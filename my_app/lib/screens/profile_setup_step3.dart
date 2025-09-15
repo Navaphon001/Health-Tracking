@@ -1,0 +1,378 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
+import '../providers/physical_info_provider.dart';
+import '../providers/profile_setup_provider.dart';
+import '../theme/app_colors.dart';
+
+class ProfileSetupStep3 extends StatelessWidget {
+  const ProfileSetupStep3({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
+    final primary = theme.colorScheme.primary;
+    final isDark = theme.brightness == Brightness.dark;
+    const ivory = AppColors.darkIvory;
+    const btnTextColor = Colors.white;
+    const gradientStart = AppColors.primaryLight;
+    const gradientEnd = AppColors.gradientLightEnd;
+
+    final textStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: isDark ? ivory : const Color(0xFF000000),
+    );
+
+    // Use selectors for granular updates
+    final healthRating = context.select<PhysicalInfoProvider, String?>((p) => p.healthRating);
+    final goals = context.select<ProfileSetupProvider, List<String>>((p) => p.goals);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('About Yourself'),
+      ),
+      body: SafeArea(
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          children: [
+            // Top row: title and step
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text('About Yourself', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                Text(t.stepOf(3, 3), style: theme.textTheme.bodyMedium),
+              ],
+            ),
+            const SizedBox(height: 8),
+            // Progress bar
+            LinearProgressIndicator(
+              value: 3 / 3,
+              backgroundColor: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+              color: theme.brightness == Brightness.light ? gradientStart : primary,
+              minHeight: 8,
+              borderRadius: const BorderRadius.all(Radius.circular(8)),
+            ),
+            const SizedBox(height: 24),
+
+            // Health Rating Question
+            Text(
+              'How would you describe your current health?',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Health Rating Emojis
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _HealthRatingItem(
+                  emoji: '😷',
+                  label: 'Poor',
+                  value: 'poor',
+                  selected: healthRating == 'poor',
+                  onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('poor'),
+                  textStyle: textStyle,
+                  isDark: isDark,
+                  primary: primary,
+                ),
+                _HealthRatingItem(
+                  emoji: '😐',
+                  label: 'Fair',
+                  value: 'fair',
+                  selected: healthRating == 'fair',
+                  onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('fair'),
+                  textStyle: textStyle,
+                  isDark: isDark,
+                  primary: primary,
+                ),
+                _HealthRatingItem(
+                  emoji: '😊',
+                  label: 'Good',
+                  value: 'good',
+                  selected: healthRating == 'good',
+                  onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('good'),
+                  textStyle: textStyle,
+                  isDark: isDark,
+                  primary: primary,
+                ),
+                _HealthRatingItem(
+                  emoji: '😃',
+                  label: 'Great',
+                  value: 'great',
+                  selected: healthRating == 'great',
+                  onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('great'),
+                  textStyle: textStyle,
+                  isDark: isDark,
+                  primary: primary,
+                ),
+                _HealthRatingItem(
+                  emoji: '🤩',
+                  label: 'Excellent',
+                  value: 'excellent',
+                  selected: healthRating == 'excellent',
+                  onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('excellent'),
+                  textStyle: textStyle,
+                  isDark: isDark,
+                  primary: primary,
+                ),
+              ],
+            ),
+            const SizedBox(height: 32),
+
+            // Goals Section
+            Text(
+              'Activity Level',
+              style: theme.textTheme.titleSmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Goals List
+            _GoalCard(
+              icon: Icons.trending_down,
+              label: 'Lose Weight',
+              value: 'lose_weight',
+              selected: goals.contains('lose_weight'),
+              onTap: () => context.read<ProfileSetupProvider>().toggleGoal('lose_weight'),
+              isDark: isDark,
+              ivory: ivory,
+              primary: primary,
+            ),
+            const SizedBox(height: 8),
+            
+            _GoalCard(
+              icon: Icons.fitness_center,
+              label: 'Build Muscle',
+              value: 'build_muscle',
+              selected: goals.contains('build_muscle'),
+              onTap: () => context.read<ProfileSetupProvider>().toggleGoal('build_muscle'),
+              isDark: isDark,
+              ivory: ivory,
+              primary: primary,
+            ),
+            const SizedBox(height: 8),
+            
+            _GoalCard(
+              icon: Icons.directions_run,
+              label: 'Improve Fitness',
+              value: 'improve_fitness',
+              selected: goals.contains('improve_fitness'),
+              onTap: () => context.read<ProfileSetupProvider>().toggleGoal('improve_fitness'),
+              isDark: isDark,
+              ivory: ivory,
+              primary: primary,
+            ),
+            const SizedBox(height: 8),
+            
+            _GoalCard(
+              icon: Icons.bedtime,
+              label: 'Better Sleep',
+              value: 'better_sleep',
+              selected: goals.contains('better_sleep'),
+              onTap: () => context.read<ProfileSetupProvider>().toggleGoal('better_sleep'),
+              isDark: isDark,
+              ivory: ivory,
+              primary: primary,
+            ),
+            const SizedBox(height: 8),
+            
+            _GoalCard(
+              icon: Icons.restaurant,
+              label: 'Eat Healthier',
+              value: 'eat_healthier',
+              selected: goals.contains('eat_healthier'),
+              onTap: () => context.read<ProfileSetupProvider>().toggleGoal('eat_healthier'),
+              isDark: isDark,
+              ivory: ivory,
+              primary: primary,
+            ),
+
+            const SizedBox(height: 32),
+
+            // Complete button with gradient
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [gradientStart, gradientEnd],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    foregroundColor: btnTextColor,
+                  ),
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Profile setup completed!')),
+                    );
+                    Navigator.of(context).pushNamedAndRemoveUntil('/dashboard', (route) => false);
+                  },
+                  child: Text(t.next),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HealthRatingItem extends StatelessWidget {
+  final String emoji;
+  final String label;
+  final String value;
+  final bool selected;
+  final VoidCallback onTap;
+  final TextStyle? textStyle;
+  final bool? isDark;
+  final Color? primary;
+
+  const _HealthRatingItem({
+    required this.emoji,
+    required this.label,
+    required this.value,
+    required this.selected,
+    required this.onTap,
+    this.textStyle,
+    this.isDark,
+    this.primary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final primaryColor = primary ?? theme.colorScheme.primary;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 50,
+            height: 50,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: selected ? primaryColor.withValues(alpha: 0.1) : Colors.transparent,
+              border: Border.all(
+                color: selected ? primaryColor : Colors.transparent,
+                width: 2,
+              ),
+            ),
+            child: Center(
+              child: Text(
+                emoji,
+                style: const TextStyle(fontSize: 24),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: selected ? primaryColor : textStyle?.color,
+              fontWeight: selected ? FontWeight.w500 : null,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GoalCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final bool selected;
+  final VoidCallback onTap;
+  final bool? isDark;
+  final Color? ivory;
+  final Color? primary;
+  
+  const _GoalCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.selected,
+    required this.onTap,
+    this.isDark,
+    this.ivory,
+    this.primary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final dark = isDark ?? theme.brightness == Brightness.dark;
+    final ivoryColor = ivory ?? const Color(0xFFFFFDF6);
+    final primaryColor = primary ?? theme.colorScheme.primary;
+    final baseBorder = theme.colorScheme.outline;
+    final selectedFill = dark ? Colors.white.withValues(alpha: 0.06) : primaryColor.withValues(alpha: 0.12);
+    final selectedBorder = dark ? ivoryColor.withValues(alpha: 0.8) : primaryColor;
+    
+    return InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Ink(
+        height: 60,
+        decoration: BoxDecoration(
+          color: selected ? selectedFill : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: selected ? selectedBorder : baseBorder,
+            width: selected ? 2 : 1,
+          ),
+          boxShadow: selected && !dark
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withValues(alpha: 0.18),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: selected 
+                    ? (dark ? ivoryColor : primaryColor)
+                    : (dark ? ivoryColor.withValues(alpha: 0.7) : theme.iconTheme.color),
+                size: 24,
+              ),
+              const SizedBox(width: 16),
+              Text(
+                label,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: dark
+                      ? ivoryColor
+                      : (selected ? primaryColor : null),
+                  fontWeight: selected ? FontWeight.w500 : null,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
