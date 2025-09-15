@@ -1,9 +1,35 @@
+// screens/main_navigation_screen.dart
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/auth_notifier.dart';
+import '../providers/habit_notifier.dart';
+import '../shared/snack_fn.dart';
 
-class MainNavigationScreen extends StatelessWidget {
+class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
+  @override
+  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+}
 
-  Future<void> _signOut(BuildContext context) async {
+class _MainNavigationScreenState extends State<MainNavigationScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // bind snackbar ให้ทั้งสอง notifier
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      SnackFn fn = (String msg, {bool isError = false}) {
+        final snackBar = SnackBar(
+          content: Text(msg),
+          backgroundColor: isError ? Colors.red : Colors.green,
+        );
+        ScaffoldMessenger.of(context).showSnackBar(snackBar);
+      };
+      context.read<AuthNotifier>().setSnackBarCallback(fn);
+      context.read<HabitNotifier>().setSnackBarCallback(fn);
+    });
+  }
+
+  Future<void> _signOut() async {
     final ok = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -15,7 +41,7 @@ class MainNavigationScreen extends StatelessWidget {
         ],
       ),
     );
-    if (ok == true && context.mounted) {
+    if (ok == true && mounted) {
       Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
     }
   }
@@ -24,11 +50,49 @@ class MainNavigationScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Home')),
-      body: Center(
-        child: FilledButton.icon(
-          onPressed: () => _signOut(context),
-          icon: const Icon(Icons.logout),
-          label: const Text('Sign out'),
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12,
+                children: const [
+                  _NavCard(icon: Icons.local_drink, label: 'Water', routeName: '/water'),
+                  _NavCard(icon: Icons.directions_run, label: 'Exercise', routeName: '/exercise'),
+                  _NavCard(icon: Icons.bedtime, label: 'Sleep', routeName: '/sleep'),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _signOut,
+                icon: const Icon(Icons.logout),
+                label: const Text('Sign out'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _NavCard extends StatelessWidget {
+  final IconData icon; final String label; final String routeName;
+  const _NavCard({super.key, required this.icon, required this.label, required this.routeName});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        onTap: () => Navigator.pushNamed(context, routeName),
+        child: Center(
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Icon(icon, size: 36), const SizedBox(height: 8), Text(label),
+          ]),
         ),
       ),
     );

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-
-typedef SnackFn = void Function(String message, {bool isError});
+import '../shared/snack_fn.dart';
 
 class AuthNotifier extends ChangeNotifier {
   String? usernameError;
