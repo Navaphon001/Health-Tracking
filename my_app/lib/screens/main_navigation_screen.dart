@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_notifier.dart';
 import '../providers/habit_notifier.dart';
-import '../shared/snack_fn.dart';
+import '../shared/snack_fn.dart'; // ใช้ showAppSnack (ผูกกับ global key แล้ว)
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -15,17 +15,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   void initState() {
     super.initState();
-    // bind snackbar ให้ทั้งสอง notifier
+    // bind snackbar ให้ทั้งสอง notifier ด้วยฟังก์ชันกลาง (ไม่ใช้ ScaffoldMessenger.of(context))
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      SnackFn fn = (String msg, {bool isError = false}) {
-        final snackBar = SnackBar(
-          content: Text(msg),
-          backgroundColor: isError ? Colors.red : Colors.green,
-        );
-        ScaffoldMessenger.of(context).showSnackBar(snackBar);
-      };
-      context.read<AuthNotifier>().setSnackBarCallback(fn);
-      context.read<HabitNotifier>().setSnackBarCallback(fn);
+      context.read<AuthNotifier>().setSnackBarCallback(showAppSnack);
+      context.read<HabitNotifier>().setSnackBarCallback(showAppSnack);
     });
   }
 
@@ -87,6 +80,8 @@ class _NavCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      clipBehavior: Clip.antiAlias, // กัน ripple ล้น
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () => Navigator.pushNamed(context, routeName),
         child: Center(
