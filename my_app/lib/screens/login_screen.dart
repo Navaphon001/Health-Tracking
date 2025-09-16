@@ -39,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
     await auth.login(_email.text.trim(), _password.text.trim());
     if (!auth.isLoading && auth.emailError == null && auth.passwordError == null) {
       if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(context, '/main', (r) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (r) => false);
     }
   }
 
