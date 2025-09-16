@@ -1,8 +1,8 @@
 import '../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 
-class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
+class DashboardPageMock extends StatelessWidget {
+  const DashboardPageMock({super.key});
 
   @override
   Widget build(BuildContext context) {

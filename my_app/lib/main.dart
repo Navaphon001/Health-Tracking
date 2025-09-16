@@ -13,6 +13,7 @@ import 'shared/app_keys.dart';
 import 'l10n/app_localizations.dart';
 import 'screens/splash_screen.dart';
 import 'screens/dashboard_page.dart';
+import 'screens/dashboard.dart';
 import 'providers/language_provider.dart';
 import 'providers/theme_provider.dart';
 import 'screens/settings_page.dart';
@@ -23,6 +24,12 @@ import 'screens/profile_setup_step3.dart';
 import 'screens/onboarding_main.dart';
 import 'providers/profile_setup_provider.dart';
 import 'providers/physical_info_provider.dart';
+import 'providers/date_provider.dart';
+import 'providers/water_provider.dart';
+import 'providers/exercise_provider.dart';
+import 'providers/meal_provider.dart';
+import 'providers/bmi_provider.dart';
+import 'providers/mood_provider.dart';
 
 import 'package:flutter/foundation.dart'; // kDebugMode, debugPrint
 import 'services/app_db.dart';
@@ -78,6 +85,12 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => ThemeProvider()..load()),
         ChangeNotifierProvider(create: (_) => ProfileSetupProvider()),
         ChangeNotifierProvider(create: (_) => PhysicalInfoProvider()..load()),
+        ChangeNotifierProvider(create: (_) => WaterProvider()),
+        ChangeNotifierProvider(create: (_) => ExerciseProvider()),
+        ChangeNotifierProvider(create: (_) => MealProvider()),
+        ChangeNotifierProvider(create: (_) => DateProvider()),
+        ChangeNotifierProvider(create: (_) => BmiProvider()),
+        ChangeNotifierProvider(create: (_) => MoodProvider())
       ],
       child: const MyApp(),
     ),
@@ -111,6 +124,7 @@ class MyApp extends StatelessWidget {
         '/sleep': (_) => const SleepScreen(),
         '/onboarding': (_) => const OnboardingMain(),
         '/dashboard': (_) => const DashboardPage(),
+        '/dashboardmock': (_) => const DashboardPageMock(),
         '/settings': (_) => const SettingsPage(),
         '/profile-setup': (_) => const ProfileSetupStep1(),
         '/profile-setup-step2': (_) => const ProfileSetupStep2(),
