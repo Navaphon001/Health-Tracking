@@ -30,7 +30,7 @@ class ProfileSetupStep3 extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('About Yourself'),
+        title: Text(t.aboutYourself),
       ),
       body: SafeArea(
         child: ListView(
@@ -40,7 +40,7 @@ class ProfileSetupStep3 extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('About Yourself', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+                Text(t.aboutYourself, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
                 Text(t.stepOf(3, 3), style: theme.textTheme.bodyMedium),
               ],
             ),
@@ -57,7 +57,7 @@ class ProfileSetupStep3 extends StatelessWidget {
 
             // Health Rating Question
             Text(
-              'How would you describe your current health?',
+              t.healthRatingQuestion,
               style: theme.textTheme.titleSmall?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w500,
@@ -71,7 +71,7 @@ class ProfileSetupStep3 extends StatelessWidget {
               children: [
                 _HealthRatingItem(
                   emoji: '😷',
-                  label: 'Poor',
+                  label: t.healthPoor,
                   value: 'poor',
                   selected: healthRating == 'poor',
                   onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('poor'),
@@ -81,7 +81,7 @@ class ProfileSetupStep3 extends StatelessWidget {
                 ),
                 _HealthRatingItem(
                   emoji: '😐',
-                  label: 'Fair',
+                  label: t.healthFair,
                   value: 'fair',
                   selected: healthRating == 'fair',
                   onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('fair'),
@@ -91,7 +91,7 @@ class ProfileSetupStep3 extends StatelessWidget {
                 ),
                 _HealthRatingItem(
                   emoji: '😊',
-                  label: 'Good',
+                  label: t.healthGood,
                   value: 'good',
                   selected: healthRating == 'good',
                   onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('good'),
@@ -101,7 +101,7 @@ class ProfileSetupStep3 extends StatelessWidget {
                 ),
                 _HealthRatingItem(
                   emoji: '😃',
-                  label: 'Great',
+                  label: t.healthGreat,
                   value: 'great',
                   selected: healthRating == 'great',
                   onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('great'),
@@ -111,7 +111,7 @@ class ProfileSetupStep3 extends StatelessWidget {
                 ),
                 _HealthRatingItem(
                   emoji: '🤩',
-                  label: 'Excellent',
+                  label: t.healthExcellent,
                   value: 'excellent',
                   selected: healthRating == 'excellent',
                   onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('excellent'),
@@ -125,7 +125,7 @@ class ProfileSetupStep3 extends StatelessWidget {
 
             // Goals Section
             Text(
-              'Activity Level',
+              t.yourGoals,
               style: theme.textTheme.titleSmall?.copyWith(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w500,
@@ -136,7 +136,7 @@ class ProfileSetupStep3 extends StatelessWidget {
             // Goals List
             _GoalCard(
               icon: Icons.trending_down,
-              label: 'Lose Weight',
+              label: t.goalLoseWeight,
               value: 'lose_weight',
               selected: goals.contains('lose_weight'),
               onTap: () => context.read<ProfileSetupProvider>().toggleGoal('lose_weight'),
@@ -148,7 +148,7 @@ class ProfileSetupStep3 extends StatelessWidget {
             
             _GoalCard(
               icon: Icons.fitness_center,
-              label: 'Build Muscle',
+              label: t.goalBuildMuscle,
               value: 'build_muscle',
               selected: goals.contains('build_muscle'),
               onTap: () => context.read<ProfileSetupProvider>().toggleGoal('build_muscle'),
@@ -160,7 +160,7 @@ class ProfileSetupStep3 extends StatelessWidget {
             
             _GoalCard(
               icon: Icons.directions_run,
-              label: 'Improve Fitness',
+              label: t.goalImproveFitness,
               value: 'improve_fitness',
               selected: goals.contains('improve_fitness'),
               onTap: () => context.read<ProfileSetupProvider>().toggleGoal('improve_fitness'),
@@ -172,7 +172,7 @@ class ProfileSetupStep3 extends StatelessWidget {
             
             _GoalCard(
               icon: Icons.bedtime,
-              label: 'Better Sleep',
+              label: t.goalBetterSleep,
               value: 'better_sleep',
               selected: goals.contains('better_sleep'),
               onTap: () => context.read<ProfileSetupProvider>().toggleGoal('better_sleep'),
@@ -184,7 +184,7 @@ class ProfileSetupStep3 extends StatelessWidget {
             
             _GoalCard(
               icon: Icons.restaurant,
-              label: 'Eat Healthier',
+              label: t.goalEatHealthier,
               value: 'eat_healthier',
               selected: goals.contains('eat_healthier'),
               onTap: () => context.read<ProfileSetupProvider>().toggleGoal('eat_healthier'),

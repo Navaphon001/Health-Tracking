@@ -118,4 +118,74 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openProfileSetupStep2 => 'Open Profile Setup Step 2';
+
+  @override
+  String get skip => 'SKIP';
+
+  @override
+  String get getStarted => 'Get Started';
+
+  @override
+  String get trackHealthTitle => 'Track Your Health';
+
+  @override
+  String get trackHealthDesc =>
+      'Monitor your daily activities, workouts, and health metrics to stay on track with your wellness goals.';
+
+  @override
+  String get setGoalsTitle => 'Set Your Goals';
+
+  @override
+  String get setGoalsDesc =>
+      'Define your fitness and health objectives to create a personalized plan that works best for you.';
+
+  @override
+  String get analyzeProgressTitle => 'Analyze Progress';
+
+  @override
+  String get analyzeProgressDesc =>
+      'View detailed insights and charts to understand your health trends and celebrate your achievements.';
+
+  @override
+  String get aboutYourself => 'About Yourself';
+
+  @override
+  String get healthRatingQuestion =>
+      'How would you describe your current health?';
+
+  @override
+  String get healthPoor => 'Poor';
+
+  @override
+  String get healthFair => 'Fair';
+
+  @override
+  String get healthGood => 'Good';
+
+  @override
+  String get healthGreat => 'Great';
+
+  @override
+  String get healthExcellent => 'Excellent';
+
+  @override
+  String get yourGoals => 'What are your main goals?';
+
+  @override
+  String get goalLoseWeight => 'Lose Weight';
+
+  @override
+  String get goalBuildMuscle => 'Build Muscle';
+
+  @override
+  String get goalImproveFitness => 'Improve Fitness';
+
+  @override
+  String get goalBetterSleep => 'Better Sleep';
+
+  @override
+  String get goalEatHealthier => 'Eat Healthier';
+
+  @override
+  String get openProfileSetupStep3 => 'Open Profile Setup Step 3';
 }

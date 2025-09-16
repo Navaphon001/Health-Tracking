@@ -313,6 +313,138 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open Profile Setup Step 2'**
   String get openProfileSetupStep2;
+
+  /// No description provided for @skip.
+  ///
+  /// In en, this message translates to:
+  /// **'SKIP'**
+  String get skip;
+
+  /// No description provided for @getStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get getStarted;
+
+  /// No description provided for @trackHealthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Track Your Health'**
+  String get trackHealthTitle;
+
+  /// No description provided for @trackHealthDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Monitor your daily activities, workouts, and health metrics to stay on track with your wellness goals.'**
+  String get trackHealthDesc;
+
+  /// No description provided for @setGoalsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Your Goals'**
+  String get setGoalsTitle;
+
+  /// No description provided for @setGoalsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Define your fitness and health objectives to create a personalized plan that works best for you.'**
+  String get setGoalsDesc;
+
+  /// No description provided for @analyzeProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Analyze Progress'**
+  String get analyzeProgressTitle;
+
+  /// No description provided for @analyzeProgressDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'View detailed insights and charts to understand your health trends and celebrate your achievements.'**
+  String get analyzeProgressDesc;
+
+  /// No description provided for @aboutYourself.
+  ///
+  /// In en, this message translates to:
+  /// **'About Yourself'**
+  String get aboutYourself;
+
+  /// No description provided for @healthRatingQuestion.
+  ///
+  /// In en, this message translates to:
+  /// **'How would you describe your current health?'**
+  String get healthRatingQuestion;
+
+  /// No description provided for @healthPoor.
+  ///
+  /// In en, this message translates to:
+  /// **'Poor'**
+  String get healthPoor;
+
+  /// No description provided for @healthFair.
+  ///
+  /// In en, this message translates to:
+  /// **'Fair'**
+  String get healthFair;
+
+  /// No description provided for @healthGood.
+  ///
+  /// In en, this message translates to:
+  /// **'Good'**
+  String get healthGood;
+
+  /// No description provided for @healthGreat.
+  ///
+  /// In en, this message translates to:
+  /// **'Great'**
+  String get healthGreat;
+
+  /// No description provided for @healthExcellent.
+  ///
+  /// In en, this message translates to:
+  /// **'Excellent'**
+  String get healthExcellent;
+
+  /// No description provided for @yourGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'What are your main goals?'**
+  String get yourGoals;
+
+  /// No description provided for @goalLoseWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Lose Weight'**
+  String get goalLoseWeight;
+
+  /// No description provided for @goalBuildMuscle.
+  ///
+  /// In en, this message translates to:
+  /// **'Build Muscle'**
+  String get goalBuildMuscle;
+
+  /// No description provided for @goalImproveFitness.
+  ///
+  /// In en, this message translates to:
+  /// **'Improve Fitness'**
+  String get goalImproveFitness;
+
+  /// No description provided for @goalBetterSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Better Sleep'**
+  String get goalBetterSleep;
+
+  /// No description provided for @goalEatHealthier.
+  ///
+  /// In en, this message translates to:
+  /// **'Eat Healthier'**
+  String get goalEatHealthier;
+
+  /// No description provided for @openProfileSetupStep3.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Profile Setup Step 3'**
+  String get openProfileSetupStep3;
 }
 
 class _AppLocalizationsDelegate

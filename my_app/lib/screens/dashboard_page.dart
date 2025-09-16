@@ -36,7 +36,7 @@ class DashboardPage extends StatelessWidget {
               const SizedBox(height: 12),
               ElevatedButton(
                 onPressed: () => Navigator.of(context).pushNamed('/profile-setup-step3'),
-                child: const Text('About Yourself'),
+                child: Text(t.aboutYourself),
               ),
             ],
           ),

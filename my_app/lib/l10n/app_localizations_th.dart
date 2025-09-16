@@ -118,4 +118,73 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get openProfileSetupStep2 => 'เปิดหน้าตั้งค่าโปรไฟล์ขั้นตอนที่ 2';
+
+  @override
+  String get skip => 'ข้าม';
+
+  @override
+  String get getStarted => 'เริ่มต้นใช้งาน';
+
+  @override
+  String get trackHealthTitle => 'ติดตามสุขภาพของคุณ';
+
+  @override
+  String get trackHealthDesc =>
+      'ติดตามกิจกรรมประจำวัน การออกกำลังกาย และเมตริกสุขภาพเพื่อให้อยู่ในเป้าหมายสุขภาพของคุณ';
+
+  @override
+  String get setGoalsTitle => 'ตั้งเป้าหมายของคุณ';
+
+  @override
+  String get setGoalsDesc =>
+      'กำหนดเป้าหมายด้านฟิตเนสและสุขภาพเพื่อสร้างแผนส่วนบุคคลที่เหมาะสมที่สุดสำหรับคุณ';
+
+  @override
+  String get analyzeProgressTitle => 'วิเคราะห์ความก้าวหน้า';
+
+  @override
+  String get analyzeProgressDesc =>
+      'ดูข้อมูลเชิงลึกและแผนภูมิโดยละเอียดเพื่อทำความเข้าใจเทรนด์สุขภาพของคุณและเฉลิมฉลองความสำเร็จ';
+
+  @override
+  String get aboutYourself => 'เกี่ยวกับตัวคุณ';
+
+  @override
+  String get healthRatingQuestion => 'คุณจะอธิบายสุขภาพปัจจุบันของคุณอย่างไร?';
+
+  @override
+  String get healthPoor => 'แย่';
+
+  @override
+  String get healthFair => 'พอใช้';
+
+  @override
+  String get healthGood => 'ดี';
+
+  @override
+  String get healthGreat => 'ดีมาก';
+
+  @override
+  String get healthExcellent => 'ยอดเยี่ยม';
+
+  @override
+  String get yourGoals => 'เป้าหมายหลักของคุณคืออะไร?';
+
+  @override
+  String get goalLoseWeight => 'ลดน้ำหนัก';
+
+  @override
+  String get goalBuildMuscle => 'สร้างกล้ามเนื้อ';
+
+  @override
+  String get goalImproveFitness => 'เพิ่มความแข็งแรง';
+
+  @override
+  String get goalBetterSleep => 'นอนหลับดีขึ้น';
+
+  @override
+  String get goalEatHealthier => 'กินอาหารเพื่อสุขภาพ';
+
+  @override
+  String get openProfileSetupStep3 => 'เปิดหน้าตั้งค่าโปรไฟล์ขั้นตอนที่ 3';
 }

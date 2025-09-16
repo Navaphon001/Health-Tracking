@@ -10,6 +10,7 @@ import 'theme/app_themes.dart';
 import 'screens/profile_setup_step1.dart';
 import 'screens/profile_setup_step2.dart';
 import 'screens/profile_setup_step3.dart';
+import 'screens/onboarding_main.dart';
 import 'providers/profile_setup_provider.dart';
 import 'providers/physical_info_provider.dart';
 
@@ -45,6 +46,7 @@ class MyApp extends StatelessWidget {
   supportedLocales: AppLocalizations.supportedLocales,
       home: const SplashScreen(),
       routes: {
+        '/onboarding': (_) => const OnboardingMain(),
         '/dashboard': (_) => const DashboardPage(),
         '/settings': (_) => const SettingsPage(),
         '/profile-setup': (_) => const ProfileSetupStep1(),
