@@ -13,98 +13,180 @@ class SleepScreen extends StatefulWidget {
 }
 
 class _SleepScreenState extends State<SleepScreen> {
+  TimeOfDay _bed = const TimeOfDay(hour: 22, minute: 0);
+  TimeOfDay _wake = const TimeOfDay(hour: 6, minute: 0);
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HabitNotifier>().fetchLatestSleepLog();
+    // preload ค่าล่าสุด (ถ้ามี)
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final n = context.read<HabitNotifier>();
+      await n.fetchLatestSleepLog();
+      if (!mounted) return;
+      final log = n.latestSleepLog;
+      if (log != null) {
+        setState(() {
+          _bed = _parseTod(log['bedTime'] as String);
+          _wake = _parseTod(log['wakeTime'] as String);
+        });
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final dur = _calcDuration(_bed, _wake);
+    final stars = _stars(dur);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Sleep'), foregroundColor: primaryColor),
-      body: Consumer<HabitNotifier>(builder: (context, n, _) {
-        final log = n.latestSleepLog;
-        final text = _format(log);
-        final stars = (log?['starCount'] ?? 0) as int;
+      body: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            // สรุปชั่วโมงและดาว (อัปเดตทันทีเมื่อเลือกเวลา)
+            Text(_formatDuration(dur),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                5,
+                (i) => Icon(i < stars ? Icons.star : Icons.star_border, color: Colors.amber),
+              ),
+            ),
 
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-            Text(text, textAlign: TextAlign.center, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 24),
+
+            // เลือกเวลานอน
+            _TimeTile(
+              title: 'Bedtime',
+              value: _hhmm(_bed),
+              icon: Icons.nightlight_round,
+              onTap: () async {
+                final picked = await _pickTime(context, _bed);
+                if (!mounted) return;
+                if (picked != null) setState(() => _bed = picked);
+              },
+            ),
             const SizedBox(height: 12),
-            Row(mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(5, (i) =>
-                Icon(i < stars ? Icons.star : Icons.star_border, color: Colors.amber))),
+
+            // เลือกเวลาตื่น
+            _TimeTile(
+              title: 'Wake-up Time',
+              value: _hhmm(_wake),
+              icon: Icons.wb_sunny,
+              onTap: () async {
+                final picked = await _pickTime(context, _wake);
+                if (!mounted) return;
+                if (picked != null) setState(() => _wake = picked);
+              },
+            ),
+
             const Spacer(),
-            FilledButton(onPressed: _edit, child: const Text('Log Sleep')),
-          ]),
-        );
-      }),
+
+            // บันทึก
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () async {
+                  final n = context.read<HabitNotifier>();
+                  final d = _calcDuration(_bed, _wake);
+                  final star = _stars(d);
+                  await n.saveSleepLog(bedTime: _bed, wakeTime: _wake, starCount: star);
+                  if (!mounted) return;
+                  // SnackBar จะมาเองจาก callback ใน Notifier (ถ้าตั้งไว้แล้ว)
+                },
+                child: const Text('Log Sleep'),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
-  String _format(Map<String, dynamic>? log) {
-    if (log == null) return 'No sleep logged';
-    final bed = _parseTod(log['bedTime'] as String);
-    final wake = _parseTod(log['wakeTime'] as String);
+  // ---------- helpers ----------
+  Future<TimeOfDay?> _pickTime(BuildContext ctx, TimeOfDay initial) async {
+    final picked = await showTimePicker(
+      context: ctx,
+      initialTime: initial,
+      initialEntryMode: TimePickerEntryMode.input, // พิมพ์ได้
+      builder: (context, child) {
+        // บังคับ 24 ชั่วโมง
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
+    );
+    return picked;
+  }
+
+  Duration _calcDuration(TimeOfDay bed, TimeOfDay wake) {
     final now = DateTime.now();
     var bdt = DateTime(now.year, now.month, now.day, bed.hour, bed.minute);
     var wdt = DateTime(now.year, now.month, now.day, wake.hour, wake.minute);
-    if (!wdt.isAfter(bdt)) wdt = wdt.add(const Duration(days: 1));
-    final dur = wdt.difference(bdt);
-    final h = dur.inHours, m = dur.inMinutes.remainder(60);
+    if (!wdt.isAfter(bdt)) wdt = wdt.add(const Duration(days: 1)); // กรณีข้ามวัน
+    return wdt.difference(bdt);
+  }
+
+  String _formatDuration(Duration d) {
+    final h = d.inHours, m = d.inMinutes.remainder(60);
     return '${h}h ${m}m last night';
   }
 
-  Future<void> _edit() async {
-    TimeOfDay bed = const TimeOfDay(hour: 22, minute: 0);
-    TimeOfDay wake = const TimeOfDay(hour: 6, minute: 0);
-
-    final res = await showDialog<Map<String, TimeOfDay>>(
-      context: context,
-      builder: (ctx) => StatefulBuilder(builder: (ctx, setS) {
-        return AlertDialog(
-          title: const Text('Log Your Sleep'),
-          content: Column(mainAxisSize: MainAxisSize.min, children: [
-            ListTile(title: const Text('Bedtime'), subtitle: Text(_hhmm(bed)),
-              onTap: () async { final p=await showTimePicker(context: context, initialTime: bed); if(p!=null){ setS(()=>bed=p);} }),
-            ListTile(title: const Text('Wake-up Time'), subtitle: Text(_hhmm(wake)),
-              onTap: () async { final p=await showTimePicker(context: context, initialTime: wake); if(p!=null){ setS(()=>wake=p);} }),
-          ]),
-          actions: [
-            TextButton(onPressed: ()=>Navigator.pop(context), child: const Text('Cancel')),
-            TextButton(onPressed: ()=>Navigator.pop(context, {'bed':bed,'wake':wake}), child: const Text('Save')),
-          ],
-        );
-      }),
-    );
-
-    if (res != null) {
-      final bedT = res['bed']!, wakeT = res['wake']!;
-      final now = DateTime.now();
-      var bdt = DateTime(now.year, now.month, now.day, bedT.hour, bedT.minute);
-      var wdt = DateTime(now.year, now.month, now.day, wakeT.hour, wakeT.minute);
-      if (!wdt.isAfter(bdt)) wdt = wdt.add(const Duration(days: 1));
-      final dur = wdt.difference(bdt);
-      final stars = _stars(dur);
-      await context.read<HabitNotifier>().saveSleepLog(bedTime: bedT, wakeTime: wakeT, starCount: stars);
-    }
-  }
-
-  int _stars(Duration d){
+  int _stars(Duration d) {
     final h = d.inHours;
-    if(h>10) return 2;
-    if(h>=8) return 5;
-    if(h>=6) return 4;
-    if(h>=5) return 3;
-    if(h>=3) return 2;
-    if(h>0)  return 1;
+    if (h > 10) return 2;
+    if (h >= 8) return 5;
+    if (h >= 6) return 4;
+    if (h >= 5) return 3;
+    if (h >= 3) return 2;
+    if (h > 0)  return 1;
     return 0;
   }
 
-  String _hhmm(TimeOfDay t)=>'${t.hour.toString().padLeft(2,'0')}:${t.minute.toString().padLeft(2,'0')}';
-  TimeOfDay _parseTod(String s){ final p=s.split(':'); return TimeOfDay(hour:int.parse(p[0]), minute:int.parse(p[1])); }
+  String _hhmm(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2,'0')}:${t.minute.toString().padLeft(2,'0')}';
+
+  TimeOfDay _parseTod(String s) {
+    final p = s.split(':');
+    return TimeOfDay(hour: int.parse(p[0]), minute: int.parse(p[1]));
+  }
+}
+
+class _TimeTile extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _TimeTile({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: ListTile(
+        contentPadding: EdgeInsets.zero,
+        leading: Icon(icon, color: secondaryTextColor),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+        subtitle: Text(value, style: const TextStyle(color: secondaryTextColor)),
+        trailing: const Icon(Icons.edit),
+        onTap: onTap,
+      ),
+    );
+  }
 }
