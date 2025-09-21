@@ -30,6 +30,20 @@ class SettingsPage extends StatelessWidget {
               onTap: () {},
             ),
           ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const CircleAvatar(
+                backgroundColor: Color(0xFFE8F5E8), 
+                child: Icon(Icons.emoji_events, color: Color(0xFF4CAF50))
+              ),
+              title: Text(t.goalAndAchievement),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.pushNamed(context, '/goals-achievements');
+              },
+            ),
+          ),
           const SizedBox(height: 24),
           Text(t.settings, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),

@@ -30,6 +30,9 @@ import 'providers/exercise_provider.dart';
 import 'providers/meal_provider.dart';
 import 'providers/bmi_provider.dart';
 import 'providers/mood_provider.dart';
+import 'providers/goal_provider.dart';
+import 'providers/achievement_provider.dart';
+import 'screens/goals_achievements_screen.dart';
 
 import 'package:flutter/foundation.dart'; // kDebugMode, debugPrint
 import 'services/app_db.dart';
@@ -90,7 +93,9 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => MealProvider()),
         ChangeNotifierProvider(create: (_) => DateProvider()),
         ChangeNotifierProvider(create: (_) => BmiProvider()),
-        ChangeNotifierProvider(create: (_) => MoodProvider())
+        ChangeNotifierProvider(create: (_) => MoodProvider()),
+        ChangeNotifierProvider(create: (_) => GoalProvider()),
+        ChangeNotifierProvider(create: (_) => AchievementProvider()),
       ],
       child: const MyApp(),
     ),
@@ -129,6 +134,7 @@ class MyApp extends StatelessWidget {
         '/profile-setup': (_) => const ProfileSetupStep1(),
         '/profile-setup-step2': (_) => const ProfileSetupStep2(),
         '/profile-setup-step3': (_) => const ProfileSetupStep3(),
+        '/goals-achievements': (_) => const GoalsAchievementsScreen(),
       },
     );
   }
