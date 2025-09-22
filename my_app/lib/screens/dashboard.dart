@@ -4,20 +4,29 @@ import 'package:table_calendar/table_calendar.dart';
 
 import '../providers/water_provider.dart';
 import '../providers/exercise_provider.dart';
-import '../providers/meal_provider.dart';
 import '../providers/date_provider.dart';
 import '../providers/bmi_provider.dart';
 import '../providers/mood_provider.dart';
+import '../providers/meal_provider.dart';
+import 'meal_logging_screen.dart';
+import '../theme/app_colors.dart';
+
 
 class DashboardPage extends StatelessWidget {
-  const DashboardPage({super.key});
+  final void Function(int)? onTabChange;
+  
+  const DashboardPage({super.key, this.onTabChange});
 
   @override
   Widget build(BuildContext context) {
     final water = context.watch<WaterProvider>().water;
     final exercise = context.watch<ExerciseProvider>().exercise;
-    final meal = context.watch<MealProvider>().meal;
     final date = context.watch<DateProvider>().date;
+
+    // โหลดข้อมูล meal count เมื่อเริ่มต้น
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<MealProvider>().loadTodayMealCount();
+    });
 
     final formattedDate = date.toLocal().toString().split(' ')[0];
 
@@ -49,7 +58,7 @@ class DashboardPage extends StatelessWidget {
                     ],
                   ),
                   GestureDetector(
-                    onTap: () => Navigator.of(context).pushNamed('/dashboardmock'),
+                    onTap: () => Navigator.of(context).pushNamed('/settings'),
                     child: const CircleAvatar(child: Icon(Icons.person)),
                   ),
                 ],
@@ -193,28 +202,64 @@ class DashboardPage extends StatelessWidget {
                     const SizedBox(height: 12),
                     _ProgressItem(
                       icon: "💧",
-                      label: "Water Intake",
+                      label: "Water Intake",  
                       progressText: "${(water / 2000 * 100).toInt()}%",
                       progress: water / 2000,
-                      onTap: () =>
-                          context.read<WaterProvider>().setWater(water + 250),
+                      onTap: () {
+                        if (onTabChange != null) {
+                          onTabChange!(2); // Water tab index = 2
+                        } else {
+                          Navigator.of(context).pushNamed('/water');
+                        }
+                      },
                     ),
                     _ProgressItem(
                       icon: "🏃‍♂️",
                       label: "Exercise",
                       progressText: exercise >= 30 ? "Done" : "${exercise} min",
                       progress: (exercise / 30).clamp(0.0, 1.0),
-                      onTap: () => context.read<ExerciseProvider>().setExercise(
-                        exercise + 10,
-                      ),
+                      onTap: () {
+                        if (onTabChange != null) {
+                          onTabChange!(3); // Exercise tab index = 3
+                        } else {
+                          Navigator.of(context).pushNamed('/exercise');
+                        }
+                      },
                     ),
                     _ProgressItem(
-                      icon: "🍽️",
-                      label: "Meals Logged",
-                      progressText: meal.isNotEmpty ? "2/3" : "0/3",
-                      progress: meal.isNotEmpty ? 0.66 : 0.0,
-                      onTap: () =>
-                          context.read<MealProvider>().setMeal("อาหารกลางวัน"),
+                      icon: "😴",
+                      label: "Sleep Logged",
+                      progressText: "8h 30m",
+                      progress: 0.85,
+                      onTap: () {
+                        if (onTabChange != null) {
+                          onTabChange!(4); // Sleep tab index = 4
+                        } else {
+                          Navigator.of(context).pushNamed('/sleep');
+                        }
+                      },
+                    ),
+                    Consumer<MealProvider>(
+                      builder: (context, mealProvider, child) {
+                        return _ProgressItem(
+                          icon: "🍽️",
+                          label: "Meals Logged",
+                          progressText: mealProvider.mealProgressText,
+                          progress: mealProvider.mealProgress,
+                          onTap: () {
+                            if (onTabChange != null) {
+                              onTabChange!(1); // Meal tab index = 1
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const MealLoggingScreen(),
+                                ),
+                              );
+                            }
+                          },
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -255,7 +300,7 @@ class _EmojiMood extends StatelessWidget {
               emoji,
               style: TextStyle(
                 fontSize: 28,
-                color: isSelected ? const Color(0xFF0ABAB5) : Colors.black,
+                color: isSelected ? AppColors.primary : Colors.black,
               ),
             ),
           ),
@@ -265,7 +310,7 @@ class _EmojiMood extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              color: isSelected ? const Color(0xFF0ABAB5) : Colors.black,
+              color: isSelected ? AppColors.primary : Colors.black,
             ),
           ),
         ],
@@ -313,7 +358,7 @@ class _ProgressItem extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(progressText),
-          IconButton(onPressed: onTap, icon: const Icon(Icons.add_circle)),
+          IconButton(onPressed: onTap, icon: const Icon(Icons.arrow_forward_ios)),
         ],
       ),
     );
@@ -395,7 +440,7 @@ class _BMISection extends StatelessWidget {
                       ElevatedButton(
                         onPressed: () => bmiProvider.reset(),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF919191),
+                          backgroundColor: AppColors.greyBackground,
                           foregroundColor: Colors.white,
                           textStyle: const TextStyle(
                             fontWeight: FontWeight.bold, // ✅ ทำให้ตัวหนา
@@ -418,7 +463,7 @@ class _BMISection extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () => _submit(context),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF0ABAB5),
+                        backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,
                         textStyle: const TextStyle(
                           fontWeight: FontWeight.bold, // ✅ ทำให้ตัวหนา

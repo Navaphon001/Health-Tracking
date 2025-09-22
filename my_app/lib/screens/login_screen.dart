@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_notifier.dart';
+import '../theme/app_colors.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -39,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
     await auth.login(_email.text.trim(), _password.text.trim());
     if (!auth.isLoading && auth.emailError == null && auth.passwordError == null) {
       if (!mounted) return;
-      Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (r) => false);
+      Navigator.pushNamedAndRemoveUntil(context, '/profile-setup', (r) => false);
     }
   }
 
@@ -63,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   shape: BoxShape.circle,
                   gradient: const LinearGradient(
                     begin: Alignment.topLeft, end: Alignment.bottomRight,
-                    colors: [Color(0xFF56DFCF), Color(0xFF0ABAB5)],
+                    colors: [AppColors.gradientLightEnd, AppColors.primary],
                   ),
                   boxShadow: [BoxShadow(
                     color: Colors.black.withOpacity(0.15),
@@ -75,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 40),
               const Text('Welcome Back!',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF333333))),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textDark)),
               const SizedBox(height: 40),
 
               // Email
@@ -128,11 +129,11 @@ class _LoginScreenState extends State<LoginScreen> {
               Container(
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Color(0xFF0ABAB5), Color(0xFF56DFCF)],
+                    colors: [AppColors.primary, AppColors.gradientLightEnd],
                     begin: Alignment.centerLeft, end: Alignment.centerRight),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [BoxShadow(
-                    color: const Color(0xFF0ABAB5).withOpacity(0.4),
+                    color: AppColors.primary.withOpacity(0.4),
                     spreadRadius: 2, blurRadius: 8, offset: const Offset(0,4),
                   )],
                 ),
@@ -161,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 GestureDetector(
                   onTap: () => Navigator.pushNamed(context, '/register'),
                   child: const Text('Register',
-                    style: TextStyle(color: Color(0xFF0ABAB5), fontWeight: FontWeight.bold)),
+                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
                 ),
               ]),
               const SizedBox(height: 40),

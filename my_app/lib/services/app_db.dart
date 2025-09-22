@@ -17,7 +17,7 @@ class AppDb {
 
     return openDatabase(
       dbPath,
-      version: 4, // ⬅️ บัมป์เป็น 4
+      version: 5, // ⬅️ บัมป์เป็น 5 เพื่อเพิ่มตาราง meal ใหม่
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -91,6 +91,47 @@ class AppDb {
             updated_at      INTEGER NOT NULL
           );
         ''');
+
+        // 5) Nutrition Database (สำหรับข้อมูลโภชนาการของอาหาร)
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS nutrition_database (
+            id              TEXT PRIMARY KEY,
+            food_name       TEXT NOT NULL,
+            calories        REAL,
+            protein         REAL,
+            carbs           REAL,
+            fat             REAL,
+            fiber           REAL,
+            sugar           REAL,
+            last_updated    INTEGER
+          );
+        ''');
+
+        // 6) Meals (สำหรับเก็บข้อมูลมื้ออาหารของผู้ใช้)
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS meals (
+            id              TEXT PRIMARY KEY,
+            food_log_id     TEXT,
+            user_id         TEXT,
+            food_name       TEXT NOT NULL,
+            meal_type       TEXT NOT NULL CHECK(meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')),
+            image_url       TEXT,
+            created_at      INTEGER NOT NULL,
+            updated_at      INTEGER NOT NULL,
+            FOREIGN KEY (food_log_id) REFERENCES food_logs(id) ON DELETE CASCADE
+          );
+        ''');
+
+        // 7) Food Logs (สำหรับเก็บบันทึกการกินของผู้ใช้รายวัน)
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS food_logs (
+            id              TEXT PRIMARY KEY,
+            user_id         TEXT NOT NULL,
+            date            TEXT NOT NULL,        -- yyyy-MM-dd
+            last_modified   INTEGER NOT NULL,
+            meal_count      INTEGER NOT NULL DEFAULT 0
+          );
+        ''');
       },
       onUpgrade: (db, oldV, newV) async {
         if (oldV < 2) {
@@ -154,9 +195,64 @@ class AppDb {
         }
         
         if (oldV < 4) {
-          // เพิ่ม health_rating และ goals columns
-          await db.execute('ALTER TABLE user_profile ADD COLUMN health_rating TEXT');
-          await db.execute('ALTER TABLE user_profile ADD COLUMN goals TEXT');
+          // เช็คว่ามี health_rating column แล้วหรือไม่
+          final healthRatingExists = await db.rawQuery(
+            "PRAGMA table_info(user_profile)"
+          ).then((columns) => columns.any((col) => col['name'] == 'health_rating'));
+          
+          if (!healthRatingExists) {
+            await db.execute('ALTER TABLE user_profile ADD COLUMN health_rating TEXT');
+          }
+          
+          // เช็คว่ามี goals column แล้วหรือไม่
+          final goalsExists = await db.rawQuery(
+            "PRAGMA table_info(user_profile)"
+          ).then((columns) => columns.any((col) => col['name'] == 'goals'));
+          
+          if (!goalsExists) {
+            await db.execute('ALTER TABLE user_profile ADD COLUMN goals TEXT');
+          }
+        }
+
+        if (oldV < 5) {
+          // เพิ่มตารางใหม่สำหรับ Meal Logging
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS nutrition_database (
+              id              TEXT PRIMARY KEY,
+              food_name       TEXT NOT NULL,
+              calories        REAL,
+              protein         REAL,
+              carbs           REAL,
+              fat             REAL,
+              fiber           REAL,
+              sugar           REAL,
+              last_updated    INTEGER
+            );
+          ''');
+
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS food_logs (
+              id              TEXT PRIMARY KEY,
+              user_id         TEXT NOT NULL,
+              date            TEXT NOT NULL,
+              last_modified   INTEGER NOT NULL,
+              meal_count      INTEGER NOT NULL DEFAULT 0
+            );
+          ''');
+
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS meals (
+              id              TEXT PRIMARY KEY,
+              food_log_id     TEXT,
+              user_id         TEXT,
+              food_name       TEXT NOT NULL,
+              meal_type       TEXT NOT NULL CHECK(meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')),
+              image_url       TEXT,
+              created_at      INTEGER NOT NULL,
+              updated_at      INTEGER NOT NULL,
+              FOREIGN KEY (food_log_id) REFERENCES food_logs(id) ON DELETE CASCADE
+            );
+          ''');
         }
       },
     );

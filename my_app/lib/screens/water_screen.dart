@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/habit_notifier.dart';
-
-const Color primaryColor = Color(0xFF0ABAB5);
+import '../theme/app_colors.dart';
 
 class WaterScreen extends StatefulWidget {
   const WaterScreen({super.key});
@@ -38,6 +37,7 @@ class _WaterScreenState extends State<WaterScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -45,6 +45,18 @@ class _WaterScreenState extends State<WaterScreen> {
             Text('บันทึกการดื่มน้ำประจำวัน', style: TextStyle(fontSize: 12)),
           ],
         ),
+        actions: [
+          GestureDetector(
+            onTap: () => Navigator.of(context).pushNamed('/settings'),
+            child: const Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: CircleAvatar(
+                radius: 18,
+                child: Icon(Icons.person, size: 20),
+              ),
+            ),
+          ),
+        ],
       ),
       body: Consumer<HabitNotifier>(
         builder: (context, n, _) {
@@ -70,7 +82,7 @@ class _WaterScreenState extends State<WaterScreen> {
                             value: percent,
                             strokeWidth: 10,
                             backgroundColor: Colors.grey.shade200,
-                            valueColor: const AlwaysStoppedAnimation(primaryColor),
+                            valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                           ),
                         ),
                         Column(
@@ -167,26 +179,55 @@ class _WaterScreenState extends State<WaterScreen> {
                 const SizedBox(height: 16),
 
                 // ปุ่ม Add (บันทึก)
-                FilledButton.icon(
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add'),
-                  onPressed: () async {
-                    final ml = _finalMl();
-                    if (_selectedDrinkIndex == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('โปรดเลือกเครื่องดื่มก่อน')),
-                      );
-                      return;
-                    }
-                    if (ml == null || ml <= 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('โปรดระบุปริมาณ (ml)')),
-                      );
-                      return;
-                    }
-                    final drink = n.drinkPresets[_selectedDrinkIndex!];
-                    await n.logDrinkWithMl(drink, ml);
-                  },
+                SizedBox(
+                  width: double.infinity,
+                  child: DecoratedBox(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [AppColors.primaryLight, AppColors.gradientLightEnd],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.all(Radius.circular(12)),
+                    ),
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.add),
+                      label: const Text(
+                        'Add',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      onPressed: () async {
+                        final ml = _finalMl();
+                        if (_selectedDrinkIndex == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('โปรดเลือกเครื่องดื่มก่อน')),
+                          );
+                          return;
+                        }
+                        if (ml == null || ml <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('โปรดระบุปริมาณ (ml)')),
+                          );
+                          return;
+                        }
+                        final drink = n.drinkPresets[_selectedDrinkIndex!];
+                        await n.logDrinkWithMl(drink, ml);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -253,7 +294,7 @@ class _DrinkTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final borderColor = selected ? primaryColor : Colors.grey.shade300;
+    final borderColor = selected ? AppColors.primary : Colors.grey.shade300;
 
     return InkWell(
       onTap: onTap,
@@ -286,7 +327,7 @@ class _DrinkTile extends StatelessWidget {
                 right: 6, top: 6,
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(color: primaryColor, borderRadius: BorderRadius.circular(999)),
+                  decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(999)),
                   child: Text('x$count',
                       style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
                 ),

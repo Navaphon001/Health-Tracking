@@ -5,7 +5,7 @@ import 'providers/auth_notifier.dart';
 import 'providers/habit_notifier.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
-import 'screens/main_navigation_screen.dart';
+import 'screens/app_navigation.dart';
 import 'screens/water_screen.dart';
 import 'screens/exercise_screen.dart';
 import 'screens/sleep_screen.dart';
@@ -124,7 +124,7 @@ class MyApp extends StatelessWidget {
       routes: {
         '/login': (_) => const LoginScreen(),
         '/register': (_) => const RegisterScreen(),
-        '/main': (_) => const MainNavigationScreen(),
+        '/main': (_) => const AppNavigation(),
         '/water': (_) => const WaterScreen(),
         '/exercise': (_) => const ExerciseScreen(),
         '/sleep': (_) => const SleepScreen(),

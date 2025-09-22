@@ -173,7 +173,9 @@ class ProfileSetupStep1 extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     foregroundColor: btnTextColor,
                   ),
-                  onPressed: () {},
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/profile-setup-step2');
+                  },
                   child: Text(t.next),
                 ),
               ),

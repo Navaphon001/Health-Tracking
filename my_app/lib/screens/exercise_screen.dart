@@ -3,10 +3,7 @@ import 'package:flutter/cupertino.dart'; // ใช้ CupertinoTimerPicker ใ�
 import 'package:provider/provider.dart';
 import '../providers/habit_notifier.dart';
 import '../models/exercise_activity.dart';
-
-const Color primaryColor = Color(0xFF0ABAB5);
-const Color textColor = Color(0xFF000000);
-const Color secondaryTextColor = Colors.grey;
+import '../theme/app_colors.dart';
 
 class ExerciseScreen extends StatefulWidget {
   const ExerciseScreen({super.key});
@@ -29,13 +26,29 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Exercise'), foregroundColor: primaryColor),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Exercise'),
+        foregroundColor: AppColors.primary,
+        actions: [
+          GestureDetector(
+            onTap: () => Navigator.of(context).pushNamed('/settings'),
+            child: const Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: CircleAvatar(
+                radius: 18,
+                child: Icon(Icons.person, size: 20),
+              ),
+            ),
+          ),
+        ],
+      ),
       floatingActionButton: FloatingActionButton(onPressed: _addOrEdit, child: const Icon(Icons.add)),
       body: Consumer<HabitNotifier>(builder: (context, n, _) {
         final list = n.exerciseActivities;
         if (list.isEmpty) {
           return const Center(
-            child: Text('No activities added yet.', style: TextStyle(color: secondaryTextColor)),
+            child: Text('No activities added yet.', style: TextStyle(color: AppColors.textSecondary)),
           );
         }
         return SingleChildScrollView(
@@ -44,7 +57,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               value: a.id,
               headerBuilder: (_, __) => ListTile(
                 title: Text(a.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                trailing: Text(_hhmm(a.scheduledTime), style: const TextStyle(color: secondaryTextColor)),
+                trailing: Text(_hhmm(a.scheduledTime), style: const TextStyle(color: AppColors.textSecondary)),
               ),
               body: _panelBody(a, n),
             )).toList(),
@@ -82,14 +95,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           style: TextStyle(
             fontSize: 42,
             fontWeight: FontWeight.bold,
-            color: finished ? Colors.green : textColor,
+            color: finished ? Colors.green : AppColors.textPrimary,
             fontFamily: 'monospace',
           ),
         ),
         const SizedBox(height: 12),
         Row(children: [
           IconButton(
-            icon: const Icon(Icons.edit, color: secondaryTextColor),
+            icon: const Icon(Icons.edit, color: AppColors.textSecondary),
             onPressed: () => _addOrEdit(existing: a),
           ),
           const Spacer(),

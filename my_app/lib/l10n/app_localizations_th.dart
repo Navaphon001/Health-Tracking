@@ -190,4 +190,7 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get openProfileSetupStep3 => 'เปิดหน้าตั้งค่าโปรไฟล์ขั้นตอนที่ 3';
+
+  @override
+  String get finish => 'เสร็จสิ้น';
 }

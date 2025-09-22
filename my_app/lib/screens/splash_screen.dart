@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
 import '../l10n/app_localizations.dart';
 
@@ -20,17 +19,8 @@ class _SplashScreenState extends State<SplashScreen> {
     _timer = Timer(const Duration(milliseconds: 900), () async {
       if (!mounted) return;
       
-      // ตรวจสอบว่าเคยดู onboarding แล้วหรือไม่
-      final prefs = await SharedPreferences.getInstance();
-      final hasSeenOnboarding = prefs.getBool('has_seen_onboarding') ?? false;
-      
-      if (!mounted) return;
-      
-      if (hasSeenOnboarding) {
-        Navigator.of(context).pushReplacementNamed('/login');
-      } else {
-        Navigator.of(context).pushReplacementNamed('/onboarding');
-      }
+      // ไปยัง onboarding ตรงๆ
+      Navigator.of(context).pushReplacementNamed('/onboarding');
     });
   }
 

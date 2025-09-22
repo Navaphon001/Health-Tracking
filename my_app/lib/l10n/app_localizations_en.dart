@@ -191,4 +191,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openProfileSetupStep3 => 'Open Profile Setup Step 3';
+
+  @override
+  String get finish => 'Finish';
 }

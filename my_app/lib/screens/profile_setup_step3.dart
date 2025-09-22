@@ -219,9 +219,9 @@ class ProfileSetupStep3 extends StatelessWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(content: Text('Profile setup completed!')),
                     );
-                    Navigator.of(context).pushNamedAndRemoveUntil('/dashboard', (route) => false);
+                    Navigator.of(context).pushNamedAndRemoveUntil('/main', (route) => false);
                   },
-                  child: Text(t.next),
+                  child: Text(t.finish),
                 ),
               ),
             ),

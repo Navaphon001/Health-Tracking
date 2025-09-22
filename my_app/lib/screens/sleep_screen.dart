@@ -1,10 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/habit_notifier.dart';
-
-const Color primaryColor = Color(0xFF0ABAB5);
-const Color textColor = Color(0xFF000000);
-const Color secondaryTextColor = Colors.grey;
+import '../theme/app_colors.dart';
 
 class SleepScreen extends StatefulWidget {
   const SleepScreen({super.key});
@@ -40,7 +37,23 @@ class _SleepScreenState extends State<SleepScreen> {
     final stars = _stars(dur);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Sleep'), foregroundColor: primaryColor),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Sleep'),
+        foregroundColor: AppColors.primary,
+        actions: [
+          GestureDetector(
+            onTap: () => Navigator.of(context).pushNamed('/settings'),
+            child: const Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: CircleAvatar(
+                radius: 18,
+                child: Icon(Icons.person, size: 20),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -89,16 +102,42 @@ class _SleepScreenState extends State<SleepScreen> {
             // บันทึก
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
-                onPressed: () async {
-                  final n = context.read<HabitNotifier>();
-                  final d = _calcDuration(_bed, _wake);
-                  final star = _stars(d);
-                  await n.saveSleepLog(bedTime: _bed, wakeTime: _wake, starCount: star);
-                  if (!mounted) return;
-                  // SnackBar จะมาเองจาก callback ใน Notifier (ถ้าตั้งไว้แล้ว)
-                },
-                child: const Text('Log Sleep'),
+              child: DecoratedBox(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primaryLight, AppColors.gradientLightEnd],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: BorderRadius.all(Radius.circular(12)),
+                ),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    final n = context.read<HabitNotifier>();
+                    final d = _calcDuration(_bed, _wake);
+                    final star = _stars(d);
+                    await n.saveSleepLog(bedTime: _bed, wakeTime: _wake, starCount: star);
+                    if (!mounted) return;
+                    // SnackBar จะมาเองจาก callback ใน Notifier (ถ้าตั้งไว้แล้ว)
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Log Sleep',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
               ),
             ),
           ],
@@ -181,9 +220,9 @@ class _TimeTile extends StatelessWidget {
       ),
       child: ListTile(
         contentPadding: EdgeInsets.zero,
-        leading: Icon(icon, color: secondaryTextColor),
+        leading: Icon(icon, color: AppColors.textSecondary),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(value, style: const TextStyle(color: secondaryTextColor)),
+        subtitle: Text(value, style: const TextStyle(color: AppColors.textSecondary)),
         trailing: const Icon(Icons.edit),
         onTap: onTap,
       ),

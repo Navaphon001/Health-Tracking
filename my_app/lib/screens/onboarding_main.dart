@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../theme/app_colors.dart';
 import 'onboarding1.dart';
 import 'onboarding2.dart';
@@ -31,12 +30,7 @@ class _OnboardingMainState extends State<OnboardingMain> {
     _completeOnboarding();
   }
 
-  void _completeOnboarding() async {
-    // บันทึกสถานะว่าดู onboarding แล้ว
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('has_seen_onboarding', true);
-    
-    if (!mounted) return;
+  void _completeOnboarding() {
     Navigator.pushReplacementNamed(context, '/login');
   }
 
