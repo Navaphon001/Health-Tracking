@@ -11,7 +11,14 @@ import '../models/water_day.dart';
 import '../models/exercise_activity.dart';
 import '../models/sleep_log.dart';
 
+import 'package:my_app/shared/date_key.dart';
+import 'package:my_app/charts/chart_point.dart';
+import 'package:my_app/charts/fill_daily_series.dart';
+
 class HabitLocalRepository {
+
+  final Database db;
+  HabitLocalRepository(this.db);
   // ---------- SharedPreferences keys (ยังใช้แค่ "รายการประเภทกิจกรรม") ----------
   static const _kExercisesKey = 'exercises'; // JSON list (ExerciseActivity catalog)
 
@@ -255,5 +262,73 @@ class HabitLocalRepository {
     await sp.setString('sleep:latest', jsonStr);
     await sp.setString('sleep:${log.startedOn}', jsonStr);
     return log;
+  }
+  Future<List<ChartPoint>> fetchSleepHoursSeries({int days = 14}) async {
+    final range = lastNDays(days);
+    final rows = await db.query(
+      'sleep_daily',
+      columns: ['date_key', 'hours', 'minutes'],
+      where: 'date_key BETWEEN ? AND ?',
+      whereArgs: [dateKeyOf(range.start), dateKeyOf(range.end)],
+      orderBy: 'date_key',
+    );
+
+    final map = <String, double>{};
+    for (final r in rows) {
+      final h = (r['hours'] as int?) ?? 0;
+      final m = (r['minutes'] as int?) ?? 0;
+      map[r['date_key'] as String] = h + (m / 60.0); // ชั่วโมง
+    }
+
+    return fillMissingDaysWithZero(
+      start: range.start,
+      end: range.end,
+      valueByDateKey: map,
+    );
+  }
+
+  Future<List<ChartPoint>> fetchWaterCountSeries({int days = 14}) async {
+    final range = lastNDays(days);
+    final rows = await db.query(
+      'water_intake_logs',
+      columns: ['date_key', 'count'],
+      where: 'date_key BETWEEN ? AND ?',
+      whereArgs: [dateKeyOf(range.start), dateKeyOf(range.end)],
+      orderBy: 'date_key',
+    );
+
+    final map = <String, double>{};
+    for (final r in rows) {
+      map[r['date_key'] as String] = ((r['count'] as int?) ?? 0).toDouble();
+    }
+
+    return fillMissingDaysWithZero(
+      start: range.start,
+      end: range.end,
+      valueByDateKey: map,
+    );
+  }
+
+  Future<List<ChartPoint>> fetchExerciseDurationSeries({int days = 14}) async {
+    final range = lastNDays(days);
+    final rows = await db.query(
+      'exercise_daily',
+      columns: ['date_key', 'duration_min'],
+      where: 'date_key BETWEEN ? AND ?',
+      whereArgs: [dateKeyOf(range.start), dateKeyOf(range.end)],
+      orderBy: 'date_key',
+    );
+
+    final map = <String, double>{};
+    for (final r in rows) {
+      map[r['date_key'] as String] =
+          ((r['duration_min'] as int?) ?? 0).toDouble(); // นาที
+    }
+
+    return fillMissingDaysWithZero(
+      start: range.start,
+      end: range.end,
+      valueByDateKey: map,
+    );
   }
 }
