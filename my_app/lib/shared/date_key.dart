@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 
 /// ฟอร์แมตคงที่ทั้งแอป
 final DateFormat _keyFmt = DateFormat('yyyy-MM-dd'); // สำหรับ date_key (local day)
-final DateFormat _hmFmt  = DateFormat('HH:mm');      // เผื่อใช้แสดง/แปลงเวลาแบบ 24 ชม.
+
 
 /// สร้างคีย์รายวันจาก DateTime (อิงเวลาเครื่องผู้ใช้)
 String dateKeyOf(DateTime dt) => _keyFmt.format(dt);

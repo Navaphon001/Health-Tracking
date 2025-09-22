@@ -75,7 +75,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
 class _NavCard extends StatelessWidget {
   final IconData icon; final String label; final String routeName;
-  const _NavCard({super.key, required this.icon, required this.label, required this.routeName});
+  const _NavCard({required this.icon, required this.label, required this.routeName});
 
   @override
   Widget build(BuildContext context) {

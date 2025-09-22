@@ -9,7 +9,7 @@ class ProfileSetupStep1 extends StatelessWidget {
 
   Future<void> _pickDob(BuildContext context) async {
     final provider = context.read<ProfileSetupProvider>();
-    final current = provider.dob;
+    final current = provider.birthDate;
     final now = DateTime.now();
     final initial = DateTime(now.year - 18, now.month, now.day);
     final picked = await showDatePicker(
@@ -18,7 +18,7 @@ class ProfileSetupStep1 extends StatelessWidget {
       lastDate: now,
       initialDate: current ?? initial,
     );
-    if (picked != null) provider.setDob(picked);
+    if (picked != null) provider.setBirthDate(picked);
   }
 
 
@@ -38,8 +38,8 @@ class ProfileSetupStep1 extends StatelessWidget {
       color: isDark ? ivory : const Color(0xFF000000),
     );
   // Avoid full-page rebuilds; use selectors for granular updates.
-  final name = context.select<ProfileSetupProvider, String?>((p) => p.name);
-  final dob = context.select<ProfileSetupProvider, DateTime?>((p) => p.dob);
+  final name = context.select<ProfileSetupProvider, String?>((p) => p.fullName);
+  final dob = context.select<ProfileSetupProvider, DateTime?>((p) => p.birthDate);
   final gender = context.select<ProfileSetupProvider, String?>((p) => p.gender);
   final nameCtrl = TextEditingController(text: name ?? '');
 
@@ -77,7 +77,7 @@ class ProfileSetupStep1 extends StatelessWidget {
               controller: nameCtrl,
               label: t.name,
               hint: t.nameHint,
-              onChanged: context.read<ProfileSetupProvider>().setName,
+              onChanged: context.read<ProfileSetupProvider>().setFullName,
               textStyle: textStyle,
               isDark: isDark,
               ivory: ivory,

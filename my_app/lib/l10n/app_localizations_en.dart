@@ -187,5 +187,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get goalEatHealthier => 'Eat Healthier';
 
   @override
+  String get goalAndAchievement => 'Goals & Achievements';
+
+  @override
   String get openProfileSetupStep3 => 'Open Profile Setup Step 3';
 }

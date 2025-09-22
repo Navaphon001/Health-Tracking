@@ -186,5 +186,8 @@ class AppLocalizationsTh extends AppLocalizations {
   String get goalEatHealthier => 'กินอาหารเพื่อสุขภาพ';
 
   @override
+  String get goalAndAchievement => 'เป้าหมายและความสำเร็จ';
+
+  @override
   String get openProfileSetupStep3 => 'เปิดหน้าตั้งค่าโปรไฟล์ขั้นตอนที่ 3';
 }

@@ -231,7 +231,7 @@ class DashboardPage extends StatelessWidget {
 class _EmojiMood extends StatelessWidget {
   final String emoji;
   final String label;
-  const _EmojiMood(this.emoji, this.label, {super.key});
+  const _EmojiMood(this.emoji, this.label);
 
   @override
   Widget build(BuildContext context) {
@@ -324,7 +324,7 @@ class _BMISection extends StatelessWidget {
   final TextEditingController weightController = TextEditingController();
   final TextEditingController heightController = TextEditingController();
 
-  _BMISection({super.key});
+  _BMISection();
 
   void _submit(BuildContext context) {
     final double? weight = double.tryParse(weightController.text);

@@ -17,7 +17,7 @@ class AppDb {
 
     return openDatabase(
       dbPath,
-      version: 2, // ⬅️ บัมป์เป็น 2
+      version: 4, // ⬅️ บัมป์เป็น 4
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -59,6 +59,38 @@ class AppDb {
             updated_at      INTEGER NOT NULL
           );
         ''');
+
+        // 4) User Profile (สำหรับ Profile Setup)
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS user_profile (
+            user_id         TEXT PRIMARY KEY,      -- username หรือ user identifier
+            step1_completed INTEGER NOT NULL DEFAULT 0,  -- 0 = false, 1 = true
+            step2_completed INTEGER NOT NULL DEFAULT 0,
+            step3_completed INTEGER NOT NULL DEFAULT 0,
+            profile_completed INTEGER NOT NULL DEFAULT 0,
+            -- Step 1: Basic Info
+            full_name       TEXT,
+            nickname        TEXT,
+            birth_date      TEXT,              -- วันเกิด (ISO format)
+            gender          TEXT,              -- เพศ
+            -- Step 2: Physical Info  
+            height          REAL,              -- ส่วนสูง (cm)
+            weight          REAL,              -- น้ำหนัก (kg)
+            activity_level  TEXT,              -- ระดับการออกกำลังกาย
+            health_goal     TEXT,              -- เป้าหมายสุขภาพ
+            -- Step 3: About Yourself
+            occupation      TEXT,              -- อาชีพ
+            lifestyle       TEXT,              -- รูปแบบชีวิต
+            sleep_hours     REAL,              -- ชั่วโมงนอนเฉลี่ย
+            wake_up_time    TEXT,              -- เวลาตื่น
+            interests       TEXT,              -- ความสนใจ (JSON array)
+            health_rating   TEXT,              -- การประเมินสุขภาพ
+            goals           TEXT,              -- เป้าหมาย (JSON array)
+            -- Timestamps
+            created_at      INTEGER NOT NULL,
+            updated_at      INTEGER NOT NULL
+          );
+        ''');
       },
       onUpgrade: (db, oldV, newV) async {
         if (oldV < 2) {
@@ -91,6 +123,40 @@ class AppDb {
             // เลือกได้: จะเก็บตารางเก่าไว้หรือทิ้ง
             await db.execute('DROP TABLE IF EXISTS exercise_logs_daily');
           }
+        }
+        
+        if (oldV < 3) {
+          // เพิ่มตาราง user_profile สำหรับ Profile Setup
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS user_profile (
+              user_id         TEXT PRIMARY KEY,
+              step1_completed INTEGER NOT NULL DEFAULT 0,
+              step2_completed INTEGER NOT NULL DEFAULT 0,
+              step3_completed INTEGER NOT NULL DEFAULT 0,
+              profile_completed INTEGER NOT NULL DEFAULT 0,
+              full_name       TEXT,
+              nickname        TEXT,
+              birth_date      TEXT,
+              gender          TEXT,
+              height          REAL,
+              weight          REAL,
+              activity_level  TEXT,
+              health_goal     TEXT,
+              occupation      TEXT,
+              lifestyle       TEXT,
+              sleep_hours     REAL,
+              wake_up_time    TEXT,
+              interests       TEXT,
+              created_at      INTEGER NOT NULL,
+              updated_at      INTEGER NOT NULL
+            );
+          ''');
+        }
+        
+        if (oldV < 4) {
+          // เพิ่ม health_rating และ goals columns
+          await db.execute('ALTER TABLE user_profile ADD COLUMN health_rating TEXT');
+          await db.execute('ALTER TABLE user_profile ADD COLUMN goals TEXT');
         }
       },
     );

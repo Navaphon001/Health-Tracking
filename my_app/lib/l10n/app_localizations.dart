@@ -440,6 +440,12 @@ abstract class AppLocalizations {
   /// **'Eat Healthier'**
   String get goalEatHealthier;
 
+  /// No description provided for @goalAndAchievement.
+  ///
+  /// In en, this message translates to:
+  /// **'Goals & Achievements'**
+  String get goalAndAchievement;
+
   /// No description provided for @openProfileSetupStep3.
   ///
   /// In en, this message translates to:

@@ -2,7 +2,7 @@
 import 'dart:async'; // ให้ Timer ใช้งานได้
 import 'package:flutter/material.dart';
 
-import '../models/water_day.dart';            // (ไม่จำเป็นต้องใช้ตรง ๆ ก็ได้ แต่เผื่อ type checking)
+
 import '../models/exercise_activity.dart';
 import '../models/sleep_log.dart';
 import '../services/habit_local_repository.dart';
@@ -131,8 +131,8 @@ class HabitNotifier extends ChangeNotifier {
           merged.add(exist);
         } else {
           // รายการใหม่ → ตั้งค่า runtime defaults
-          f.remainingDuration ??= f.goalDuration;
-          f.isRunning ??= false;
+          f.remainingDuration = f.goalDuration;
+          f.isRunning = false;
           merged.add(f);
         }
       }
@@ -151,14 +151,14 @@ class HabitNotifier extends ChangeNotifier {
       final i = exerciseActivities.indexWhere((e) => e.id == saved.id);
       if (i == -1) {
         // รายการใหม่ → ตั้ง runtime default ถ้ายังไม่มี
-        saved.remainingDuration ??= saved.goalDuration;
-        saved.isRunning ??= false;
+        saved.remainingDuration = saved.goalDuration;
+        saved.isRunning = false;
         exerciseActivities.add(saved);
       } else {
         // คงค่า runtime เดิมไว้
         final keep = exerciseActivities[i];
-        saved.remainingDuration ??= keep.remainingDuration ?? saved.goalDuration;
-        saved.isRunning ??= keep.isRunning ?? false;
+        saved.remainingDuration = keep.remainingDuration;
+        saved.isRunning = keep.isRunning;
         exerciseActivities[i] = saved;
       }
       notifyListeners();
