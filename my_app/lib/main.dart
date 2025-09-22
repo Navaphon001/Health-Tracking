@@ -38,7 +38,8 @@ import 'package:flutter/foundation.dart'; // kDebugMode, debugPrint
 import 'services/app_db.dart';
 
 Future<void> _devSmokeTest() async {
-  final repo = HabitLocalRepository();
+  final db = await AppDb.instance.database;
+  final repo = HabitLocalRepository(db);
   final today = DateTime.now();
 
   // 1) Water: +1 แก้ว (250 ml)

@@ -1,4 +1,4 @@
-// screens/main_navigation_screen.dart
+// lib/screens/main_navigation_screen.dart
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_notifier.dart';
@@ -15,7 +15,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   void initState() {
     super.initState();
-    // bind snackbar ให้ทั้งสอง notifier ด้วยฟังก์ชันกลาง (ไม่ใช้ ScaffoldMessenger.of(context))
+    // bind snackbar ให้ทั้งสอง notifier ด้วยฟังก์ชันกลาง
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<AuthNotifier>().setSnackBarCallback(showAppSnack);
       context.read<HabitNotifier>().setSnackBarCallback(showAppSnack);
@@ -39,21 +39,36 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     }
   }
 
+  void _goTrends() => Navigator.pushNamed(context, '/trends');
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Home')),
+      appBar: AppBar(
+        title: const Text('Home'),
+        actions: [
+          IconButton(
+            tooltip: 'Trends',
+            onPressed: _goTrends,
+            icon: const Icon(Icons.show_chart),
+          ),
+        ],
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             Expanded(
               child: GridView.count(
-                crossAxisCount: 2, crossAxisSpacing: 12, mainAxisSpacing: 12,
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
                 children: const [
-                  _NavCard(icon: Icons.local_drink, label: 'Water', routeName: '/water'),
-                  _NavCard(icon: Icons.directions_run, label: 'Exercise', routeName: '/exercise'),
-                  _NavCard(icon: Icons.bedtime, label: 'Sleep', routeName: '/sleep'),
+                  _NavCard(icon: Icons.local_drink,     label: 'Water',   routeName: '/water'),
+                  _NavCard(icon: Icons.directions_run,  label: 'Exercise',routeName: '/exercise'),
+                  _NavCard(icon: Icons.bedtime,         label: 'Sleep',   routeName: '/sleep'),
+                  // ✅ เพิ่มการ์ดไปหน้ากราฟ
+                  _NavCard(icon: Icons.show_chart,      label: 'Trends',  routeName: '/trends'),
                 ],
               ),
             ),
@@ -74,7 +89,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 }
 
 class _NavCard extends StatelessWidget {
-  final IconData icon; final String label; final String routeName;
+  final IconData icon;
+  final String label;
+  final String routeName;
   const _NavCard({required this.icon, required this.label, required this.routeName});
 
   @override
@@ -85,9 +102,14 @@ class _NavCard extends StatelessWidget {
       child: InkWell(
         onTap: () => Navigator.pushNamed(context, routeName),
         child: Center(
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Icon(icon, size: 36), const SizedBox(height: 8), Text(label),
-          ]),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 36),
+              const SizedBox(height: 8),
+              Text(label),
+            ],
+          ),
         ),
       ),
     );
