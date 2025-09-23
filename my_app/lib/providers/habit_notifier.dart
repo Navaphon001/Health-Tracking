@@ -12,7 +12,6 @@ import '../services/app_db.dart';
 import '../shared/snack_fn.dart';
 import '../charts/chart_point.dart';
 
-// ---------- รุ่นข้อมูลเครื่องดื่ม (UI เท่านั้น ไม่แตะ SQLite) ----------
 class DrinkPreset {
   final String id;
   String name;
@@ -36,32 +35,24 @@ class HabitNotifier extends ChangeNotifier {
     _local = HabitLocalRepository(db);
   }
 
-  // (สะดวกเวลาไปหน้ากราฟ)
   HabitLocalRepository get repo => _local;
 
-  // Snack callback (เลือกใช้)
   SnackFn? _snackFn;
   void setSnackBarCallback(SnackFn fn) => _snackFn = fn;
 
-  // ===== WATER (ของเดิมจาก SQLite) =====
-  int dailyWaterCount = 0; // เก็บใน SQLite
-  int dailyWaterGoal  = 8; // เก็บใน SQLite (แก้ว/วัน)
+  // ===== WATER (SQLite) =====
+  int dailyWaterCount = 0; // จาก SQLite
+  int dailyWaterGoal  = 8; // จาก SQLite (จำนวนแก้ว/วัน เก็บแบบเดิม)
+  int dailyWaterMl    = 0; // จาก SQLite (ml/วัน)
 
-  // ===== WATER (ของใหม่ฝั่ง UI/SharedPrefs — ไม่แตะ SQLite) =====
-  // นิยาม “1 แก้ว” = baseGlassMl ml เพื่อแมปกับตารางเดิมที่เก็บเป็น "แก้ว"
-  static const int baseGlassMl = 250;
-
-  // ปริมาณที่ดื่มวันนี้ (ml) — เก็บใน SharedPreferences ตามวัน
-  int dailyWaterMl = 0;
-
+  // เผื่อจุดอื่น ๆ ยังอ้างอิง target ml
   int get dailyWaterTargetMl => dailyWaterGoal * baseGlassMl;
 
-  // รายการเครื่องดื่มให้กด (UI)
+  // ===== WATER (UI/SharedPrefs สำหรับ preset) =====
+  static const int baseGlassMl = 250;
   final List<DrinkPreset> drinkPresets = [
     DrinkPreset(id: 'water_default', name: 'น้ำเปล่า', ml: baseGlassMl),
   ];
-
-  // จำนวนที่กดของแต่ละเครื่องดื่มในวันนี้ (แสดง badge xN) — เก็บใน prefs ตามวัน
   final Map<String, int> dailyDrinkCounts = {};
 
   // ===== EXERCISE =====
@@ -72,41 +63,31 @@ class HabitNotifier extends ChangeNotifier {
   // ===== SLEEP =====
   Map<String, dynamic>? latestSleepLog;
 
-  // ---------------- Lifecycle helpers ----------------
   Future<SharedPreferences> get _prefs async => SharedPreferences.getInstance();
 
   String _dateKey(DateTime dt) =>
       '${dt.year.toString().padLeft(4, '0')}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}';
 
-  String _kDailyMlKey(String dk) => 'water/dailyMl/$dk';
   String _kDrinkCountsKey(String dk) => 'water/dailyDrinkCounts/$dk';
   String get _kPresetsKey => 'water/drinkPresets';
 
   // ---------------- Water ----------------
   Future<void> fetchDailyWaterIntake() async {
     try {
-      // โหลด “แก้ว/เป้า” จาก SQLite (เหมือนเดิม)
+      // 1) โหลดแก้ว/เป้า (ยังใช้โครงเดิม)
       final WaterDay day = await _local.getWaterToday();
       dailyWaterCount = day.count;
       dailyWaterGoal  = day.goal;
 
-      // โหลด ml และจำนวนต่อ drink จาก SharedPreferences
-      final dk = _dateKey(DateTime.now());
-      final p  = await _prefs;
+      // 2) โหลด ml วันนี้จาก SQLite (ถ้าไม่มีให้ประมาณจากแก้ว)
+      final todayRow = await _local.getWaterDaily(DateTime.now());
+      dailyWaterMl = (todayRow?['ml'] as int?) ?? (dailyWaterCount * baseGlassMl);
 
-      // โหลด preset ที่ผู้ใช้เคยเพิ่ม (ถ้ามี)
+      // 3) โหลด preset และนับจำนวนต่อ drink จาก SharedPreferences (UI-only)
+      final p  = await _prefs;
       _loadPresetsFromPrefs(p);
 
-      // ml วันนี้
-      final ml = p.getInt(_kDailyMlKey(dk));
-      if (ml == null) {
-        // ถ้าไม่เคยมีค่า ให้ประมาณจาก “แก้ว * baseGlassMl” ไม่ให้เป็นศูนย์
-        dailyWaterMl = dailyWaterCount * baseGlassMl;
-      } else {
-        dailyWaterMl = ml;
-      }
-
-      // นับต่อ drink วันนี้
+      final dk = _dateKey(DateTime.now());
       dailyDrinkCounts.clear();
       final countsJson = p.getString(_kDrinkCountsKey(dk));
       if (countsJson != null) {
@@ -120,36 +101,51 @@ class HabitNotifier extends ChangeNotifier {
     }
   }
 
-  /// (เดิม) เพิ่มแก้ว — ใช้กับ DB เดิมโดยตรง
+  /// เพิ่ม “แก้ว” แบบเดิม แต่จะ +ml ไปที่ SQLite ด้วยตาม baseGlassMl
   Future<void> incrementWaterIntake([int step = 1]) async {
     try {
-      final WaterDay day = await _local.incrementWater(step);
+      final now = DateTime.now();
+      await _local.upsertWater(
+        day: now,
+        deltaCount: step,
+        deltaMl: baseGlassMl * step,
+      );
+
+      final WaterDay day = await _local.getWaterToday();
       dailyWaterCount = day.count;
-      dailyWaterGoal  = day.goal;
+
+      final row = await _local.getWaterDaily(now);
+      dailyWaterMl = (row?['ml'] as int?) ?? dailyWaterMl;
+
+      dailyWaterGoal = day.goal;
       notifyListeners();
     } catch (_) {
       _snackFn?.call('บันทึกน้ำดื่มล้มเหลว', isError: true);
     }
   }
 
-  /// (เดิม) กดการ์ด drink แล้วบันทึกด้วยค่า default ของ drink นั้น
+  /// กดการ์ด drink เฉพาะชนิด (จะ +1 แก้ว และ +ml ตาม preset)
   Future<void> logDrink(DrinkPreset d) async {
     return logDrinkWithMl(d, d.ml);
   }
 
-  /// (ใหม่) ใช้กับปุ่ม Add — เลือก drink + ระบุ ml เอง
+  /// ระบุ ml เอง แล้ว +แก้ว +ml ลง SQLite พร้อมเก็บนับต่อ drink (UI)
   Future<void> logDrinkWithMl(DrinkPreset d, int ml) async {
     try {
-      // 1) DB: เพิ่ม 1 แก้ว (schema เดิม)
-      await incrementWaterIntake(1);
+      final now = DateTime.now();
 
-      // 2) Prefs: เพิ่ม ml และนับจำนวนของ drink นั้น ๆ
+      // 1) DB: +1 แก้ว และ +ml ตามที่เลือก
+      await _local.upsertWater(day: now, deltaCount: 1, deltaMl: ml);
+
+      // 2) อัปเดตสถานะในแอปจาก DB
+      final WaterDay day = await _local.getWaterToday();
+      dailyWaterCount = day.count;
+      final row = await _local.getWaterDaily(now);
+      dailyWaterMl = (row?['ml'] as int?) ?? (dailyWaterMl + ml);
+
+      // 3) นับจำนวนต่อ drink (UI-only)
       final p  = await _prefs;
-      final dk = _dateKey(DateTime.now());
-
-      dailyWaterMl += ml;
-      await p.setInt(_kDailyMlKey(dk), dailyWaterMl);
-
+      final dk = _dateKey(now);
       dailyDrinkCounts[d.id] = (dailyDrinkCounts[d.id] ?? 0) + 1;
       await p.setString(_kDrinkCountsKey(dk), jsonEncode(dailyDrinkCounts));
 
@@ -160,7 +156,6 @@ class HabitNotifier extends ChangeNotifier {
     }
   }
 
-  /// เพิ่ม preset เครื่องดื่ม (ชื่ออย่างเดียวก็ได้)
   Future<void> addDrinkPreset(String name, [int ml = baseGlassMl]) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
     drinkPresets.insert(0, DrinkPreset(id: id, name: name, ml: ml));
@@ -176,7 +171,6 @@ class HabitNotifier extends ChangeNotifier {
       final arr = jsonDecode(s) as List;
       final list = arr.map((e) => DrinkPreset.fromJson((e as Map).cast<String, dynamic>())).toList();
 
-      // รวมค่า: รักษา default ไว้ แล้วเพิ่มที่ผู้ใช้สร้าง
       final ids = {for (final d in drinkPresets) d.id};
       for (final d in list) {
         if (!ids.contains(d.id)) {
@@ -196,7 +190,6 @@ class HabitNotifier extends ChangeNotifier {
     await stopExerciseTimer(a.id, persist: false);
 
     a.isRunning = true;
-
     if (a.remainingDuration.inSeconds <= 0) {
       a.remainingDuration = a.goalDuration;
     }
@@ -233,9 +226,13 @@ class HabitNotifier extends ChangeNotifier {
     notifyListeners();
 
     if (persist && deltaMin > 0) {
+      // ส่งชนิดกิจกรรมเป็น string (เช่น 'walk', 'run', ...)
+      final type = a.type.toLowerCase().replaceAll(' ', '_');
       await _local.addExerciseMinutes(
         day: DateTime.now(),
         deltaMinutes: deltaMin,
+        type: type,
+        // ให้รีโปไปอ่านอัตรา kcal/นาที ของแต่ละ type เอง
       );
       _snackFn?.call('บันทึกออกกำลังกาย +$deltaMin นาที');
     }
@@ -266,6 +263,7 @@ class HabitNotifier extends ChangeNotifier {
           exist.name = f.name;
           exist.goalDuration = f.goalDuration;
           exist.scheduledTime = f.scheduledTime;
+          exist.type = f.type; // คงค่า type
           merged.add(exist);
         } else {
           // รายการใหม่ → ตั้งค่า runtime defaults
@@ -319,7 +317,7 @@ class HabitNotifier extends ChangeNotifier {
   // ---------------- Sleep ----------------
   Future<void> fetchLatestSleepLog() async {
     try {
-      final s = await _local.getLatestSleep(); // อาจ deprecate ในโปรเจกต์ของคุณ
+      final s = await _local.getLatestSleep();
       latestSleepLog = (s == null)
           ? null
           : {
@@ -393,13 +391,15 @@ class HabitNotifier extends ChangeNotifier {
   String _hhmm(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
 
-  // -------- Charts (เดิม) --------
+  // -------- Charts (อัปเดตให้ตรงกับ ml/kcal) --------
   Future<List<ChartPoint>> fetchSleepSeries({int days = 14}) =>
       _local.fetchSleepHoursSeries(days: days);
 
+  /// ml/วัน
   Future<List<ChartPoint>> fetchWaterSeries({int days = 14}) =>
-      _local.fetchWaterCountSeries(days: days);
+      _local.fetchWaterMlSeries(days: days);
 
+  /// kcal/วัน (รวมทุกประเภท)
   Future<List<ChartPoint>> fetchExerciseSeries({int days = 14}) =>
-      _local.fetchExerciseDurationSeries(days: days);
+      _local.fetchExerciseCaloriesSeries(days: days);
 }

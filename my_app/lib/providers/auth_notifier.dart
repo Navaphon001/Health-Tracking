@@ -12,8 +12,9 @@ class AuthNotifier extends ChangeNotifier {
   void setSnackBarCallback(SnackFn fn) => _snackFn = fn;
 
   // -------- Login (mock) --------
-  Future<void> login(String email, String password) async {
-    emailError = null; passwordError = null;
+  Future<bool> login(String email, String password) async {
+    emailError = null; 
+    passwordError = null;
 
     final emailRegex = RegExp(r"^[a-zA-Z0-9.!#$%&'*+\-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
     if (email.isEmpty) {
@@ -30,23 +31,28 @@ class AuthNotifier extends ChangeNotifier {
     if (emailError != null || passwordError != null) {
       notifyListeners();
       _snackFn?.call('กรุณาตรวจสอบข้อมูลให้ครบถ้วน', isError: true);
-      return;
+      return false;
     }
 
-    isLoading = true; notifyListeners();
+    isLoading = true; 
+    notifyListeners();
     await Future.delayed(const Duration(milliseconds: 800));
-    isLoading = false; notifyListeners();
+    isLoading = false; 
+    notifyListeners();
 
     _snackFn?.call('เข้าสู่ระบบสำเร็จ');
+    return true;
   }
 
   // -------- Register (mock) --------
-  Future<void> register({
+  Future<bool> register({
     required String username,
     required String email,
     required String password,
   }) async {
-    usernameError = null; emailError = null; passwordError = null;
+    usernameError = null; 
+    emailError = null; 
+    passwordError = null;
 
     final emailRegex = RegExp(r"^[a-zA-Z0-9.!#$%&'*+\-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
     if (username.isEmpty) {
@@ -68,13 +74,16 @@ class AuthNotifier extends ChangeNotifier {
     if (usernameError != null || emailError != null || passwordError != null) {
       notifyListeners();
       _snackFn?.call('กรุณาตรวจสอบข้อมูลให้ครบถ้วน', isError: true);
-      return;
+      return false;
     }
 
-    isLoading = true; notifyListeners();
+    isLoading = true; 
+    notifyListeners();
     await Future.delayed(const Duration(milliseconds: 900));
-    isLoading = false; notifyListeners();
+    isLoading = false; 
+    notifyListeners();
 
     _snackFn?.call('สมัครสมาชิกสำเร็จ');
+    return true;
   }
 }

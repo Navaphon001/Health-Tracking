@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../charts/chart_point.dart';
 import '../charts/trend_line_chart.dart';
 import '../services/habit_local_repository.dart';
@@ -13,7 +14,16 @@ class HealthTrendsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final waterGoal = context.select<HabitNotifier, int>((n) => n.dailyWaterGoal);
+    // goal เดิมเป็น "แก้ว" -> แปลงเป็นมล. (สมมติ 1 แก้ว = 250 มล.)
+    final waterGlassesGoal =
+        context.select<HabitNotifier, int>((n) => n.dailyWaterGoal);
+    final double waterGoalMl = ((waterGlassesGoal > 0
+                ? waterGlassesGoal * 250
+                : 2000) // fallback เป้าหมาย 2,000 มล.
+            )
+        .toDouble();
+
+    const double exerciseKcalGoal = 300; // เป้าหมาย kcal/วัน (ตั้งค่าได้ตามต้องการ)
 
     return Scaffold(
       appBar: AppBar(title: const Text('Health Trends')),
@@ -27,26 +37,26 @@ class HealthTrendsScreen extends StatelessWidget {
               data: data,
               unit: 'ชม.',
               goal: 8,
-              curved: true,     // เส้นโค้ง
+              curved: true, // เส้นโค้ง
             ),
           ),
           SectionCard(
-            title: 'Water (แก้ว/วัน)',
-            future: repo.fetchWaterCountSeries(days: days),
+            title: 'Water (มล./วัน)',
+            future: repo.fetchWaterMlSeries(days: days), // ✅ ใช้ ml
             childBuilder: (data) => TrendLineChart(
               data: data,
-              unit: 'แก้ว',
-              goal: waterGoal.toDouble(),
-              curved: false,    // ✅ เส้นตรงรายวัน (เหมาะกับ count/วัน)
+              unit: 'มล.',
+              goal: waterGoalMl,
+              curved: false, // เส้นตรงรายวัน
             ),
           ),
           SectionCard(
-            title: 'Exercise (นาที/วัน)',
-            future: repo.fetchExerciseDurationSeries(days: days),
+            title: 'Exercise (kcal/วัน)',
+            future: repo.fetchExerciseCaloriesSeries(days: days), // ✅ ใช้ kcal
             childBuilder: (data) => TrendLineChart(
               data: data,
-              unit: 'นาที',
-              goal: 30,
+              unit: 'kcal',
+              goal: exerciseKcalGoal,
               curved: true,
             ),
           ),
@@ -93,7 +103,9 @@ class SectionCard extends StatelessWidget {
                     return Center(child: Text('ผิดพลาด: ${snap.error}'));
                   }
                   final data = snap.data ?? const <ChartPoint>[];
-                  if (data.isEmpty) return const Center(child: Text('ยังไม่มีข้อมูล'));
+                  if (data.isEmpty) {
+                    return const Center(child: Text('ยังไม่มีข้อมูล'));
+                  }
                   return childBuilder(data);
                 },
               ),

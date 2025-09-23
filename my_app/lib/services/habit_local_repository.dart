@@ -3,30 +3,36 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
-
 import '../shared/date_key.dart';
-import 'app_db.dart';
 
-// (ยังใช้โมเดลเดิมของคุณได้ ถ้าต้องการ)
+// โมเดลที่มีใช้งาน
 import '../models/water_day.dart';
 import '../models/exercise_activity.dart';
 import '../models/sleep_log.dart';
-import 'package:my_app/charts/chart_point.dart';
-import 'package:my_app/charts/fill_daily_series.dart';
+
+import '../charts/chart_point.dart';
+import '../charts/fill_daily_series.dart';
 
 class HabitLocalRepository {
-
   final Database db;
   HabitLocalRepository(this.db);
-  // ---------- SharedPreferences keys (ยังใช้แค่ "รายการประเภทกิจกรรม") ----------
-  static const _kExercisesKey = 'exercises'; // JSON list (ExerciseActivity catalog)
+
+  // ---------- SharedPreferences keys ----------
+  static const _kExercisesKey = 'exercises';          // แคตตาล็อกกิจกรรม
+  static const _kExerciseRatesKey = 'exercise:rates'; // { type: kcalPerMinute }
+
+  // ค่าเริ่มต้น ถ้ายังไม่เคยตั้งค่า
+  static const Map<String, double> _kDefaultExerciseRates = {
+    'run': 80.0,
+    'walk': 40.0,
+    'general': 0.0,
+  };
 
   // =========================
   // WATER (SQLite: water_intake_logs)
   // =========================
 
   Future<Map<String, dynamic>?> getWaterDaily(DateTime day) async {
-    final db = await AppDb.instance.database;
     final key = dateKeyOf(day);
     final rows = await db.query(
       'water_intake_logs',
@@ -45,7 +51,6 @@ class HabitLocalRepository {
     int? goalCount,
     int? goalMl,
   }) async {
-    final db = await AppDb.instance.database;
     final key = dateKeyOf(day);
     final now = nowEpochMillis();
 
@@ -75,11 +80,10 @@ class HabitLocalRepository {
   }
 
   // =========================
-  // SLEEP (SQLite: sleep_daily) — เก็บชั่วโมง/นาทีรวมต่อวัน
+  // SLEEP (SQLite: sleep_daily)
   // =========================
 
   Future<Map<String, dynamic>?> getSleepDaily(DateTime day) async {
-    final db = await AppDb.instance.database;
     final key = dateKeyOf(day);
     final rows = await db.query(
       'sleep_daily',
@@ -98,9 +102,8 @@ class HabitLocalRepository {
     int? quality,
     String? note,
   }) async {
-    final db = await AppDb.instance.database;
     final key = dateKeyOf(day);
-    final hm = normalizeHM(hours, minutes); // แคป 0..24h + แตก h/m
+    final hm = normalizeHM(hours, minutes);
     final now = nowEpochMillis();
 
     await db.rawInsert('''
@@ -124,7 +127,6 @@ class HabitLocalRepository {
     final curM = (row?['minutes'] as int?) ?? 0;
     final hm = normalizeHM(curH, curM + deltaMinutes);
 
-    final db = await AppDb.instance.database;
     final key = dateKeyOf(day);
     final now = nowEpochMillis();
 
@@ -139,72 +141,180 @@ class HabitLocalRepository {
   }
 
   // =========================
-  // EXERCISE (SQLite: exercise_daily) — รวมเวลาต่อ "วัน"
+  // EXERCISE (SQLite: exercise_daily)
   // =========================
+  // กติกา: แคล = (kcal/นาที ของประเภทนั้น) × นาที
+  // เก็บอัตรา (kcal/นาที) ตาม type ไว้ใน SharedPreferences หรือส่งมาจาก UI ตอนบันทึก
 
+  Future<void> setExerciseRate(String type, double kcalPerMinute) async {
+    final sp = await SharedPreferences.getInstance();
+    final raw = sp.getString(_kExerciseRatesKey);
+    final Map<String, dynamic> map =
+        raw == null || raw.isEmpty ? {} : Map<String, dynamic>.from(jsonDecode(raw));
+    map[type.toLowerCase()] = kcalPerMinute; // เก็บเป็นตัวพิมพ์เล็กเสมอ
+    await sp.setString(_kExerciseRatesKey, jsonEncode(map));
+  }
+
+  Future<double?> getExerciseRate(String type) async {
+    final lower = type.toLowerCase();
+    final sp = await SharedPreferences.getInstance();
+    final raw = sp.getString(_kExerciseRatesKey);
+
+    if (raw != null && raw.isNotEmpty) {
+      final map = Map<String, dynamic>.from(jsonDecode(raw));
+      final v = map[lower] ?? map[type]; // เผื่อเคยเก็บแบบไม่ lower
+      if (v != null) {
+        return (v is num) ? v.toDouble() : double.tryParse(v.toString());
+      }
+    }
+    // ถ้ายังไม่เคยตั้งค่า -> ใช้ค่า default
+    return _kDefaultExerciseRates[lower];
+  }
+
+  Future<Map<String, double>> getAllExerciseRates() async {
+    final sp = await SharedPreferences.getInstance();
+    final raw = sp.getString(_kExerciseRatesKey);
+
+    // เริ่มจากค่า default
+    final out = Map<String, double>.from(_kDefaultExerciseRates);
+
+    if (raw != null && raw.isNotEmpty) {
+      final map = Map<String, dynamic>.from(jsonDecode(raw));
+      for (final e in map.entries) {
+        final k = e.key.toString().toLowerCase();
+        final v = (e.value is num)
+            ? (e.value as num).toDouble()
+            : double.tryParse(e.value.toString()) ?? 0.0;
+        out[k] = v; // override ค่า default
+      }
+    }
+    return out;
+  }
+
+  /// เพิ่มเวลาการออกกำลังแบบใช้ "อัตรา/นาที × นาที"
+  /// - ถ้า [caloriesPerMinute] ถูกส่งมา จะใช้ค่านั้น
+  /// - ถ้าไม่ส่ง จะอ่านจาก SharedPreferences (มี default ให้)
   Future<void> addExerciseMinutes({
     required DateTime day,
     required int deltaMinutes,
-    double? calories,
+    String type = 'general',
+    double? caloriesPerMinute,
     String? notes,
   }) async {
-    final db  = await AppDb.instance.database;
     final key = dateKeyOf(day);
     final now = nowEpochMillis();
 
+    final rate = caloriesPerMinute ?? (await getExerciseRate(type)) ?? 0.0;
+    final double kcal = rate * deltaMinutes;
+
     await db.rawInsert('''
-      INSERT INTO exercise_daily(date_key, duration_min, calories_burned, notes, created_at, updated_at)
-      VALUES(?, ?, ?, ?, ?, ?)
-      ON CONFLICT(date_key) DO UPDATE SET
+      INSERT INTO exercise_daily(date_key, type, duration_min, calories_burned, notes, created_at, updated_at)
+      VALUES(?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(date_key, type) DO UPDATE SET
         duration_min    = exercise_daily.duration_min + excluded.duration_min,
-        calories_burned = COALESCE(exercise_daily.calories_burned,0) + COALESCE(excluded.calories_burned,0),
+        calories_burned = COALESCE(exercise_daily.calories_burned,0) + excluded.calories_burned,
         notes           = COALESCE(excluded.notes, exercise_daily.notes),
         updated_at      = excluded.updated_at;
-    ''', [key, deltaMinutes, calories, notes, now, now]);
+    ''', [key, type, deltaMinutes, kcal, notes, now, now]);
   }
 
+  /// รวมทุกชนิดของวันนั้น
   Future<Map<String, dynamic>?> getExerciseDaily(DateTime day) async {
-    final db  = await AppDb.instance.database;
     final key = dateKeyOf(day);
-    final rows = await db.query('exercise_daily', where: 'date_key = ?', whereArgs: [key], limit: 1);
+    final rows = await db.rawQuery(
+      '''
+      SELECT
+        ? AS date_key,
+        COALESCE(SUM(duration_min), 0)                 AS duration_min,
+        COALESCE(SUM(COALESCE(calories_burned,0)), 0)  AS calories_burned
+      FROM exercise_daily
+      WHERE date_key = ?
+      ''',
+      [key, key],
+    );
+    if (rows.isEmpty) return null;
+    return Map<String, dynamic>.from(rows.first);
+  }
+
+  Future<Map<String, dynamic>?> getExerciseDailyByType(DateTime day, String type) async {
+    final key = dateKeyOf(day);
+    final rows = await db.query(
+      'exercise_daily',
+      columns: ['date_key', 'type', 'duration_min', 'calories_burned', 'notes', 'created_at', 'updated_at'],
+      where: 'date_key = ? AND type = ?',
+      whereArgs: [key, type],
+      limit: 1,
+    );
     return rows.isEmpty ? null : Map<String, dynamic>.from(rows.first);
   }
 
+  /// ไล่คำนวณย้อนหลังให้แถวที่ calories_burned เป็น 0/NULL โดยใช้อัตรา (kcal/นาที) ปัจจุบัน
+  Future<int> backfillExerciseCalories() async {
+    final rows = await db.query(
+      'exercise_daily',
+      columns: ['date_key', 'type', 'duration_min', 'calories_burned'],
+    );
+
+    final now = nowEpochMillis();
+    var updated = 0;
+
+    for (final r in rows) {
+      final mins = (r['duration_min'] as int?) ?? 0;
+      final cur  = (r['calories_burned'] as num?)?.toDouble() ?? 0.0;
+      if (mins > 0 && cur == 0.0) {
+        final type = (r['type'] as String?) ?? 'general';
+        final rate = (await getExerciseRate(type)) ?? 0.0;
+        await db.update(
+          'exercise_daily',
+          {'calories_burned': rate * mins, 'updated_at': now},
+          where: 'date_key = ? AND type = ?',
+          whereArgs: [r['date_key'], type],
+        );
+        updated++;
+      }
+    }
+    return updated;
+  }
+
   // =========================
-  // สรุปรายวันรวม (สำหรับ Dashboard)
+  // SUMMARY (สำหรับ Dashboard)
   // =========================
 
   Future<Map<String, dynamic>> dailySummary(DateTime day) async {
-    final db  = await AppDb.instance.database;
     final key = dateKeyOf(day);
 
-    // sleep
     final s = await getSleepDaily(day);
-    final sleepMinutes = s == null ? 0 : ((s['hours'] as int) * 60 + (s['minutes'] as int));
+    final sleepMinutes = s == null ? 0 : (((s['hours'] as int?) ?? 0) * 60 + ((s['minutes'] as int?) ?? 0));
 
-    // water
     final w = await getWaterDaily(day);
     final waterCount = w?['count'] as int? ?? 0;
     final waterMl    = w?['ml'] as int? ?? 0;
 
-    // exercise (อ่านจาก exercise_daily โดยตรง)
     final e = await db.rawQuery(
-      'SELECT duration_min AS mins FROM exercise_daily WHERE date_key = ?',
+      '''
+      SELECT
+        COALESCE(SUM(duration_min), 0)                AS mins,
+        COALESCE(SUM(COALESCE(calories_burned,0)),0) AS kcal
+      FROM exercise_daily
+      WHERE date_key = ?
+      ''',
       [key],
     );
-    final exerciseMinutes = e.isEmpty ? 0 : ((e.first['mins'] as int?) ?? 0);
+    final exerciseMinutes  = e.isEmpty ? 0   : ((e.first['mins'] as int?) ?? 0);
+    final exerciseCalories = e.isEmpty ? 0.0 : ((e.first['kcal'] as num?) ?? 0).toDouble();
 
     return {
-      'date_key'        : key,
-      'sleep_minutes'   : sleepMinutes,
-      'water_count'     : waterCount,
-      'water_ml'        : waterMl,
-      'exercise_minutes': exerciseMinutes,
+      'date_key'          : key,
+      'sleep_minutes'     : sleepMinutes,
+      'water_count'       : waterCount,
+      'water_ml'          : waterMl,
+      'exercise_minutes'  : exerciseMinutes,
+      'exercise_calories' : exerciseCalories,
     };
   }
 
   // =========================
-  // Exercise "Catalog" (ชื่อ/สี/ไอคอน) — เก็บด้วย SharedPreferences ต่อไปก่อน
+  // Exercise "Catalog" (ผ่าน SharedPreferences)
   // =========================
 
   Future<List<ExerciseActivity>> getExercises() async {
@@ -226,7 +336,11 @@ class HabitLocalRepository {
     }
 
     final i = list.indexWhere((e) => e.id == a.id);
-    if (i == -1) list.add(a); else list[i] = a;
+    if (i == -1) {
+      list.add(a);
+    } else {
+      list[i] = a;
+    }
 
     await sp.setString(
       _kExercisesKey,
@@ -243,7 +357,7 @@ class HabitLocalRepository {
   }
 
   // =========================
-  // (OPTIONAL) ของเดิมที่ใช้ SleepLog ผ่าน SP
+  // (LEGACY) Sleep ผ่าน SharedPreferences เพื่อรองรับ HabitNotifier เดิม
   // =========================
 
   @Deprecated('Use sleep_daily via setSleepHM/getSleepDaily instead.')
@@ -262,6 +376,11 @@ class HabitLocalRepository {
     await sp.setString('sleep:${log.startedOn}', jsonStr);
     return log;
   }
+
+  // =========================
+  // CHART SERIES
+  // =========================
+
   Future<List<ChartPoint>> fetchSleepHoursSeries({int days = 14}) async {
     final range = lastNDays(days);
     final rows = await db.query(
@@ -276,7 +395,7 @@ class HabitLocalRepository {
     for (final r in rows) {
       final h = (r['hours'] as int?) ?? 0;
       final m = (r['minutes'] as int?) ?? 0;
-      map[r['date_key'] as String] = h + (m / 60.0); // ชั่วโมง
+      map[r['date_key'] as String] = h + (m / 60.0);
     }
 
     return fillMissingDaysWithZero(
@@ -286,6 +405,7 @@ class HabitLocalRepository {
     );
   }
 
+  @Deprecated('Use fetchWaterMlSeries instead.')
   Future<List<ChartPoint>> fetchWaterCountSeries({int days = 14}) async {
     final range = lastNDays(days);
     final rows = await db.query(
@@ -308,11 +428,11 @@ class HabitLocalRepository {
     );
   }
 
-  Future<List<ChartPoint>> fetchExerciseDurationSeries({int days = 14}) async {
+  Future<List<ChartPoint>> fetchWaterMlSeries({int days = 14}) async {
     final range = lastNDays(days);
     final rows = await db.query(
-      'exercise_daily',
-      columns: ['date_key', 'duration_min'],
+      'water_intake_logs',
+      columns: ['date_key', 'ml'],
       where: 'date_key BETWEEN ? AND ?',
       whereArgs: [dateKeyOf(range.start), dateKeyOf(range.end)],
       orderBy: 'date_key',
@@ -320,8 +440,87 @@ class HabitLocalRepository {
 
     final map = <String, double>{};
     for (final r in rows) {
+      map[r['date_key'] as String] = ((r['ml'] as int?) ?? 0).toDouble();
+    }
+
+    return fillMissingDaysWithZero(
+      start: range.start,
+      end: range.end,
+      valueByDateKey: map,
+    );
+  }
+
+  @Deprecated('Use fetchExerciseCaloriesSeries instead.')
+  Future<List<ChartPoint>> fetchExerciseDurationSeries({int days = 14}) async {
+    final range = lastNDays(days);
+    final rows = await db.rawQuery(
+      '''
+      SELECT date_key, COALESCE(SUM(duration_min), 0) AS duration_min
+      FROM exercise_daily
+      WHERE date_key BETWEEN ? AND ?
+      GROUP BY date_key
+      ORDER BY date_key
+      ''',
+      [dateKeyOf(range.start), dateKeyOf(range.end)],
+    );
+
+    final map = <String, double>{};
+    for (final r in rows) {
       map[r['date_key'] as String] =
-          ((r['duration_min'] as int?) ?? 0).toDouble(); // นาที
+          ((r['duration_min'] as int?) ?? 0).toDouble();
+    }
+
+    return fillMissingDaysWithZero(
+      start: range.start,
+      end: range.end,
+      valueByDateKey: map,
+    );
+  }
+
+  Future<List<ChartPoint>> fetchExerciseCaloriesSeries({int days = 14}) async {
+    final range = lastNDays(days);
+    final rows = await db.rawQuery(
+      '''
+      SELECT date_key,
+             COALESCE(SUM(COALESCE(calories_burned, 0)), 0) AS kcal
+      FROM exercise_daily
+      WHERE date_key BETWEEN ? AND ?
+      GROUP BY date_key
+      ORDER BY date_key
+      ''',
+      [dateKeyOf(range.start), dateKeyOf(range.end)],
+    );
+
+    final map = <String, double>{};
+    for (final r in rows) {
+      final v = (r['kcal'] as num?) ?? 0;
+      map[r['date_key'] as String] = v.toDouble();
+    }
+
+    return fillMissingDaysWithZero(
+      start: range.start,
+      end: range.end,
+      valueByDateKey: map,
+    );
+  }
+
+  Future<List<ChartPoint>> fetchExerciseDurationSeriesByType({
+    required String type,
+    int days = 14,
+  }) async {
+    final range = lastNDays(days);
+    final rows = await db.query(
+      'exercise_daily',
+      columns: ['date_key', 'duration_min'],
+      where: 'type = ? AND date_key BETWEEN ? AND ?',
+      whereArgs: [type, dateKeyOf(range.start), dateKeyOf(range.end)],
+      orderBy: 'date_key',
+    );
+
+    final map = <String, double>{};
+    for (final r in rows) {
+      map[r['date_key'] as String] =
+          ((r['duration_min'] as int?) ?? 0).toDouble();
     }
 
     return fillMissingDaysWithZero(

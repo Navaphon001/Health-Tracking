@@ -1,7 +1,7 @@
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
-// import 'package:flutter/foundation.dart'; // ถ้าจะ debugPrint path
+// import 'package:flutter/foundation.dart'; // debugPrint path ถ้าต้องการ
 
 class AppDb {
   static final AppDb instance = AppDb._();
@@ -13,11 +13,10 @@ class AppDb {
   Future<Database> _open() async {
     final dir = await getApplicationDocumentsDirectory();
     final dbPath = p.join(dir.path, 'habit_daily.db');
-    // debugPrint('DB PATH => $dbPath');
 
     return openDatabase(
       dbPath,
-      version: 5, // ⬅️ บัมป์เป็น 5 เพื่อเพิ่มตาราง meal ใหม่
+      version: 6, // ⬅️ บัมป์เป็น 6: เพิ่ม is_synced ให้ทุกตาราง
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -30,10 +29,12 @@ class AppDb {
             minutes    INTEGER NOT NULL DEFAULT 0 CHECK(minutes BETWEEN 0 AND 59),
             quality    INTEGER,
             note       TEXT,
+            is_synced  INTEGER NOT NULL DEFAULT 0, -- 0=ยังไม่ซิงก์
             created_at INTEGER NOT NULL,
             updated_at INTEGER NOT NULL
           );
         ''');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_sleep_is_synced ON sleep_daily(is_synced);');
 
         // 2) Water
         await db.execute('''
@@ -43,99 +44,82 @@ class AppDb {
             ml         INTEGER NOT NULL DEFAULT 0,
             goal_count INTEGER,
             goal_ml    INTEGER,
+            is_synced  INTEGER NOT NULL DEFAULT 0, -- 0=ยังไม่ซิงก์
             created_at INTEGER NOT NULL,
             updated_at INTEGER NOT NULL
           );
         ''');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_water_is_synced ON water_intake_logs(is_synced);');
 
-        // 3) Exercise (รวมรายวัน, ไม่แยกชนิด)
+        // 3) Exercise (แยกชนิด/Type)
         await db.execute('''
           CREATE TABLE IF NOT EXISTS exercise_daily (
-            date_key        TEXT PRIMARY KEY,      -- yyyy-MM-dd
+            date_key        TEXT NOT NULL,          -- yyyy-MM-dd
+            type            TEXT NOT NULL DEFAULT 'general',
             duration_min    INTEGER NOT NULL DEFAULT 0,
             calories_burned REAL,
             notes           TEXT,
-            created_at      INTEGER NOT NULL,
-            updated_at      INTEGER NOT NULL
-          );
-        ''');
-
-        // 4) User Profile (สำหรับ Profile Setup)
-        await db.execute('''
-          CREATE TABLE IF NOT EXISTS user_profile (
-            user_id         TEXT PRIMARY KEY,      -- username หรือ user identifier
-            step1_completed INTEGER NOT NULL DEFAULT 0,  -- 0 = false, 1 = true
-            step2_completed INTEGER NOT NULL DEFAULT 0,
-            step3_completed INTEGER NOT NULL DEFAULT 0,
-            profile_completed INTEGER NOT NULL DEFAULT 0,
-            -- Step 1: Basic Info
-            full_name       TEXT,
-            nickname        TEXT,
-            birth_date      TEXT,              -- วันเกิด (ISO format)
-            gender          TEXT,              -- เพศ
-            -- Step 2: Physical Info  
-            height          REAL,              -- ส่วนสูง (cm)
-            weight          REAL,              -- น้ำหนัก (kg)
-            activity_level  TEXT,              -- ระดับการออกกำลังกาย
-            health_goal     TEXT,              -- เป้าหมายสุขภาพ
-            -- Step 3: About Yourself
-            occupation      TEXT,              -- อาชีพ
-            lifestyle       TEXT,              -- รูปแบบชีวิต
-            sleep_hours     REAL,              -- ชั่วโมงนอนเฉลี่ย
-            wake_up_time    TEXT,              -- เวลาตื่น
-            interests       TEXT,              -- ความสนใจ (JSON array)
-            health_rating   TEXT,              -- การประเมินสุขภาพ
-            goals           TEXT,              -- เป้าหมาย (JSON array)
-            -- Timestamps
-            created_at      INTEGER NOT NULL,
-            updated_at      INTEGER NOT NULL
-          );
-        ''');
-
-        // 5) Nutrition Database (สำหรับข้อมูลโภชนาการของอาหาร)
-        await db.execute('''
-          CREATE TABLE IF NOT EXISTS nutrition_database (
-            id              TEXT PRIMARY KEY,
-            food_name       TEXT NOT NULL,
-            calories        REAL,
-            protein         REAL,
-            carbs           REAL,
-            fat             REAL,
-            fiber           REAL,
-            sugar           REAL,
-            last_updated    INTEGER
-          );
-        ''');
-
-        // 6) Meals (สำหรับเก็บข้อมูลมื้ออาหารของผู้ใช้)
-        await db.execute('''
-          CREATE TABLE IF NOT EXISTS meals (
-            id              TEXT PRIMARY KEY,
-            food_log_id     TEXT,
-            user_id         TEXT,
-            food_name       TEXT NOT NULL,
-            meal_type       TEXT NOT NULL CHECK(meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')),
-            image_url       TEXT,
+            is_synced       INTEGER NOT NULL DEFAULT 0, -- 0=ยังไม่ซิงก์
             created_at      INTEGER NOT NULL,
             updated_at      INTEGER NOT NULL,
-            FOREIGN KEY (food_log_id) REFERENCES food_logs(id) ON DELETE CASCADE
+            PRIMARY KEY(date_key, type)
           );
+        ''');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_exercise_daily_date ON exercise_daily(date_key);');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_exercise_is_synced ON exercise_daily(is_synced);');
+        await db.execute('''
+          CREATE UNIQUE INDEX IF NOT EXISTS uniq_exercise_daily_date_general
+          ON exercise_daily(date_key)
+          WHERE type = 'general';
+        ''');
+        await db.execute('''
+          CREATE VIEW IF NOT EXISTS exercise_daily_sum AS
+          SELECT
+            date_key,
+            SUM(duration_min)    AS duration_min,
+            SUM(calories_burned) AS calories_burned,
+            MIN(created_at)      AS created_at,
+            MAX(updated_at)      AS updated_at
+          FROM exercise_daily
+          GROUP BY date_key;
         ''');
 
-        // 7) Food Logs (สำหรับเก็บบันทึกการกินของผู้ใช้รายวัน)
+        // 4) Basic Profile
         await db.execute('''
-          CREATE TABLE IF NOT EXISTS food_logs (
-            id              TEXT PRIMARY KEY,
-            user_id         TEXT NOT NULL,
-            date            TEXT NOT NULL,        -- yyyy-MM-dd
-            last_modified   INTEGER NOT NULL,
-            meal_count      INTEGER NOT NULL DEFAULT 0
+          CREATE TABLE IF NOT EXISTS basic_profile (
+            id                TEXT PRIMARY KEY,     -- แนะนำให้ = user_id (1:1)
+            user_id           TEXT NOT NULL UNIQUE,
+            full_name         TEXT,
+            date_of_birth     TEXT,                 -- ISO8601 yyyy-MM-dd
+            gender            TEXT,
+            profile_image_url TEXT,
+            is_synced         INTEGER NOT NULL DEFAULT 0, -- 0=ยังไม่ซิงก์
+            created_at        INTEGER NOT NULL,
+            updated_at        INTEGER NOT NULL
           );
         ''');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_basic_profile_user ON basic_profile(user_id);');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_basic_profile_is_synced ON basic_profile(is_synced);');
+
+        // 5) Physical Info
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS physical_info (
+            id             TEXT PRIMARY KEY,        -- แนะนำให้ = user_id (1:1)
+            user_id        TEXT NOT NULL UNIQUE,
+            weight         REAL,
+            height         REAL,
+            activity_level TEXT,
+            is_synced      INTEGER NOT NULL DEFAULT 0, -- 0=ยังไม่ซิงก์
+            created_at     INTEGER NOT NULL,
+            updated_at     INTEGER NOT NULL
+          );
+        ''');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_physical_info_user ON physical_info(user_id);');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_physical_info_is_synced ON physical_info(is_synced);');
       },
       onUpgrade: (db, oldV, newV) async {
+        // v1 -> v2 : เดิม (exercise_daily แบบรวม)
         if (oldV < 2) {
-          // สร้างตารางใหม่ (ถ้ายังไม่มี)
           await db.execute('''
             CREATE TABLE IF NOT EXISTS exercise_daily (
               date_key        TEXT PRIMARY KEY,
@@ -147,7 +131,6 @@ class AppDb {
             );
           ''');
 
-          // ถ้ามีตารางเก่า exercise_logs_daily ให้รวมยอดย้ายมา
           final exists = await db.rawQuery(
             "SELECT name FROM sqlite_master WHERE type='table' AND name='exercise_logs_daily'"
           );
@@ -161,98 +144,181 @@ class AppDb {
               FROM exercise_logs_daily
               GROUP BY date_key;
             ''');
-            // เลือกได้: จะเก็บตารางเก่าไว้หรือทิ้ง
             await db.execute('DROP TABLE IF EXISTS exercise_logs_daily');
           }
         }
-        
-        if (oldV < 3) {
-          // เพิ่มตาราง user_profile สำหรับ Profile Setup
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS user_profile (
-              user_id         TEXT PRIMARY KEY,
-              step1_completed INTEGER NOT NULL DEFAULT 0,
-              step2_completed INTEGER NOT NULL DEFAULT 0,
-              step3_completed INTEGER NOT NULL DEFAULT 0,
-              profile_completed INTEGER NOT NULL DEFAULT 0,
-              full_name       TEXT,
-              nickname        TEXT,
-              birth_date      TEXT,
-              gender          TEXT,
-              height          REAL,
-              weight          REAL,
-              activity_level  TEXT,
-              health_goal     TEXT,
-              occupation      TEXT,
-              lifestyle       TEXT,
-              sleep_hours     REAL,
-              wake_up_time    TEXT,
-              interests       TEXT,
-              created_at      INTEGER NOT NULL,
-              updated_at      INTEGER NOT NULL
-            );
-          ''');
-        }
-        
+
+        // v2 -> v4 : เดิม (อัปเกรด exercise_daily ให้มี type + view/index)
         if (oldV < 4) {
-          // เช็คว่ามี health_rating column แล้วหรือไม่
-          final healthRatingExists = await db.rawQuery(
-            "PRAGMA table_info(user_profile)"
-          ).then((columns) => columns.any((col) => col['name'] == 'health_rating'));
-          
-          if (!healthRatingExists) {
-            await db.execute('ALTER TABLE user_profile ADD COLUMN health_rating TEXT');
+          final hasOld = await db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='exercise_daily'"
+          );
+          if (hasOld.isNotEmpty) {
+            final pragma = await db.rawQuery('PRAGMA table_info(exercise_daily);');
+            final hasType = pragma.any((c) => (c['name'] as String) == 'type');
+
+            if (!hasType) {
+              await db.execute('''
+                CREATE TABLE exercise_daily_new (
+                  date_key        TEXT NOT NULL,
+                  type            TEXT NOT NULL DEFAULT 'general',
+                  duration_min    INTEGER NOT NULL DEFAULT 0,
+                  calories_burned REAL,
+                  notes           TEXT,
+                  created_at      INTEGER NOT NULL,
+                  updated_at      INTEGER NOT NULL,
+                  PRIMARY KEY(date_key, type)
+                );
+              ''');
+
+              await db.execute('''
+                INSERT INTO exercise_daily_new(date_key, type, duration_min, calories_burned, notes, created_at, updated_at)
+                SELECT date_key, 'general', duration_min, calories_burned, notes, created_at, updated_at
+                FROM exercise_daily;
+              ''');
+
+              await db.execute('DROP TABLE exercise_daily;');
+              await db.execute('ALTER TABLE exercise_daily_new RENAME TO exercise_daily;');
+            }
+          } else {
+            await db.execute('''
+              CREATE TABLE IF NOT EXISTS exercise_daily (
+                date_key        TEXT NOT NULL,
+                type            TEXT NOT NULL DEFAULT 'general',
+                duration_min    INTEGER NOT NULL DEFAULT 0,
+                calories_burned REAL,
+                notes           TEXT,
+                created_at      INTEGER NOT NULL,
+                updated_at      INTEGER NOT NULL,
+                PRIMARY KEY(date_key, type)
+              );
+            ''');
           }
-          
-          // เช็คว่ามี goals column แล้วหรือไม่
-          final goalsExists = await db.rawQuery(
-            "PRAGMA table_info(user_profile)"
-          ).then((columns) => columns.any((col) => col['name'] == 'goals'));
-          
-          if (!goalsExists) {
-            await db.execute('ALTER TABLE user_profile ADD COLUMN goals TEXT');
+
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_exercise_daily_date ON exercise_daily(date_key);');
+          await db.execute('''
+            CREATE UNIQUE INDEX IF NOT EXISTS uniq_exercise_daily_date_general
+            ON exercise_daily(date_key) WHERE type = 'general';
+          ''');
+          await db.execute('''
+            CREATE VIEW IF NOT EXISTS exercise_daily_sum AS
+            SELECT
+              date_key,
+              SUM(duration_min)    AS duration_min,
+              SUM(calories_burned) AS calories_burned,
+              MIN(created_at)      AS created_at,
+              MAX(updated_at)      AS updated_at
+            FROM exercise_daily
+            GROUP BY date_key;
+          ''');
+        }
+
+        // v4 -> v5 : แยก user_profile -> basic_profile & physical_info
+        if (oldV < 5) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS basic_profile (
+              id                TEXT PRIMARY KEY,
+              user_id           TEXT NOT NULL UNIQUE,
+              full_name         TEXT,
+              date_of_birth     TEXT,
+              gender            TEXT,
+              profile_image_url TEXT,
+              is_synced         INTEGER NOT NULL DEFAULT 0,
+              created_at        INTEGER NOT NULL,
+              updated_at        INTEGER NOT NULL
+            );
+          ''');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_basic_profile_user ON basic_profile(user_id);');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_basic_profile_is_synced ON basic_profile(is_synced);');
+
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS physical_info (
+              id             TEXT PRIMARY KEY,
+              user_id        TEXT NOT NULL UNIQUE,
+              weight         REAL,
+              height         REAL,
+              activity_level TEXT,
+              is_synced      INTEGER NOT NULL DEFAULT 0,
+              created_at     INTEGER NOT NULL,
+              updated_at     INTEGER NOT NULL
+            );
+          ''');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_physical_info_user ON physical_info(user_id);');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_physical_info_is_synced ON physical_info(is_synced);');
+
+          final hasUserProfile = await db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='user_profile'"
+          );
+          if (hasUserProfile.isNotEmpty) {
+            await db.execute('''
+              INSERT OR IGNORE INTO basic_profile
+                (id, user_id, full_name, date_of_birth, gender, profile_image_url, is_synced, created_at, updated_at)
+              SELECT
+                user_id AS id,
+                user_id,
+                full_name,
+                birth_date,
+                gender,
+                NULL as profile_image_url,
+                0 as is_synced,
+                created_at,
+                updated_at
+              FROM user_profile
+              WHERE full_name IS NOT NULL OR birth_date IS NOT NULL OR gender IS NOT NULL;
+            ''');
+
+            await db.execute('''
+              INSERT OR IGNORE INTO physical_info
+                (id, user_id, weight, height, activity_level, is_synced, created_at, updated_at)
+              SELECT
+                user_id AS id,
+                user_id,
+                weight,
+                height,
+                activity_level,
+                0 as is_synced,
+                created_at,
+                updated_at
+              FROM user_profile
+              WHERE weight IS NOT NULL OR height IS NOT NULL OR activity_level IS NOT NULL;
+            ''');
           }
         }
 
-        if (oldV < 5) {
-          // เพิ่มตารางใหม่สำหรับ Meal Logging
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS nutrition_database (
-              id              TEXT PRIMARY KEY,
-              food_name       TEXT NOT NULL,
-              calories        REAL,
-              protein         REAL,
-              carbs           REAL,
-              fat             REAL,
-              fiber           REAL,
-              sugar           REAL,
-              last_updated    INTEGER
-            );
-          ''');
+        // v5 -> v6 : เพิ่มคอลัมน์ is_synced ให้ทุกตารางที่ยังไม่มี
+        if (oldV < 6) {
+          Future<void> ensureIsSynced(String table) async {
+            final cols = await db.rawQuery('PRAGMA table_info($table);');
+            final has = cols.any((c) => (c['name'] as String) == 'is_synced');
+            if (!has) {
+              await db.execute('ALTER TABLE $table ADD COLUMN is_synced INTEGER NOT NULL DEFAULT 0;');
+            }
+          }
 
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS food_logs (
-              id              TEXT PRIMARY KEY,
-              user_id         TEXT NOT NULL,
-              date            TEXT NOT NULL,
-              last_modified   INTEGER NOT NULL,
-              meal_count      INTEGER NOT NULL DEFAULT 0
-            );
-          ''');
+          await ensureIsSynced('sleep_daily');
+          await ensureIsSynced('water_intake_logs');
+          await ensureIsSynced('exercise_daily');
+          await ensureIsSynced('basic_profile');
+          await ensureIsSynced('physical_info');
 
-          await db.execute('''
-            CREATE TABLE IF NOT EXISTS meals (
-              id              TEXT PRIMARY KEY,
-              food_log_id     TEXT,
-              user_id         TEXT,
-              food_name       TEXT NOT NULL,
-              meal_type       TEXT NOT NULL CHECK(meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')),
-              image_url       TEXT,
-              created_at      INTEGER NOT NULL,
-              updated_at      INTEGER NOT NULL,
-              FOREIGN KEY (food_log_id) REFERENCES food_logs(id) ON DELETE CASCADE
-            );
-          ''');
+          // (เผื่อยังมีตารางเก่าอยู่) เพิ่มให้ user_profile ด้วย
+          final hasUserProfile = await db.rawQuery(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='user_profile'"
+          );
+          if (hasUserProfile.isNotEmpty) {
+            final cols = await db.rawQuery('PRAGMA table_info(user_profile);');
+            final has = cols.any((c) => (c['name'] as String) == 'is_synced');
+            if (!has) {
+              await db.execute('ALTER TABLE user_profile ADD COLUMN is_synced INTEGER NOT NULL DEFAULT 0;');
+            }
+          }
+
+          // สร้าง index is_synced ให้ตารางที่ยังไม่มี
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_sleep_is_synced ON sleep_daily(is_synced);');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_water_is_synced ON water_intake_logs(is_synced);');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_exercise_is_synced ON exercise_daily(is_synced);');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_basic_profile_is_synced ON basic_profile(is_synced);');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_physical_info_is_synced ON physical_info(is_synced);');
         }
       },
     );
