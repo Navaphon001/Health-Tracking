@@ -1,230 +1,501 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/habit_notifier.dart';
 import '../theme/app_colors.dart';
 
 class WaterScreen extends StatefulWidget {
   const WaterScreen({super.key});
+
   @override
   State<WaterScreen> createState() => _WaterScreenState();
 }
 
 class _WaterScreenState extends State<WaterScreen> {
-  // เลือก drink + ml (ช่องเดียว)
-  int? _selectedDrinkIndex;
-  final _mlCtl = TextEditingController();
-  final List<int> _mlOptions = const [120, 150, 180, 200, 220, 250, 300, 350, 500];
+  final TextEditingController _amountController = TextEditingController();
+  String _selectedAmount = '250';
+  DrinkPreset? _selectedBeverage;
+
+  final List<String> _amountOptions = ['100', '150', '200', '250', '300', '350', '400', '500'];
+
+  @override
+  void dispose() {
+    _amountController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
-    _mlCtl.text = HabitNotifier.baseGlassMl.toString(); // ค่าเริ่มต้น 250
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HabitNotifier>().fetchDailyWaterIntake();
+    _amountController.text = _selectedAmount;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final n = context.read<HabitNotifier>();
+      // Reset เพื่อเริ่มนับใหม่
+      n.dailyWaterMl = 0;
+      n.dailyWaterCount = 0;
+      await n.fetchDailyWaterIntake();
     });
   }
 
-  @override
-  void dispose() {
-    _mlCtl.dispose();
-    super.dispose();
+  void _addWaterIntake() {
+    final amount = int.tryParse(_amountController.text.isNotEmpty 
+        ? _amountController.text 
+        : _selectedAmount);
+    
+    if (amount == null || amount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).pleaseEnterAmount),
+        ),
+      );
+      return;
+    }
+
+    // ใช้เครื่องดื่มที่เลือก หรือสร้าง DrinkPreset สำหรับน้ำธรรมดา
+    final preset = _selectedBeverage ?? DrinkPreset(
+      id: 'water_${DateTime.now().millisecondsSinceEpoch}',
+      name: 'Water',
+      ml: amount,
+    );
+
+    // บันทึกผ่าน HabitNotifier (ส่ง amount ที่ผู้ใช้กรอก)
+    context.read<HabitNotifier>().logDrinkWithMl(preset, amount);
+    
+    // Reset form
+    setState(() {
+      _selectedBeverage = null;
+      _amountController.text = _selectedAmount;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(AppLocalizations.of(context).beverageAdded),
+      ),
+    );
   }
 
-  int? _finalMl() => int.tryParse(_mlCtl.text);
+  void _showAddBeverageDialog() {
+    final nameController = TextEditingController();
+    
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('เพิ่มเครื่องดื่มใหม่'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: 'ชื่อเครื่องดื่ม',
+            hintText: 'เช่น นมเย็น, ชาเขียว',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context).cancel),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final name = nameController.text.trim();
+              
+              if (name.isNotEmpty) {
+                context.read<HabitNotifier>().addDrinkPreset(name, 250);
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('เพิ่ม $name เรียบร้อยแล้ว')),
+                );
+              }
+            },
+            child: Text(AppLocalizations.of(context).add),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmDialog(DrinkPreset preset) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('ลบเครื่องดื่ม'),
+        content: Text('คุณต้องการลบ "${preset.name}" หรือไม่?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(AppLocalizations.of(context).cancel),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              // If the deleted beverage is currently selected, deselect it
+              if (_selectedBeverage?.id == preset.id) {
+                setState(() {
+                  _selectedBeverage = null;
+                  _selectedAmount = '250';
+                  _amountController.text = _selectedAmount;
+                });
+              }
+              
+              await context.read<HabitNotifier>().deleteDrinkPreset(preset.id);
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('ลบ ${preset.name} เรียบร้อยแล้ว')),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('ลบ'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBeverageCard(DrinkPreset preset) {
+    final isSelected = _selectedBeverage?.id == preset.id;
+    
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          if (isSelected) {
+            // If already selected, deselect it
+            _selectedBeverage = null;
+            _selectedAmount = '250'; // Reset to default
+            _amountController.text = _selectedAmount;
+          } else {
+            // Select the beverage
+            _selectedBeverage = preset;
+            _selectedAmount = preset.ml.toString();
+            _amountController.text = _selectedAmount;
+          }
+        });
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: isSelected ? AppColors.primary : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? AppColors.primary : Colors.grey[300]!,
+            width: 2,
+          ),
+        ),
+        child: Stack(
+          children: [
+            // Main content - centered
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12.0, bottom: 8.0, left: 8.0, right: 8.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.local_drink,
+                      color: isSelected ? Colors.white : AppColors.primary,
+                      size: 24,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      preset.name,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        color: isSelected ? Colors.white : Colors.black87,
+                      ),
+                      textAlign: TextAlign.center,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Delete button in top-right corner
+            Positioned(
+              top: 4,
+              right: 4,
+              child: GestureDetector(
+                onTap: () => _showDeleteConfirmDialog(preset),
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: Colors.black,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.delete,
+                    color: Colors.white,
+                    size: 12,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAddBeverageCard() {
+    return GestureDetector(
+      onTap: _showAddBeverageDialog,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: AppColors.primary,
+            width: 2,
+          ),
+        ),
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.add,
+              color: Colors.white,
+              size: 32,
+            ),
+            SizedBox(height: 4),
+            Text(
+              'Add',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressCircle(int currentAmount, int goalAmount) {
+    final progress = goalAmount > 0 ? (currentAmount / goalAmount).clamp(0.0, 1.0) : 0.0;
+    
+    return Container(
+      width: 180,
+      height: 180,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          SizedBox(
+            width: 180,
+            height: 180,
+            child: CircularProgressIndicator(
+              value: progress,
+              strokeWidth: 8,
+              backgroundColor: Colors.grey[300],
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primary),
+            ),
+          ),
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '$currentAmount/${goalAmount}ml',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBeverageGrid() {
+    final t = AppLocalizations.of(context);
+    
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.grey[100],
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                t.selectBeverage,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+              ),
+              GestureDetector(
+                onTap: _showAddBeverageDialog,
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.black,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Consumer<HabitNotifier>(
+            builder: (context, notifier, child) {
+              final presets = notifier.drinkPresets;
+              
+              // Calculate grid dimensions - show exactly 3 rows for better visibility
+              final totalItems = presets.length + 1; // +1 for add button
+              final maxVisibleRows = 3;
+              final gridHeight = maxVisibleRows * 80.0 + (maxVisibleRows - 1) * 12.0; // 3 rows * 80 height + 2 spacing
+              
+              return Container(
+                height: gridHeight, // Fixed height for 3 rows
+                child: GridView.builder(
+                  physics: const BouncingScrollPhysics(), // Enable scrolling
+                  itemCount: totalItems,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.0,
+                  ),
+                  itemBuilder: (context, index) {
+                    if (index == presets.length) {
+                      // Add button
+                      return _buildAddBeverageCard();
+                    } else {
+                      // Beverage preset
+                      final preset = presets[index];
+                      return _buildBeverageCard(preset);
+                    }
+                  },
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAmountInput() {
+    return TextFormField(
+      controller: _amountController,
+      keyboardType: TextInputType.number,
+      textAlign: TextAlign.center,
+      decoration: InputDecoration(
+        hintText: 'กรอกปริมาณ ml',
+        suffixText: 'ml',
+        suffixIcon: PopupMenuButton<String>(
+          icon: const Icon(Icons.arrow_drop_down, color: Colors.grey),
+          onSelected: (String value) {
+            setState(() {
+              _selectedAmount = value;
+              _amountController.text = value;
+            });
+          },
+          itemBuilder: (BuildContext context) {
+            return _amountOptions.map<PopupMenuEntry<String>>((String value) {
+              return PopupMenuItem<String>(
+                value: value,
+                child: Text('$value ml'),
+              );
+            }).toList();
+          },
+        ),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(8),
+          borderSide: const BorderSide(color: AppColors.primary),
+        ),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('การดื่มน้ำ', style: TextStyle(fontWeight: FontWeight.w700)),
-            Text('บันทึกการดื่มน้ำประจำวัน', style: TextStyle(fontSize: 12)),
-          ],
-        ),
+        centerTitle: true,
+        title: Text(t.waterIntakeTitle, style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black)),
         actions: [
           GestureDetector(
             onTap: () => Navigator.of(context).pushNamed('/settings'),
             child: const Padding(
               padding: EdgeInsets.only(right: 16.0),
-              child: CircleAvatar(
-                radius: 18,
-                child: Icon(Icons.person, size: 20),
-              ),
+              child: CircleAvatar(child: Icon(Icons.person)),
             ),
           ),
         ],
       ),
       body: Consumer<HabitNotifier>(
-        builder: (context, n, _) {
-          final totalMl = n.dailyWaterMl;
-          final targetMl = n.dailyWaterTargetMl;
-          final percent = (targetMl == 0) ? 0.0 : (totalMl / targetMl).clamp(0.0, 1.0);
+        builder: (context, notifier, child) {
+          final totalAmount = notifier.dailyWaterMl;
+          const goalAmount = 2000; // Default goal: 2000ml
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(20),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // วงกลมความคืบหน้า
+                const SizedBox(height: 20),
+                // Progress Circle
+                _buildProgressCircle(totalAmount, goalAmount),
+                
+                const SizedBox(height: 30),
+                
+                // Amount Input
                 Center(
                   child: SizedBox(
-                    width: 160, height: 160,
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        SizedBox(
-                          width: 160, height: 160,
-                          child: CircularProgressIndicator(
-                            value: percent,
-                            strokeWidth: 10,
-                            backgroundColor: Colors.grey.shade200,
-                            valueColor: const AlwaysStoppedAnimation(AppColors.primary),
-                          ),
-                        ),
-                        Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text('$totalMl/$targetMl',
-                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w700)),
-                            const Text('ml', style: TextStyle(fontSize: 12)),
-                          ],
-                        ),
-                      ],
-                    ),
+                    width: 140,
+                    child: _buildAmountInput(),
                   ),
                 ),
-                const SizedBox(height: 12),
-
-                // คอมโบฟิลด์: กรอกเอง + เลือกจากรายการ (ช่องเดียว)
-                Center(
-                  child: SizedBox(
-                    width: 260,
-                    child: _MlComboField(
-                      controller: _mlCtl,
-                      options: _mlOptions,
-                      label: 'ปริมาณ (ml)',
-                      onChanged: (_) => setState(() {}), // อัปเดต hint บนการ์ด
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // สรุปจำนวนแก้ว
-                Text(
-                  'วันนี้: ${n.dailyWaterCount} แก้ว',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-                const SizedBox(height: 16),
-
-                // การ์ดเลือกเครื่องดื่ม + ปุ่มเพิ่มชื่อเครื่องดื่ม
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade300, width: 1.2),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            const Text('เลือกเครื่องดื่ม', style: TextStyle(fontWeight: FontWeight.w700)),
-                            const Spacer(),
-                            IconButton(
-                              tooltip: 'เพิ่มเครื่องดื่ม',
-                              onPressed: () => _showAddDrinkDialog(context),
-                              icon: const Icon(Icons.add_circle_outline),
-                              splashRadius: 20,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-
-                        // Grid รายการเครื่องดื่ม (แตะ = เลือก)
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: n.drinkPresets.length,
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 12,
-                            crossAxisSpacing: 12,
-                            childAspectRatio: 1,
-                          ),
-                          itemBuilder: (context, index) {
-                            final d = n.drinkPresets[index];
-                            final cnt = n.dailyDrinkCounts[d.id] ?? 0;
-                            final selected = _selectedDrinkIndex == index;
-
-                            return _DrinkTile(
-                              name: d.name,
-                              mlHint: _finalMl(),
-                              count: cnt,
-                              selected: selected,
-                              onTap: () => setState(() => _selectedDrinkIndex = index),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // ปุ่ม Add (บันทึก)
+                
+                const SizedBox(height: 20),
+                
+                // Beverage Selection Grid
+                _buildBeverageGrid(),
+                
+                const SizedBox(height: 30),
+                
+                // Save Button
                 SizedBox(
                   width: double.infinity,
-                  child: DecoratedBox(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [AppColors.primaryLight, AppColors.gradientLightEnd],
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
+                  child: ElevatedButton(
+                    onPressed: _addWaterIntake,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                      borderRadius: BorderRadius.all(Radius.circular(12)),
                     ),
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.add),
-                      label: const Text(
-                        'Add',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      onPressed: () async {
-                        final ml = _finalMl();
-                        if (_selectedDrinkIndex == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('โปรดเลือกเครื่องดื่มก่อน')),
-                          );
-                          return;
-                        }
-                        if (ml == null || ml <= 0) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('โปรดระบุปริมาณ (ml)')),
-                          );
-                          return;
-                        }
-                        final drink = n.drinkPresets[_selectedDrinkIndex!];
-                        await n.logDrinkWithMl(drink, ml);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
+                    child: Text(
+                      t.save,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),
@@ -234,148 +505,6 @@ class _WaterScreenState extends State<WaterScreen> {
           );
         },
       ),
-    );
-  }
-
-  // Dialog เพิ่มเครื่องดื่มใหม่ — ชื่ออย่างเดียว
-  Future<void> _showAddDrinkDialog(BuildContext context) async {
-    final nameCtl = TextEditingController();
-    final formKey = GlobalKey<FormState>();
-
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('เพิ่มเครื่องดื่ม'),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: nameCtl,
-            decoration: const InputDecoration(
-              labelText: 'ชื่อเครื่องดื่ม (เช่น น้ำเปล่า ชา...)',
-            ),
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'กรุณากรอกชื่อ' : null,
-          ),
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('ยกเลิก')),
-          FilledButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                context.read<HabitNotifier>().addDrinkPreset(nameCtl.text.trim());
-                Navigator.pop(context, true);
-              }
-            },
-            child: const Text('บันทึก'),
-          ),
-        ],
-      ),
-    );
-
-    if (ok == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('เพิ่มเครื่องดื่มแล้ว')));
-    }
-  }
-}
-
-class _DrinkTile extends StatelessWidget {
-  final String name;
-  final int? mlHint;  // ใช้โชว์เล็ก ๆ ว่าตอนนี้จะบวกกี่ ml
-  final int count;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _DrinkTile({
-    required this.name,
-    required this.mlHint,
-    required this.count,
-    required this.selected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final borderColor = selected ? AppColors.primary : Colors.grey.shade300;
-
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
-      child: Ink(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: borderColor, width: selected ? 2 : 1),
-        ),
-        child: Stack(
-          children: [
-            Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.local_drink, size: 28),
-                  const SizedBox(height: 6),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6),
-                    child: Text(name, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  ),
-                  if (mlHint != null)
-                    Text('+$mlHint ml',
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
-                ],
-              ),
-            ),
-            if (count > 0)
-              Positioned(
-                right: 6, top: 6,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(999)),
-                  child: Text('x$count',
-                      style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// ===== คอมโบฟิลด์: ช่องเดียว (กรอกเอง + ดรอปดาวน์) =====
-class _MlComboField extends StatelessWidget {
-  final TextEditingController controller;
-  final List<int> options;
-  final String label;
-  final ValueChanged<int?>? onChanged;
-
-  const _MlComboField({
-    required this.controller,
-    required this.options,
-    this.label = 'ปริมาณ (ml)',
-    this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return TextField(
-      controller: controller,
-      keyboardType: TextInputType.number,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        isDense: true,
-        suffixIcon: PopupMenuButton<int>(
-          tooltip: 'เลือกจากรายการ',
-          icon: const Icon(Icons.arrow_drop_down),
-          onSelected: (v) {
-            controller.text = v.toString();
-            onChanged?.call(v);
-          },
-          itemBuilder: (context) => options
-              .map((e) => PopupMenuItem<int>(value: e, child: Text('$e ml')))
-              .toList(),
-        ),
-      ),
-      onChanged: (_) => onChanged?.call(int.tryParse(controller.text)),
     );
   }
 }

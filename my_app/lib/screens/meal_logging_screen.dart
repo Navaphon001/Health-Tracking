@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../models/meal.dart';
 import '../providers/meal_provider.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 class MealLoggingScreen extends StatefulWidget {
   const MealLoggingScreen({super.key});
@@ -29,6 +30,19 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
     super.dispose();
   }
 
+  String _getMealTypeName(MealType type, AppLocalizations t) {
+    switch (type) {
+      case MealType.breakfast:
+        return t.breakfast;
+      case MealType.lunch:
+        return t.lunch;
+      case MealType.dinner:
+        return t.dinner;
+      case MealType.snack:
+        return t.snack;
+    }
+  }
+
   Future<void> _pickImage(ImageSource source) async {
     try {
       final XFile? image = await _picker.pickImage(
@@ -46,13 +60,14 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('เกิดข้อผิดพลาดในการเลือกรูป: $e')),
+          SnackBar(content: Text(AppLocalizations.of(context).imageSelectionError(e.toString()))),
         );
       }
     }
   }
 
   void _showImageSourceDialog() {
+    final t = AppLocalizations.of(context);
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -60,7 +75,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera),
-              title: const Text('ถ่ายรูป'),
+              title: Text(t.takePhoto),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.camera);
@@ -68,7 +83,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text('เลือกจากแกลเลอรี่'),
+              title: Text(t.selectFromGallery),
               onTap: () {
                 Navigator.pop(context);
                 _pickImage(ImageSource.gallery);
@@ -77,7 +92,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
             if (_selectedImage != null)
               ListTile(
                 leading: const Icon(Icons.delete),
-                title: const Text('ลบรูป'),
+                title: Text(t.deletePhoto),
                 onTap: () {
                   Navigator.pop(context);
                   setState(() {
@@ -110,8 +125,9 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
 
         // แสดงข้อความสำเร็จ
         if (mounted) {
+          final t = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('บันทึกข้อมูลอาหารเรียบร้อยแล้ว')),
+            SnackBar(content: Text(t.mealDataSavedSuccessfully)),
           );
 
           // กลับไปหน้าก่อนหน้าพร้อมส่งสัญญาณว่าบันทึกสำเร็จ
@@ -120,8 +136,9 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
       } catch (e) {
         // แสดงข้อความผิดพลาด
         if (mounted) {
+          final t = AppLocalizations.of(context);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('เกิดข้อผิดพลาด: $e')),
+            SnackBar(content: Text(t.errorOccurredWithDetails(e.toString()))),
           );
         }
       }
@@ -132,6 +149,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final t = AppLocalizations.of(context);
     
     return Consumer<MealProvider>(
       builder: (context, mealProvider, child) {
@@ -139,27 +157,16 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
       backgroundColor: colorScheme.surface,
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: Text(
-          'การบันทึกมื้ออาหาร',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-            color: colorScheme.onSurface,
-          ),
-        ),
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
-        elevation: 0,
         centerTitle: true,
+        title: Text(t.mealLogging, style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black)),
+        backgroundColor: colorScheme.surface,
+        elevation: 0,
         actions: [
           GestureDetector(
             onTap: () => Navigator.of(context).pushNamed('/settings'),
             child: const Padding(
               padding: EdgeInsets.only(right: 16.0),
-              child: CircleAvatar(
-                radius: 18,
-                child: Icon(Icons.person, size: 20),
-              ),
+              child: CircleAvatar(child: Icon(Icons.person)),
             ),
           ),
         ],
@@ -173,7 +180,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
             children: [
               // Meal Type Selection
               Text(
-                'เลือกช่วงเวลาการบันทึก',
+                t.selectMealTime,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -203,7 +210,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            type.displayName,
+                            _getMealTypeName(type, t),
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               color: isSelected ? Colors.white : colorScheme.onSurface,
@@ -222,7 +229,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
               
               // Food Name Input
               Text(
-                'ชื่อเมนู',
+                t.foodName,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -233,7 +240,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
               TextFormField(
                 controller: _foodNameController,
                 decoration: InputDecoration(
-                  hintText: 'กรอกชื่อเมนูอาหาร',
+                  hintText: t.enterFoodName,
                   hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6)),
                   filled: true,
                   fillColor: colorScheme.surfaceContainerHighest,
@@ -256,7 +263,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'กรุณากรอกชื่อเมนูอาหาร';
+                    return t.pleaseEnterFoodName;
                   }
                   return null;
                 },
@@ -301,7 +308,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'รูปอาหาร',
+                              t.mealPhoto,
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w500,
@@ -310,7 +317,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'แตะเพื่อเพิ่มรูป',
+                              t.addPhoto,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: colorScheme.onSurface.withValues(alpha: 0.6),
@@ -325,7 +332,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
               
               // Description Field
               Text(
-                'ข้อมูลอาหาร',
+                t.mealDescription,
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -337,7 +344,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
                 controller: _descriptionController,
                 maxLines: 4,
                 decoration: InputDecoration(
-                  hintText: 'ระบุรายละเอียดเพิ่มเติม เช่น ส่วนประกอบ, รสชาติ, หรือหมายเหตุอื่นๆ',
+                  hintText: t.enterMealDescription,
                   hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6)),
                   filled: true,
                   fillColor: colorScheme.surfaceContainerHighest,
@@ -392,9 +399,9 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
                               valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                             ),
                           )
-                        : const Text(
-                            'บันทึกข้อมูล',
-                            style: TextStyle(
+                        : Text(
+                            t.saveMeal,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),

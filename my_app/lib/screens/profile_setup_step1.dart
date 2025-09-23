@@ -3,9 +3,29 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/profile_setup_provider.dart';
 import '../theme/app_colors.dart';
+import '../shared/profile_image_picker.dart';
 
-class ProfileSetupStep1 extends StatelessWidget {
+class ProfileSetupStep1 extends StatefulWidget {
   const ProfileSetupStep1({super.key});
+
+  @override
+  State<ProfileSetupStep1> createState() => _ProfileSetupStep1State();
+}
+
+class _ProfileSetupStep1State extends State<ProfileSetupStep1> {
+  late final TextEditingController _nameController;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
 
   Future<void> _pickDob(BuildContext context) async {
     final provider = context.read<ProfileSetupProvider>();
@@ -41,11 +61,15 @@ class ProfileSetupStep1 extends StatelessWidget {
   final name = context.select<ProfileSetupProvider, String?>((p) => p.fullName);
   final dob = context.select<ProfileSetupProvider, DateTime?>((p) => p.birthDate);
   final gender = context.select<ProfileSetupProvider, String?>((p) => p.gender);
-  final nameCtrl = TextEditingController(text: name ?? '');
+  
+  // Update controller text only when provider value changes
+  if (_nameController.text != (name ?? '')) {
+    _nameController.text = name ?? '';
+  }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(t.profile),
+        title: Text(t.profileSetup),
       ),
       body: SafeArea(
         child: ListView(
@@ -70,11 +94,13 @@ class ProfileSetupStep1 extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            // Avatar controls removed
+            // Profile Image Picker
+            const ProfileImagePicker(),
+            const SizedBox(height: 32),
 
             // Name
             _RoundedTextField(
-              controller: nameCtrl,
+              controller: _nameController,
               label: t.name,
               hint: t.nameHint,
               onChanged: context.read<ProfileSetupProvider>().setFullName,
@@ -259,28 +285,59 @@ class _GenderCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final dark = isDark ?? theme.brightness == Brightness.dark;
-    final ivoryColor = ivory ?? const Color(0xFFFFFDF6);
     final primaryColor = primary ?? theme.colorScheme.primary;
-    final baseBorder = theme.colorScheme.outline;
-    final selectedFill = dark ? Colors.white.withOpacity(0.06) : primaryColor.withOpacity(0.12);
-    final selectedBorder = dark ? ivoryColor.withOpacity(0.8) : primaryColor;
+    
+    // Define colors based on selection state and theme
+    Color backgroundColor;
+    Color borderColor;
+    Color textColor;
+    Color iconColor;
+    
+    if (selected) {
+      if (dark) {
+        backgroundColor = primaryColor.withOpacity(0.15);
+        borderColor = primaryColor;
+        textColor = primaryColor;
+        iconColor = primaryColor;
+      } else {
+        backgroundColor = primaryColor.withOpacity(0.1);
+        borderColor = primaryColor;
+        textColor = primaryColor;
+        iconColor = primaryColor;
+      }
+    } else {
+      if (dark) {
+        backgroundColor = theme.colorScheme.surface;
+        borderColor = theme.colorScheme.outline.withOpacity(0.3);
+        textColor = theme.colorScheme.onSurface;
+        iconColor = theme.colorScheme.onSurface.withOpacity(0.7);
+      } else {
+        backgroundColor = Colors.grey[50]!;
+        borderColor = Colors.grey[300]!;
+        textColor = Colors.grey[700]!;
+        iconColor = Colors.grey[600]!;
+      }
+    }
+    
     return InkWell(
       borderRadius: BorderRadius.circular(16),
       onTap: onTap,
-      child: Ink(
-        height: 110,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        height: 90,
         decoration: BoxDecoration(
-          color: selected ? selectedFill : Colors.transparent,
+          color: backgroundColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: selected ? selectedBorder : baseBorder,
+            color: borderColor,
+            width: selected ? 2 : 1,
           ),
-          boxShadow: selected && !dark
+          boxShadow: selected
               ? [
                   BoxShadow(
-                    color: primaryColor.withOpacity(0.18),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
+                    color: primaryColor.withOpacity(0.15),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
                   ),
                 ]
               : null,
@@ -292,18 +349,15 @@ class _GenderCard extends StatelessWidget {
               Text(
                 label,
                 style: theme.textTheme.titleSmall?.copyWith(
-                  color: dark
-                      ? ivoryColor
-                      : (selected ? primaryColor : null),
+                  color: textColor,
+                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                 ),
               ),
               const SizedBox(height: 6),
               Icon(
                 icon,
                 size: 28,
-                color: dark
-                    ? ivoryColor
-                    : (selected ? primaryColor : theme.colorScheme.onSurface),
+                color: iconColor,
               ),
             ],
           ),

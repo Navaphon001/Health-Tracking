@@ -12,6 +12,7 @@
   "english": "อังกฤษ",
   "thai": "ไทย",
   "profile": "โปรไฟล์",
+  "profileSetup": "ตั้งค่าโปรไฟล์",
   "stepOf": "ขั้นตอน {current} จาก {total}",
   "@stepOf": {
     "placeholders": {
@@ -64,5 +65,191 @@
   "goalEatHealthier": "กินอาหารเพื่อสุขภาพ",
   "goalAndAchievement": "เป้าหมายและความสำเร็จ",
   "openProfileSetupStep3": "เปิดหน้าตั้งค่าโปรไฟล์ขั้นตอนที่ 3",
-  "finish": "เสร็จสิ้น"
+  "finish": "เสร็จสิ้น",
+  "welcomeBack": "ยินดีต้อนรับกลับ!",
+  "email": "อีเมล",
+  "password": "รหัสผ่าน",
+  "pleaseEnterEmail": "กรุณากรอกอีเมล",
+  "invalidEmailFormat": "รูปแบบอีเมลไม่ถูกต้อง",
+  "pleaseEnterPassword": "กรุณากรอกรหัสผ่าน",
+  "passwordMinLength": "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร",
+  "forgotPassword": "ลืมรหัสผ่าน?",
+  "signIn": "เข้าสู่ระบบ",
+  "dontHaveAccount": "ยังไม่มีบัญชี? ",
+  "register": "สมัครสมาชิก",
+  "waterIntakeTitle": "การดื่มน้ำ",
+  "dailyWaterLogSubtitle": "บันทึกการดื่มน้ำประจำวัน",
+  "waterIntake": "การดื่มน้ำ",
+  "dailyWaterLog": "บันทึกการดื่มน้ำประจำวัน",
+  "selectBeverage": "เลือกเครื่องดื่ม",
+  "addBeverage": "เพิ่มเครื่องดื่ม",
+  "add": "เพิ่ม",
+  "save": "บันทึก",
+  "cancel": "ยกเลิก",
+  "edit": "แก้ไข",
+  "pleaseSelectBeverage": "กรุณาเลือกเครื่องดื่มก่อน",
+  "pleaseEnterAmount": "โปรดระบุปริมาณ (ml)",
+  "beverageAdded": "เพิ่มเครื่องดื่มแล้ว",
+  "ml": "ml",
+  "exercise": "การออกกำลังกาย",
+  "noActivitiesYet": "ยังไม่มีกิจกรรมที่เพิ่ม",
+  "reset": "รีเซ็ต",
+  "stop": "หยุด",
+  "start": "เริ่ม",
+  "selectDuration": "เลือกระยะเวลา",
+  "use": "ใช้",
+  "addActivity": "เพิ่มกิจกรรม",
+  "editActivity": "แก้ไขกิจกรรม",
+  "activityName": "ชื่อกิจกรรม",
+  "duration": "ระยะเวลา",
+  "pick": "เลือก",
+  "startTime": "เวลาเริ่ม",
+  "now": "ตอนนี้",
+  "done": "เสร็จแล้ว",
+  "min": "นาที",
+  "sleepLogged": "บันทึกการนอน",
+  "mealsLogged": "บันทึกอาหาร",
+  "errorOccurred": "เกิดข้อผิดพลาด",
+  "home": "หน้าแรก",
+  "meal": "อาหาร",
+  "water": "น้ำ",
+  "sleep": "นอน",
+  "createYourAccount": "สร้างบัญชีของคุณ",
+  "username": "ชื่อผู้ใช้",
+  "pleaseEnterUsername": "กรุณากรอกชื่อผู้ใช้",
+  "pleaseEnterAnEmail": "กรุณากรอกอีเมล",
+  "passwordMinimum6Chars": "รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร",
+  "confirmPassword": "ยืนยันรหัสผ่าน",
+  "pleaseConfirmPassword": "กรุณายืนยันรหัสผ่าน",
+  "passwordsDoNotMatch": "รหัสผ่านไม่ตรงกัน",
+  "createAccount": "สร้างบัญชี",
+  "haveAnAccount": "มีบัญชีแล้ว? ",
+  "passwordMismatch": "รหัสผ่านไม่ตรงกัน",
+  "bedtime": "เวลานอน",
+  "wakeUpTime": "เวลาตื่น",
+  "logSleep": "บันทึกการนอน",
+  "lastNight": "เมื่อคืน",
+  "addWater": "เพิ่มน้ำ",
+  "selectActivity": "เลือกกิจกรรม",
+  "goodMorning": "สวัสดีตอนเช้า, Alex!",
+  "date": "วันที่ {date}",
+  "@date": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "waterIntakeLabel": "การดื่มน้ำ",
+  "exerciseLabel": "การออกกำลังกาย",
+  "sleepLoggedLabel": "บันทึกการนอน",
+  "mealsLoggedLabel": "บันทึกอาหาร",
+  "todayMood": "อารมณ์วันนี้",
+  "todayProgress": "การดำเนินการวันนี้",
+  "todayWeight": "น้ำหนักวันนี้",
+  "weightKg": "น้ำหนัก (kg)",
+  "heightCm": "ส่วนสูง (cm)",
+  "save": "บันทึก",
+  "edit": "แก้ไข",
+  "done": "เสร็จแล้ว",
+  "volumeMl": "ปริมาณ (ml)",
+  "todayGlasses": "วันนี้: {count} แก้ว",
+  "@todayGlasses": {
+    "placeholders": {
+      "count": {"type": "num"}
+    }
+  },
+  "addBeverageTooltip": "เพิ่มเครื่องดื่ม",
+  "beverageNameHint": "ชื่อเครื่องดื่ม (เช่น น้ำเปล่า ชา...)",
+  "pleaseEnterName": "กรุณากรอกชื่อ",
+  "chooseFromList": "เลือกจากรายการ",
+  "selectProfilePhoto": "เลือกรูปโปรไฟล์",
+  "gallery": "แกลเลอรี่",
+  "camera": "กล้อง",
+  "errorOccurred2": "เกิดข้อผิดพลาด: {error}",
+  "@errorOccurred2": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "deleteGoal": "ลบเป้าหมาย",
+  "goalDeletedSuccessfully": "ลบเป้าหมายสำเร็จ",
+  "healthTrends": "แนวโน้มสุขภาพ",
+  "profileSetupCompleted": "ตั้งค่าโปรไฟล์เสร็จสมบูรณ์!",
+  "uranusCode": "รหัสยูเรนัส",
+  "confirmDeleteGoal": "คุณแน่ใจหรือไม่ที่จะลบ \"{title}\"?",
+  "@confirmDeleteGoal": {
+    "placeholders": {
+      "title": {"type": "String"}
+    }
+  },
+  "delete": "ลบ",
+  "pleaseEnterGoalTitle": "กรุณากรอกชื่อเป้าหมาย",
+  "pleaseEnterDescription": "กรุณากรอกคำอธิบาย",
+  "goalAddedSuccessfully": "เพิ่มเป้าหมายสำเร็จ!",
+  "errorWithDetails": "ผิดพลาด: {error}",
+  "@errorWithDetails": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "noDataAvailable": "ยังไม่มีข้อมูล",
+  "youtubeChannel": "ช่อง Youtube",
+  "noData": "ไม่มีข้อมูล",
+  "errorSelectingImage": "เกิดข้อผิดพลาดในการเลือกรูp: {error}",
+  "@errorSelectingImage": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "takePhoto": "ถ่ายรูป",
+  "selectFromGallery": "เลือกจากแกลเลอรี่",
+  "deletePhoto": "ลบรูป",
+  "mealDataSavedSuccessfully": "บันทึกข้อมูลอาหารเรียบร้อยแล้ว",
+  "errorOccurredWithDetails": "เกิดข้อผิดพลาด: {error}",
+  "@errorOccurredWithDetails": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "activeGoals": "เป้าหมายที่ใช้งาน",
+  "achievements": "ความสำเร็จ",
+  "addYourFirstGoal": "เพิ่มเป้าหมายแรกของคุณ",
+  "addGoal": "เพิ่มเป้าหมาย",
+  "drinkWater": "ดื่มน้ำ",
+  "sleepGoal": "นอนหลับ",
+  "weightGoal": "น้ำหนัก",
+  "glasses": "แก้ว",
+  "minutes": "นาที",
+  "hours": "ชั่วโมง",
+  "kg": "กก.",
+  "general": "ทั่วไป",
+  "goalTitle": "ชื่อเป้าหมาย",
+  "description": "คำอธิบาย",
+  "category": "หมวดหมู่",
+  "targetValue": "ค่าเป้าหมาย ({unit})",
+  "@targetValue": {
+    "placeholders": {
+      "unit": {"type": "String"}
+    }
+  },
+  "goal": "เป้าหมาย",
+  "mealLogging": "การบันทึกมื้ออาหาร",
+  "selectMealTime": "เลือกช่วงเวลาการบันทึก",
+  "breakfast": "เช้า",
+  "lunch": "เที่ยง",
+  "dinner": "เย็น",
+  "snack": "ของว่าง",
+  "foodName": "ชื่อเมนู",
+  "enterFoodName": "กรอกชื่อเมนูอาหาร",
+  "mealPhoto": "รูปอาหาร",
+  "addPhoto": "แกะฟิวเจอร์",
+  "mealDescription": "ข้อมูลอาหาร",
+  "enterMealDescription": "ระบุรายละเอียดเพิ่มเติม เช่น ส่วนประกอบ, ร้านค้า, วิธีทำอาหาร และอื่นๆ",
+  "saveMeal": "บันทึกข้อมูล",
+  "pleaseEnterFoodName": "กรุณากรอกชื่อเมนูอาหาร",
+  "imageSelectionError": "เกิดข้อผิดพลาดในการเลือกรูป: {error}",
+  "@imageSelectionError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  }
 }

@@ -6,10 +6,11 @@ import '../providers/water_provider.dart';
 import '../providers/exercise_provider.dart';
 import '../providers/date_provider.dart';
 import '../providers/bmi_provider.dart';
-import '../providers/mood_provider.dart';
+import '../providers/mood_provider.dart';  
 import '../providers/meal_provider.dart';
 import 'meal_logging_screen.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 
 class DashboardPage extends StatelessWidget {
@@ -19,6 +20,7 @@ class DashboardPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final water = context.watch<WaterProvider>().water;
     final exercise = context.watch<ExerciseProvider>().exercise;
     final date = context.watch<DateProvider>().date;
@@ -44,15 +46,15 @@ class DashboardPage extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'สวัสดีตอนเช้า, Alex!',
-                        style: TextStyle(
+                      Text(
+                        t.goodMorning,
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        'วันที่ $formattedDate',
+                        t.date(formattedDate),
                         style: const TextStyle(fontSize: 16),
                       ),
                     ],
@@ -135,9 +137,9 @@ class DashboardPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "น้ำหนักวันนี้",
-                      style: TextStyle(
+                    Text(
+                      t.todayWeight,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -158,23 +160,23 @@ class DashboardPage extends StatelessWidget {
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
+                  children: [
                     Text(
-                      "อารมณ์วันนี้",
-                      style: TextStyle(
+                      t.todayMood,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    SizedBox(height: 12),
+                    const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _EmojiMood("😐", "Poor"),
-                        _EmojiMood("🙂", "Fair"),
-                        _EmojiMood("😊", "Good"),
-                        _EmojiMood("😁", "Great"),
-                        _EmojiMood("🥳", "Excellent"),
+                        _EmojiMood("😐", t.healthPoor),
+                        _EmojiMood("🙂", t.healthFair),
+                        _EmojiMood("😊", t.healthGood),
+                        _EmojiMood("😁", t.healthGreat),
+                        _EmojiMood("🥳", t.healthExcellent),
                       ],
                     ),
                   ],
@@ -191,9 +193,9 @@ class DashboardPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "การดำเนินการวันนี้",
-                      style: TextStyle(
+                    Text(
+                      t.todayProgress,
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
@@ -202,7 +204,7 @@ class DashboardPage extends StatelessWidget {
                     const SizedBox(height: 12),
                     _ProgressItem(
                       icon: "💧",
-                      label: "Water Intake",  
+                      label: t.waterIntakeLabel,  
                       progressText: "${(water / 2000 * 100).toInt()}%",
                       progress: water / 2000,
                       onTap: () {
@@ -215,8 +217,8 @@ class DashboardPage extends StatelessWidget {
                     ),
                     _ProgressItem(
                       icon: "🏃‍♂️",
-                      label: "Exercise",
-                      progressText: exercise >= 30 ? "Done" : "${exercise} min",
+                      label: t.exerciseLabel,
+                      progressText: exercise >= 30 ? t.done : "${exercise} min",
                       progress: (exercise / 30).clamp(0.0, 1.0),
                       onTap: () {
                         if (onTabChange != null) {
@@ -228,7 +230,7 @@ class DashboardPage extends StatelessWidget {
                     ),
                     _ProgressItem(
                       icon: "😴",
-                      label: "Sleep Logged",
+                      label: t.sleepLoggedLabel,
                       progressText: "8h 30m",
                       progress: 0.85,
                       onTap: () {
@@ -243,7 +245,7 @@ class DashboardPage extends StatelessWidget {
                       builder: (context, mealProvider, child) {
                         return _ProgressItem(
                           icon: "🍽️",
-                          label: "Meals Logged",
+                          label: t.mealsLoggedLabel,
                           progressText: mealProvider.mealProgressText,
                           progress: mealProvider.mealProgress,
                           onTap: () {
@@ -382,6 +384,7 @@ class _BMISection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Consumer<BmiProvider>(
       builder: (context, bmiProvider, _) {
         final isReadOnly = bmiProvider.submitted;
@@ -403,9 +406,9 @@ class _BMISection extends StatelessWidget {
                     controller: weightController,
                     keyboardType: TextInputType.number,
                     readOnly: isReadOnly,
-                    decoration: const InputDecoration(
-                      labelText: 'น้ำหนัก (kg)',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: t.weightKg,
+                      border: const OutlineInputBorder(),
                       isDense: true,
                     ),
                   ),
@@ -416,9 +419,9 @@ class _BMISection extends StatelessWidget {
                     controller: heightController,
                     keyboardType: TextInputType.number,
                     readOnly: isReadOnly,
-                    decoration: const InputDecoration(
-                      labelText: 'ส่วนสูง (cm)',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: t.heightCm,
+                      border: const OutlineInputBorder(),
                       isDense: true,
                     ),
                   ),
@@ -454,7 +457,7 @@ class _BMISection extends StatelessWidget {
                             borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: const Text("แก้ไข"),
+                        child: Text(t.edit),
                       ),
                     ],
                   )
@@ -477,7 +480,7 @@ class _BMISection extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text("บันทึก"),
+                      child: Text(t.save),
                     ),
                   ),
           ],

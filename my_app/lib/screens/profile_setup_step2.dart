@@ -34,7 +34,7 @@ class ProfileSetupStep2 extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(t.profile),
+        title: Text(t.profileSetup),
       ),
       body: SafeArea(
         child: ListView(

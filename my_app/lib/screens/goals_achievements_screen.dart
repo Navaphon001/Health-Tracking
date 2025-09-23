@@ -19,24 +19,26 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     
+    // ตรวจสอบว่ามาจากการ navigate ปกติหรือไม่ (เช่น จากหน้า Settings)
+    final canPop = Navigator.of(context).canPop();
+    
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Theme.of(context).iconTheme.color),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          t.goalAndAchievement,
-          style: TextStyle(
-            color: Theme.of(context).textTheme.titleLarge?.color,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+        automaticallyImplyLeading: canPop,
+        title: Text(t.goalAndAchievement, style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black)),
         centerTitle: true,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16.0),
+            child: GestureDetector(
+              onTap: () => Navigator.of(context).pushNamed('/settings'),
+              child: const CircleAvatar(child: Icon(Icons.person)),
+            ),
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -45,7 +47,7 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
           children: [
             // Active Goals Section
             Text(
-              'Active Goals',
+              t.activeGoals,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -77,7 +79,7 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
 
             // Achievements Section
             Text(
-              'Achievements',
+              t.achievements,
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
@@ -139,7 +141,7 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Add your first goal',
+              AppLocalizations.of(context).addYourFirstGoal,
               style: TextStyle(
                 fontSize: 14,
                 color: Theme.of(context).textTheme.bodyMedium?.color,
@@ -180,7 +182,7 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Add Goal',
+              AppLocalizations.of(context).addGoal,
               style: TextStyle(
                 fontSize: 12,
                 color: Theme.of(context).colorScheme.primary,
@@ -402,20 +404,20 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Goal'),
-        content: Text('Are you sure you want to delete "${goal.title}"?'),
+        title: Text(AppLocalizations.of(context).deleteGoal),
+        content: Text(AppLocalizations.of(context).confirmDeleteGoal(goal.title)),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+            child: Text(AppLocalizations.of(context).cancel),
           ),
           TextButton(
             onPressed: () {
               context.read<GoalProvider>().removeGoal(goal.id);
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Goal deleted successfully'),
+                SnackBar(
+                  content: Text(AppLocalizations.of(context).goalDeletedSuccessfully),
                   backgroundColor: Colors.red,
                 ),
               );
@@ -423,7 +425,7 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
             style: TextButton.styleFrom(
               foregroundColor: Colors.red,
             ),
-            child: const Text('Delete'),
+            child: Text(AppLocalizations.of(context).delete),
           ),
         ],
       ),
@@ -444,18 +446,21 @@ class _AddGoalBottomSheetState extends State<_AddGoalBottomSheet> {
   String _selectedUnit = '';
   DateTime? _targetDate;
 
-  final List<Map<String, String>> _categories = [
-    {'value': 'water', 'label': 'ดื่มน้ำ', 'unit': 'glasses'},
-    {'value': 'exercise', 'label': 'ออกกำลังกาย', 'unit': 'minutes'},
-    {'value': 'sleep', 'label': 'นอนหลับ', 'unit': 'hours'},
-    {'value': 'weight', 'label': 'น้ำหนัก', 'unit': 'kg'},
-    {'value': 'general', 'label': 'ทั่วไป', 'unit': ''},
-  ];
+  List<Map<String, String>> _getLocalizedCategories(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return [
+      {'value': 'water', 'label': t.drinkWater, 'unit': t.glasses},
+      {'value': 'exercise', 'label': t.exercise, 'unit': t.minutes},
+      {'value': 'sleep', 'label': t.sleepGoal, 'unit': t.hours},
+      {'value': 'weight', 'label': t.weightGoal, 'unit': t.kg},
+      {'value': 'general', 'label': t.general, 'unit': ''},
+    ];
+  }
 
   @override
   void initState() {
     super.initState();
-    _selectedUnit = _categories.first['unit']!;
+    _selectedUnit = 'glasses'; // Default unit will be updated when dialog is shown
   }
 
   @override
@@ -506,7 +511,7 @@ class _AddGoalBottomSheetState extends State<_AddGoalBottomSheet> {
             TextField(
               controller: _titleController,
               decoration: InputDecoration(
-                labelText: 'Goal Title',
+                labelText: AppLocalizations.of(context).goalTitle,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -523,7 +528,7 @@ class _AddGoalBottomSheetState extends State<_AddGoalBottomSheet> {
               controller: _descriptionController,
               maxLines: 3,
               decoration: InputDecoration(
-                labelText: 'Description',
+                labelText: AppLocalizations.of(context).description,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -539,7 +544,7 @@ class _AddGoalBottomSheetState extends State<_AddGoalBottomSheet> {
             DropdownButtonFormField<String>(
               value: _selectedCategory,
               decoration: InputDecoration(
-                labelText: 'Category',
+                labelText: AppLocalizations.of(context).category,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -548,7 +553,7 @@ class _AddGoalBottomSheetState extends State<_AddGoalBottomSheet> {
                   borderSide: BorderSide(color: Theme.of(context).colorScheme.primary),
                 ),
               ),
-              items: _categories.map((category) {
+              items: _getLocalizedCategories(context).map((category) {
                 return DropdownMenuItem<String>(
                   value: category['value'],
                   child: Text(category['label']!),
@@ -557,7 +562,7 @@ class _AddGoalBottomSheetState extends State<_AddGoalBottomSheet> {
               onChanged: (value) {
                 setState(() {
                   _selectedCategory = value!;
-                  _selectedUnit = _categories.firstWhere(
+                  _selectedUnit = _getLocalizedCategories(context).firstWhere(
                     (cat) => cat['value'] == value,
                   )['unit']!;
                 });
@@ -571,7 +576,7 @@ class _AddGoalBottomSheetState extends State<_AddGoalBottomSheet> {
                 controller: _targetValueController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: 'Target Value ($_selectedUnit)',
+                  labelText: AppLocalizations.of(context).targetValue(_selectedUnit),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -641,14 +646,14 @@ class _AddGoalBottomSheetState extends State<_AddGoalBottomSheet> {
   void _addGoal() {
     if (_titleController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a goal title')),
+        SnackBar(content: Text(AppLocalizations.of(context).pleaseEnterGoalTitle)),
       );
       return;
     }
 
     if (_descriptionController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a description')),
+        SnackBar(content: Text(AppLocalizations.of(context).pleaseEnterDescription)),
       );
       return;
     }
@@ -674,7 +679,7 @@ class _AddGoalBottomSheetState extends State<_AddGoalBottomSheet> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Goal added successfully!'),
+        content: Text(AppLocalizations.of(context).goalAddedSuccessfully),
         backgroundColor: Theme.of(context).colorScheme.primary,
       ),
     );

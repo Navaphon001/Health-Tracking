@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_notifier.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -47,6 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthNotifier>();
+    final t = AppLocalizations.of(context);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -74,7 +76,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: const Icon(Icons.favorite, color: Colors.white, size: 60),
               ),
               const SizedBox(height: 40),
-              const Text('Welcome Back!',
+              Text(t.welcomeBack,
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.textDark)),
               const SizedBox(height: 40),
@@ -84,15 +86,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _email,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
-                  hintText: 'Email',
+                  hintText: t.email,
                   prefixIcon: Icon(Icons.email_outlined, color: Colors.grey.shade600),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   errorText: auth.emailError,
                 ),
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'กรุณากรอกอีเมล';
+                  if (v == null || v.isEmpty) return t.pleaseEnterEmail;
                   final r = RegExp(r"^[a-zA-Z0-9.!#$%&'*+\-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
-                  if (!r.hasMatch(v)) return 'รูปแบบอีเมลไม่ถูกต้อง';
+                  if (!r.hasMatch(v)) return t.invalidEmailFormat;
                   return null;
                 },
               ),
@@ -103,14 +105,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _password,
                 obscureText: true,
                 decoration: InputDecoration(
-                  hintText: 'Password',
+                  hintText: t.password,
                   prefixIcon: Icon(Icons.lock_outline, color: Colors.grey.shade600),
                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                   errorText: auth.passwordError,
                 ),
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'กรุณากรอกรหัสผ่าน';
-                  if (v.length < 6) return 'รหัสผ่านต้องมีอย่างน้อย 6 ตัวอักษร';
+                  if (v == null || v.isEmpty) return t.pleaseEnterPassword;
+                  if (v.length < 6) return t.passwordMinLength;
                   return null;
                 },
               ),
@@ -120,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 alignment: Alignment.centerRight,
                 child: TextButton(
                   onPressed: () {/* TODO: forgot password */},
-                  child: const Text('Forgot password?'),
+                  child: Text(t.forgotPassword),
                 ),
               ),
               const SizedBox(height: 20),
@@ -148,8 +150,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         child: auth.isLoading
                           ? const SizedBox(width: 24, height: 24,
                               child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
-                          : const Text('Sign In',
-                              style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+                          : Text(t.signIn,
+                              style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ),
@@ -158,11 +160,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 40),
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text("Don't have an account? ", style: TextStyle(color: Colors.grey[600])),
+                Text(t.dontHaveAccount, style: TextStyle(color: Colors.grey[600])),
                 GestureDetector(
                   onTap: () => Navigator.pushNamed(context, '/register'),
-                  child: const Text('Register',
-                    style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                  child: Text(t.register,
+                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
                 ),
               ]),
               const SizedBox(height: 40),

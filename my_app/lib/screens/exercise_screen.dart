@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/habit_notifier.dart';
 import '../models/exercise_activity.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 class ExerciseScreen extends StatefulWidget {
   const ExerciseScreen({super.key});
@@ -25,20 +26,18 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('Exercise'),
-        foregroundColor: AppColors.primary,
+        centerTitle: true,
+        title: Text(t.exercise, style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black)),
         actions: [
           GestureDetector(
             onTap: () => Navigator.of(context).pushNamed('/settings'),
             child: const Padding(
               padding: EdgeInsets.only(right: 16.0),
-              child: CircleAvatar(
-                radius: 18,
-                child: Icon(Icons.person, size: 20),
-              ),
+              child: CircleAvatar(child: Icon(Icons.person)),
             ),
           ),
         ],
@@ -47,8 +46,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       body: Consumer<HabitNotifier>(builder: (context, n, _) {
         final list = n.exerciseActivities;
         if (list.isEmpty) {
-          return const Center(
-            child: Text('No activities added yet.', style: TextStyle(color: AppColors.textSecondary)),
+          return Center(
+            child: Text(t.noActivitiesYet, style: const TextStyle(color: AppColors.textSecondary)),
           );
         }
         return SingleChildScrollView(
@@ -68,6 +67,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 
   Widget _panelBody(ExerciseActivity a, HabitNotifier n) {
+    final t = AppLocalizations.of(context);
     final finished = a.remainingDuration.inSeconds == 0;
 
     String _fmt(Duration d) {
@@ -108,7 +108,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           const Spacer(),
           FilledButton(
             onPressed: finished ? reset : toggle,
-            child: Text(finished ? 'Reset' : (a.isRunning ? 'Stop' : 'Start')),
+            child: Text(finished ? t.reset : (a.isRunning ? t.stop : t.start)),
           ),
           const SizedBox(width: 8),
           IconButton(
@@ -122,6 +122,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   // ===== Dialog เพิ่ม/แก้ไข (เลือกเวลา & duration) =====
   Future<void> _addOrEdit({ExerciseActivity? existing}) async {
+    final t = AppLocalizations.of(context);
     final name = TextEditingController(text: existing?.name);
     TimeOfDay startTime = existing?.scheduledTime ?? TimeOfDay.now();
     Duration selectedDuration = existing?.goalDuration ?? const Duration(minutes: 10);
@@ -142,7 +143,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                     child: Column(
                       children: [
                         const SizedBox(height: 8),
-                        const Text('Select Duration', style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text(t.selectDuration, style: const TextStyle(fontWeight: FontWeight.bold)),
                         Expanded(
                           child: CupertinoTimerPicker(
                             mode: CupertinoTimerPickerMode.hm,
@@ -155,9 +156,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                           child: Row(
                             children: [
-                              TextButton(onPressed: () => Navigator.of(bctx).pop(), child: const Text('Cancel')),
+                              TextButton(onPressed: () => Navigator.of(bctx).pop(), child: Text(t.cancel)),
                               const Spacer(),
-                              FilledButton(onPressed: () => Navigator.of(bctx).pop(temp), child: const Text('Use')),
+                              FilledButton(onPressed: () => Navigator.of(bctx).pop(temp), child: Text(t.use)),
                             ],
                           ),
                         ),
@@ -189,37 +190,37 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           }
 
           return AlertDialog(
-            title: Text(existing == null ? 'Add Activity' : 'Edit Activity'),
+            title: Text(existing == null ? t.addActivity : t.editActivity),
             content: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TextField(controller: name, decoration: const InputDecoration(labelText: 'Activity Name'), autofocus: true),
+                  TextField(controller: name, decoration: InputDecoration(labelText: t.activityName), autofocus: true),
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const Expanded(child: Text('Duration')),
+                      Expanded(child: Text(t.duration)),
                       Text(fmtDur(selectedDuration), style: const TextStyle(color: Colors.grey)),
                       const SizedBox(width: 8),
                       OutlinedButton.icon(
                         onPressed: _pickDurationBottomSheet,
                         icon: const Icon(Icons.timer_outlined),
-                        label: const Text('Pick'),
+                        label: Text(t.pick),
                       ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      const Expanded(child: Text('Start Time')),
+                      Expanded(child: Text(t.startTime)),
                       Text(_hhmm(startTime), style: const TextStyle(color: Colors.grey)),
                       const SizedBox(width: 8),
-                      TextButton(onPressed: () => setS(() => startTime = TimeOfDay.now()), child: const Text('Now')),
+                      TextButton(onPressed: () => setS(() => startTime = TimeOfDay.now()), child: Text(t.now)),
                       const SizedBox(width: 4),
                       OutlinedButton.icon(
                         onPressed: _pickStartTime,
                         icon: const Icon(Icons.schedule),
-                        label: const Text('Pick'),
+                        label: Text(t.pick),
                       ),
                     ],
                   ),
@@ -227,7 +228,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
               ),
             ),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+              TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t.cancel)),
               FilledButton(
                 onPressed: (name.text.trim().isEmpty || selectedDuration.inMinutes == 0)
                     ? null
@@ -236,7 +237,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           'time': startTime,
                           'duration': selectedDuration,
                         }),
-                child: const Text('Save'),
+                child: Text(t.save),
               ),
             ],
           );

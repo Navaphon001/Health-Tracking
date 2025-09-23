@@ -12,7 +12,6 @@ import 'screens/sleep_screen.dart';
 import 'shared/app_keys.dart';
 import 'l10n/app_localizations.dart';
 import 'screens/splash_screen.dart';
-import 'screens/dashboard_page.dart';
 import 'screens/dashboard.dart';
 import 'providers/language_provider.dart';
 import 'providers/theme_provider.dart';
@@ -130,7 +129,6 @@ class MyApp extends StatelessWidget {
         '/sleep': (_) => const SleepScreen(),
         '/onboarding': (_) => const OnboardingMain(),
         '/dashboard': (_) => const DashboardPage(),
-        '/dashboardmock': (_) => const DashboardPageMock(),
         '/settings': (_) => const SettingsPage(),
         '/profile-setup': (_) => const ProfileSetupStep1(),
         '/profile-setup-step2': (_) => const ProfileSetupStep2(),

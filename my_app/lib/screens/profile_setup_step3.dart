@@ -30,7 +30,7 @@ class ProfileSetupStep3 extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(t.aboutYourself),
+        title: Text(t.profileSetup),
       ),
       body: SafeArea(
         child: ListView(
@@ -217,7 +217,7 @@ class ProfileSetupStep3 extends StatelessWidget {
                   ),
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Profile setup completed!')),
+                      SnackBar(content: Text(AppLocalizations.of(context).profileSetupCompleted)),
                     );
                     Navigator.of(context).pushNamedAndRemoveUntil('/main', (route) => false);
                   },

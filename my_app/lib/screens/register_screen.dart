@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_notifier.dart';
+import '../l10n/app_localizations.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -38,9 +39,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _doRegister() async {
     if (!_formKey.currentState!.validate()) return;
+    final t = AppLocalizations.of(context);
     if (_password.text != _confirm.text) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: const Text('รหัสผ่านไม่ตรงกัน'),
+        SnackBar(content: Text(t.passwordMismatch),
           backgroundColor: Colors.red.shade700),
       );
       return;
@@ -98,6 +100,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final auth = context.watch<AuthNotifier>();
 
     return Scaffold(
@@ -126,43 +129,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: const Icon(Icons.favorite, color: Colors.white, size: 60),
               ),
               const SizedBox(height: 40),
-              const Text('Create your account',
+              Text(t.createYourAccount,
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF333333))),
+                style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Color(0xFF333333))),
               const SizedBox(height: 40),
 
               _field(
-                c: _username, hint: 'Username',
+                c: _username, hint: t.username,
                 errorText: auth.usernameError,
-                validator: (v) => (v == null || v.isEmpty) ? 'Please enter a username' : null,
+                validator: (v) => (v == null || v.isEmpty) ? t.pleaseEnterUsername : null,
               ),
               const SizedBox(height: 20),
 
               _field(
-                c: _email, hint: 'Email', type: TextInputType.emailAddress,
+                c: _email, hint: t.email, type: TextInputType.emailAddress,
                 errorText: auth.emailError,
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'Please enter an email';
+                  if (v == null || v.isEmpty) return t.pleaseEnterAnEmail;
                   final r = RegExp(r"^[a-zA-Z0-9.!#$%&'*+\-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
-                  if (!r.hasMatch(v)) return 'รูปแบบอีเมลไม่ถูกต้อง';
+                  if (!r.hasMatch(v)) return t.invalidEmailFormat;
                   return null;
                 },
               ),
               const SizedBox(height: 20),
 
               _field(
-                c: _password, hint: 'Password', obscure: true,
+                c: _password, hint: t.password, obscure: true,
                 errorText: auth.passwordError,
                 validator: (v) => (v == null || v.length < 6)
-                    ? 'Password must be at least 6 characters' : null,
+                    ? t.passwordMinimum6Chars : null,
               ),
               const SizedBox(height: 20),
 
               _field(
-                c: _confirm, hint: 'Confirm password', obscure: true,
+                c: _confirm, hint: t.confirmPassword, obscure: true,
                 validator: (v) {
-                  if (v == null || v.isEmpty) return 'Please confirm your password';
-                  if (v != _password.text) return 'Passwords do not match';
+                  if (v == null || v.isEmpty) return t.pleaseConfirmPassword;
+                  if (v != _password.text) return t.passwordsDoNotMatch;
                   return null;
                 },
               ),
@@ -191,8 +194,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: auth.isLoading
                           ? const SizedBox(width: 24, height: 24,
                               child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3))
-                          : const Text('Create account',
-                              style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
+                          : Text(t.createAccount,
+                              style: const TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ),
@@ -201,11 +204,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 30),
 
               Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                Text("Have an account? ", style: TextStyle(color: Colors.grey[800], fontSize: 16)),
+                Text(t.haveAnAccount, style: TextStyle(color: Colors.grey[800], fontSize: 16)),
                 GestureDetector(
                   onTap: () => Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false),
-                  child: const Text('Sign In',
-                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+                  child: Text(t.signIn,
+                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
                 ),
               ]),
               const SizedBox(height: 40),

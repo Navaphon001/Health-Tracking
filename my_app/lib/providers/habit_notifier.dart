@@ -141,7 +141,7 @@ class HabitNotifier extends ChangeNotifier {
       final WaterDay day = await _local.getWaterToday();
       dailyWaterCount = day.count;
       final row = await _local.getWaterDaily(now);
-      dailyWaterMl = (row?['ml'] as int?) ?? (dailyWaterMl + ml);
+      dailyWaterMl = (row?['ml'] as int?) ?? 0;
 
       // 3) นับจำนวนต่อ drink (UI-only)
       final p  = await _prefs;
@@ -159,6 +159,13 @@ class HabitNotifier extends ChangeNotifier {
   Future<void> addDrinkPreset(String name, [int ml = baseGlassMl]) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
     drinkPresets.insert(0, DrinkPreset(id: id, name: name, ml: ml));
+    final p = await _prefs;
+    await _savePresetsToPrefs(p);
+    notifyListeners();
+  }
+
+  Future<void> deleteDrinkPreset(String id) async {
+    drinkPresets.removeWhere((preset) => preset.id == id);
     final p = await _prefs;
     await _savePresetsToPrefs(p);
     notifyListeners();

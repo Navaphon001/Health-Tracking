@@ -24,7 +24,7 @@ class SettingsPage extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const CircleAvatar(child: Icon(Icons.person)),
-              title: const Text('Uranus Code'),
+              title: Text(AppLocalizations.of(context).uranusCode),
               subtitle: const Text('Youtube Channel'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {},

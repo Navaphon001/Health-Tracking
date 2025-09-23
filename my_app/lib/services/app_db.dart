@@ -116,6 +116,37 @@ class AppDb {
         ''');
         await db.execute('CREATE INDEX IF NOT EXISTS idx_physical_info_user ON physical_info(user_id);');
         await db.execute('CREATE INDEX IF NOT EXISTS idx_physical_info_is_synced ON physical_info(is_synced);');
+
+        // 6) User Profile (สำหรับ profile setup flow)
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS user_profile (
+            user_id               TEXT PRIMARY KEY,
+            step1_completed       INTEGER NOT NULL DEFAULT 0,
+            step2_completed       INTEGER NOT NULL DEFAULT 0,
+            step3_completed       INTEGER NOT NULL DEFAULT 0,
+            profile_completed     INTEGER NOT NULL DEFAULT 0,
+            full_name             TEXT,
+            nickname              TEXT,
+            birth_date            TEXT,
+            gender                TEXT,
+            profile_image_url     TEXT,
+            height                REAL,
+            weight                REAL,
+            activity_level        TEXT,
+            health_goal           TEXT,
+            health_rating         TEXT,
+            occupation            TEXT,
+            lifestyle             TEXT,
+            sleep_hours           REAL,
+            wake_up_time          TEXT,
+            interests             TEXT,
+            goals                 TEXT,
+            is_synced             INTEGER NOT NULL DEFAULT 0,
+            created_at            INTEGER NOT NULL,
+            updated_at            INTEGER NOT NULL
+          );
+        ''');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_user_profile_is_synced ON user_profile(is_synced);');
       },
       onUpgrade: (db, oldV, newV) async {
         // v1 -> v2 : เดิม (exercise_daily แบบรวม)

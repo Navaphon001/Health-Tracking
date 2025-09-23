@@ -12,6 +12,7 @@
   "english": "English",
   "thai": "Thai",
   "profile": "Profile",
+  "profileSetup": "Profile setup",
   "stepOf": "Step {current} of {total}",
   "@stepOf": {
     "placeholders": {
@@ -64,5 +65,191 @@
   "goalEatHealthier": "Eat Healthier",
   "goalAndAchievement": "Goals & Achievements",
   "openProfileSetupStep3": "Open Profile Setup Step 3",
-  "finish": "Finish"
+  "finish": "Finish",
+  "welcomeBack": "Welcome Back!",
+  "email": "Email",
+  "password": "Password",
+  "pleaseEnterEmail": "Please enter email",
+  "invalidEmailFormat": "Invalid email format",
+  "pleaseEnterPassword": "Please enter password",  
+  "passwordMinLength": "Password must be at least 6 characters",
+  "forgotPassword": "Forgot password?",
+  "signIn": "Sign In",
+  "dontHaveAccount": "Don't have an account? ",
+  "register": "Register",
+  "waterIntakeTitle": "Water Intake",
+  "dailyWaterLogSubtitle": "Record your daily water intake",
+  "waterIntake": "Water Intake",
+  "dailyWaterLog": "Daily Water Log",
+  "selectBeverage": "Select Beverage",
+  "addBeverage": "Add Beverage",
+  "add": "Add",
+  "save": "Save",
+  "cancel": "Cancel",
+  "edit": "Edit",
+  "pleaseSelectBeverage": "Please select a beverage first",
+  "pleaseEnterAmount": "Please enter amount (ml)",
+  "beverageAdded": "Beverage added",
+  "ml": "ml",
+  "exercise": "Exercise",
+  "noActivitiesYet": "No activities added yet",
+  "reset": "Reset",
+  "stop": "Stop",
+  "start": "Start",
+  "selectDuration": "Select Duration",
+  "use": "Use",
+  "addActivity": "Add Activity",
+  "editActivity": "Edit Activity",
+  "activityName": "Activity Name",
+  "duration": "Duration",
+  "pick": "Pick",
+  "startTime": "Start Time",
+  "now": "Now",
+  "done": "Done",
+  "min": "min",
+  "sleepLogged": "Sleep Logged",
+  "mealsLogged": "Meals Logged",
+  "errorOccurred": "An error occurred",
+  "home": "Home",
+  "meal": "Meal",
+  "water": "Water",
+  "sleep": "Sleep",
+  "createYourAccount": "Create your account",
+  "username": "Username",
+  "pleaseEnterUsername": "Please enter a username",
+  "pleaseEnterAnEmail": "Please enter an email",
+  "passwordMinimum6Chars": "Password must be at least 6 characters",
+  "confirmPassword": "Confirm password",
+  "pleaseConfirmPassword": "Please confirm your password",
+  "passwordsDoNotMatch": "Passwords do not match",
+  "createAccount": "Create account",
+  "haveAnAccount": "Have an account? ",
+  "passwordMismatch": "Passwords do not match",
+  "bedtime": "Bedtime",
+  "wakeUpTime": "Wake-up Time",
+  "logSleep": "Log Sleep",
+  "lastNight": "last night",
+  "addWater": "Add Water",
+  "selectActivity": "Select Activity",
+  "goodMorning": "Good morning, Alex!",
+  "date": "Date {date}",
+  "@date": {
+    "placeholders": {
+      "date": {"type": "String"}
+    }
+  },
+  "waterIntakeLabel": "Water Intake",
+  "exerciseLabel": "Exercise",
+  "sleepLoggedLabel": "Sleep Logged",
+  "mealsLoggedLabel": "Meals Logged",
+  "todayMood": "Today's Mood",
+  "todayProgress": "Today's Progress",
+  "todayWeight": "Today's Weight",
+  "weightKg": "Weight (kg)",
+  "heightCm": "Height (cm)",
+  "save": "Save",
+  "edit": "Edit",
+  "done": "Done",
+  "volumeMl": "Volume (ml)",
+  "todayGlasses": "Today: {count} glasses",
+  "@todayGlasses": {
+    "placeholders": {
+      "count": {"type": "num"}
+    }
+  },
+  "addBeverageTooltip": "Add beverage",
+  "beverageNameHint": "Beverage name (e.g. water, tea...)",
+  "pleaseEnterName": "Please enter a name",
+  "chooseFromList": "Choose from list",
+  "selectProfilePhoto": "Select Profile Photo",
+  "gallery": "Gallery",
+  "camera": "Camera",
+  "errorOccurred2": "An error occurred: {error}",
+  "@errorOccurred2": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "deleteGoal": "Delete Goal",
+  "goalDeletedSuccessfully": "Goal deleted successfully",
+  "healthTrends": "Health Trends",
+  "profileSetupCompleted": "Profile setup completed!",
+  "uranusCode": "Uranus Code",
+  "confirmDeleteGoal": "Are you sure you want to delete \"{title}\"?",
+  "@confirmDeleteGoal": {
+    "placeholders": {
+      "title": {"type": "String"}
+    }
+  },
+  "delete": "Delete",
+  "pleaseEnterGoalTitle": "Please enter a goal title",
+  "pleaseEnterDescription": "Please enter a description",
+  "goalAddedSuccessfully": "Goal added successfully!",
+  "errorWithDetails": "Error: {error}",
+  "@errorWithDetails": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "noDataAvailable": "No data available",
+  "youtubeChannel": "Youtube Channel",
+  "noData": "No data",
+  "errorSelectingImage": "Error selecting image: {error}",
+  "@errorSelectingImage": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "takePhoto": "Take Photo",
+  "selectFromGallery": "Select from Gallery",
+  "deletePhoto": "Delete Photo",
+  "mealDataSavedSuccessfully": "Meal data saved successfully",
+  "errorOccurredWithDetails": "An error occurred: {error}",
+  "@errorOccurredWithDetails": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "activeGoals": "Active Goals",
+  "achievements": "Achievements",
+  "addYourFirstGoal": "Add your first goal",
+  "addGoal": "Add Goal",
+  "drinkWater": "Drink Water",
+  "sleepGoal": "Sleep",
+  "weightGoal": "Weight",
+  "glasses": "glasses",
+  "minutes": "minutes",
+  "hours": "hours",
+  "kg": "kg",
+  "general": "General",
+  "goalTitle": "Goal Title",
+  "description": "Description",
+  "category": "Category",
+  "targetValue": "Target Value ({unit})",
+  "@targetValue": {
+    "placeholders": {
+      "unit": {"type": "String"}
+    }
+  },
+  "goal": "Goal",
+  "mealLogging": "Meal Logging",
+  "selectMealTime": "Select meal time",
+  "breakfast": "Breakfast",
+  "lunch": "Lunch",
+  "dinner": "Dinner",
+  "snack": "Snack",
+  "foodName": "Food Name",
+  "enterFoodName": "Enter food name",
+  "mealPhoto": "Meal Photo",
+  "addPhoto": "Add Photo",
+  "mealDescription": "Meal Description",
+  "enterMealDescription": "Enter meal description, e.g., portion size, restaurant, cooking method, etc.",
+  "saveMeal": "Save Meal",
+  "pleaseEnterFoodName": "Please enter food name",
+  "imageSelectionError": "Image selection error: {error}",
+  "@imageSelectionError": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  }
 }

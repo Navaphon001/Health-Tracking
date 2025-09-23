@@ -64,20 +64,21 @@ class UserProfileService {
     required String nickname,
     required DateTime birthDate,
     required String gender,
+    String? profileImageUrl,
   }) async {
     final db = await AppDb.instance.database;
     final now = DateTime.now().millisecondsSinceEpoch;
     
     await db.execute('''
       INSERT OR REPLACE INTO user_profile (
-        user_id, step1_completed, full_name, nickname, birth_date, gender,
+        user_id, step1_completed, full_name, nickname, birth_date, gender, profile_image_url,
         created_at, updated_at
-      ) VALUES (?, 1, ?, ?, ?, ?, 
+      ) VALUES (?, 1, ?, ?, ?, ?, ?, 
         COALESCE((SELECT created_at FROM user_profile WHERE user_id = ?), ?), 
         ?
       )
     ''', [
-      userId, fullName, nickname, birthDate.toIso8601String(), gender,
+      userId, fullName, nickname, birthDate.toIso8601String(), gender, profileImageUrl,
       userId, now, now
     ]);
   }
@@ -180,6 +181,7 @@ class UserProfileService {
     String? nickname,
     DateTime? birthDate,
     String? gender,
+    String? profileImageUrl,
   }) async {
     final db = await AppDb.instance.database;
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -189,6 +191,7 @@ class UserProfileService {
     if (nickname != null) updates['nickname'] = nickname;
     if (birthDate != null) updates['birth_date'] = birthDate.toIso8601String();
     if (gender != null) updates['gender'] = gender;
+    if (profileImageUrl != null) updates['profile_image_url'] = profileImageUrl;
     
     if (updates.length > 1) { // มีการเปลี่ยนแปลงนอกจาก updated_at
       await db.update('user_profile', updates, where: 'user_id = ?', whereArgs: [userId]);

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_localizations.dart';
 import 'dashboard.dart';
 import 'meal_logging_screen.dart';
 import 'water_screen.dart';
 import 'exercise_screen.dart';
 import 'sleep_screen.dart';
+import 'goals_achievements_screen.dart';
 
 class AppNavigation extends StatefulWidget {
   const AppNavigation({super.key});
@@ -28,10 +30,12 @@ class _AppNavigationState extends State<AppNavigation> {
     const WaterScreen(),
     const ExerciseScreen(),
     const SleepScreen(),
+    const GoalsAchievementsScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       body: IndexedStack(
         index: _currentIndex,
@@ -67,31 +71,36 @@ class _AppNavigationState extends State<AppNavigation> {
             fontWeight: FontWeight.normal,
             fontSize: 11,
           ),
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(Icons.home_outlined),
-              activeIcon: Icon(Icons.home),
-              label: 'Home',
+              icon: const Icon(Icons.home_outlined),
+              activeIcon: const Icon(Icons.home),
+              label: t.home,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.restaurant_outlined),
-              activeIcon: Icon(Icons.restaurant),
-              label: 'Meal',
+              icon: const Icon(Icons.restaurant_outlined),
+              activeIcon: const Icon(Icons.restaurant),
+              label: t.meal,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.water_drop_outlined),
-              activeIcon: Icon(Icons.water_drop),
-              label: 'Water',
+              icon: const Icon(Icons.water_drop_outlined),
+              activeIcon: const Icon(Icons.water_drop),
+              label: t.water,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.fitness_center_outlined),
-              activeIcon: Icon(Icons.fitness_center),
-              label: 'Exercise',
+              icon: const Icon(Icons.fitness_center_outlined),
+              activeIcon: const Icon(Icons.fitness_center),
+              label: t.exercise,
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.bedtime_outlined),
-              activeIcon: Icon(Icons.bedtime),
-              label: 'Sleep',
+              icon: const Icon(Icons.bedtime_outlined),
+              activeIcon: const Icon(Icons.bedtime),
+              label: t.sleep,
+            ),
+            BottomNavigationBarItem(
+              icon: const Icon(Icons.flag_outlined),
+              activeIcon: const Icon(Icons.flag),
+              label: t.goal,
             ),
           ],
         ),

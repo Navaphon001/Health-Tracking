@@ -176,6 +176,12 @@ abstract class AppLocalizations {
   /// **'Profile'**
   String get profile;
 
+  /// No description provided for @profileSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile setup'**
+  String get profileSetup;
+
   /// No description provided for @stepOf.
   ///
   /// In en, this message translates to:
@@ -457,6 +463,834 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Finish'**
   String get finish;
+
+  /// No description provided for @welcomeBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome Back!'**
+  String get welcomeBack;
+
+  /// No description provided for @email.
+  ///
+  /// In en, this message translates to:
+  /// **'Email'**
+  String get email;
+
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// No description provided for @pleaseEnterEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter email'**
+  String get pleaseEnterEmail;
+
+  /// No description provided for @invalidEmailFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid email format'**
+  String get invalidEmailFormat;
+
+  /// No description provided for @pleaseEnterPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter password'**
+  String get pleaseEnterPassword;
+
+  /// No description provided for @passwordMinLength.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get passwordMinLength;
+
+  /// No description provided for @forgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot password?'**
+  String get forgotPassword;
+
+  /// No description provided for @signIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign In'**
+  String get signIn;
+
+  /// No description provided for @dontHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account? '**
+  String get dontHaveAccount;
+
+  /// No description provided for @register.
+  ///
+  /// In en, this message translates to:
+  /// **'Register'**
+  String get register;
+
+  /// No description provided for @waterIntakeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Water Intake'**
+  String get waterIntakeTitle;
+
+  /// No description provided for @dailyWaterLogSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Record your daily water intake'**
+  String get dailyWaterLogSubtitle;
+
+  /// No description provided for @waterIntake.
+  ///
+  /// In en, this message translates to:
+  /// **'Water Intake'**
+  String get waterIntake;
+
+  /// No description provided for @dailyWaterLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Water Log'**
+  String get dailyWaterLog;
+
+  /// No description provided for @selectBeverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Beverage'**
+  String get selectBeverage;
+
+  /// No description provided for @addBeverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Beverage'**
+  String get addBeverage;
+
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// No description provided for @pleaseSelectBeverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a beverage first'**
+  String get pleaseSelectBeverage;
+
+  /// No description provided for @pleaseEnterAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter amount (ml)'**
+  String get pleaseEnterAmount;
+
+  /// No description provided for @beverageAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'Beverage added'**
+  String get beverageAdded;
+
+  /// No description provided for @ml.
+  ///
+  /// In en, this message translates to:
+  /// **'ml'**
+  String get ml;
+
+  /// No description provided for @exercise.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise'**
+  String get exercise;
+
+  /// No description provided for @noActivitiesYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No activities added yet'**
+  String get noActivitiesYet;
+
+  /// No description provided for @reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
+
+  /// No description provided for @stop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stop;
+
+  /// No description provided for @start.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get start;
+
+  /// No description provided for @selectDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Duration'**
+  String get selectDuration;
+
+  /// No description provided for @use.
+  ///
+  /// In en, this message translates to:
+  /// **'Use'**
+  String get use;
+
+  /// No description provided for @addActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Activity'**
+  String get addActivity;
+
+  /// No description provided for @editActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Activity'**
+  String get editActivity;
+
+  /// No description provided for @activityName.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity Name'**
+  String get activityName;
+
+  /// No description provided for @duration.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get duration;
+
+  /// No description provided for @pick.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick'**
+  String get pick;
+
+  /// No description provided for @startTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Time'**
+  String get startTime;
+
+  /// No description provided for @now.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get now;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @min.
+  ///
+  /// In en, this message translates to:
+  /// **'min'**
+  String get min;
+
+  /// No description provided for @sleepLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Logged'**
+  String get sleepLogged;
+
+  /// No description provided for @mealsLogged.
+  ///
+  /// In en, this message translates to:
+  /// **'Meals Logged'**
+  String get mealsLogged;
+
+  /// No description provided for @errorOccurred.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred'**
+  String get errorOccurred;
+
+  /// No description provided for @home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get home;
+
+  /// No description provided for @meal.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal'**
+  String get meal;
+
+  /// No description provided for @water.
+  ///
+  /// In en, this message translates to:
+  /// **'Water'**
+  String get water;
+
+  /// No description provided for @sleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep'**
+  String get sleep;
+
+  /// No description provided for @createYourAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create your account'**
+  String get createYourAccount;
+
+  /// No description provided for @username.
+  ///
+  /// In en, this message translates to:
+  /// **'Username'**
+  String get username;
+
+  /// No description provided for @pleaseEnterUsername.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a username'**
+  String get pleaseEnterUsername;
+
+  /// No description provided for @pleaseEnterAnEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter an email'**
+  String get pleaseEnterAnEmail;
+
+  /// No description provided for @passwordMinimum6Chars.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get passwordMinimum6Chars;
+
+  /// No description provided for @confirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm password'**
+  String get confirmPassword;
+
+  /// No description provided for @pleaseConfirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Please confirm your password'**
+  String get pleaseConfirmPassword;
+
+  /// No description provided for @passwordsDoNotMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordsDoNotMatch;
+
+  /// No description provided for @createAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create account'**
+  String get createAccount;
+
+  /// No description provided for @haveAnAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Have an account? '**
+  String get haveAnAccount;
+
+  /// No description provided for @passwordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordMismatch;
+
+  /// No description provided for @bedtime.
+  ///
+  /// In en, this message translates to:
+  /// **'Bedtime'**
+  String get bedtime;
+
+  /// No description provided for @wakeUpTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Wake-up Time'**
+  String get wakeUpTime;
+
+  /// No description provided for @logSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Log Sleep'**
+  String get logSleep;
+
+  /// No description provided for @lastNight.
+  ///
+  /// In en, this message translates to:
+  /// **'last night'**
+  String get lastNight;
+
+  /// No description provided for @addWater.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Water'**
+  String get addWater;
+
+  /// No description provided for @selectActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Activity'**
+  String get selectActivity;
+
+  /// No description provided for @goodMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning, Alex!'**
+  String get goodMorning;
+
+  /// No description provided for @date.
+  ///
+  /// In en, this message translates to:
+  /// **'Date {date}'**
+  String date(String date);
+
+  /// No description provided for @waterIntakeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Water Intake'**
+  String get waterIntakeLabel;
+
+  /// No description provided for @exerciseLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise'**
+  String get exerciseLabel;
+
+  /// No description provided for @sleepLoggedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Logged'**
+  String get sleepLoggedLabel;
+
+  /// No description provided for @mealsLoggedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Meals Logged'**
+  String get mealsLoggedLabel;
+
+  /// No description provided for @todayMood.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Mood'**
+  String get todayMood;
+
+  /// No description provided for @todayProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Progress'**
+  String get todayProgress;
+
+  /// No description provided for @todayWeight.
+  ///
+  /// In en, this message translates to:
+  /// **'Today\'s Weight'**
+  String get todayWeight;
+
+  /// No description provided for @weightKg.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight (kg)'**
+  String get weightKg;
+
+  /// No description provided for @heightCm.
+  ///
+  /// In en, this message translates to:
+  /// **'Height (cm)'**
+  String get heightCm;
+
+  /// No description provided for @volumeMl.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume (ml)'**
+  String get volumeMl;
+
+  /// No description provided for @todayGlasses.
+  ///
+  /// In en, this message translates to:
+  /// **'Today: {count} glasses'**
+  String todayGlasses(num count);
+
+  /// No description provided for @addBeverageTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add beverage'**
+  String get addBeverageTooltip;
+
+  /// No description provided for @beverageNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Beverage name (e.g. water, tea...)'**
+  String get beverageNameHint;
+
+  /// No description provided for @pleaseEnterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a name'**
+  String get pleaseEnterName;
+
+  /// No description provided for @chooseFromList.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from list'**
+  String get chooseFromList;
+
+  /// No description provided for @selectProfilePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Profile Photo'**
+  String get selectProfilePhoto;
+
+  /// No description provided for @gallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Gallery'**
+  String get gallery;
+
+  /// No description provided for @camera.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera'**
+  String get camera;
+
+  /// No description provided for @errorOccurred2.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred: {error}'**
+  String errorOccurred2(String error);
+
+  /// No description provided for @deleteGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Goal'**
+  String get deleteGoal;
+
+  /// No description provided for @goalDeletedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal deleted successfully'**
+  String get goalDeletedSuccessfully;
+
+  /// No description provided for @healthTrends.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Trends'**
+  String get healthTrends;
+
+  /// No description provided for @profileSetupCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile setup completed!'**
+  String get profileSetupCompleted;
+
+  /// No description provided for @uranusCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Uranus Code'**
+  String get uranusCode;
+
+  /// No description provided for @confirmDeleteGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete \"{title}\"?'**
+  String confirmDeleteGoal(String title);
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @pleaseEnterGoalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a goal title'**
+  String get pleaseEnterGoalTitle;
+
+  /// No description provided for @pleaseEnterDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a description'**
+  String get pleaseEnterDescription;
+
+  /// No description provided for @goalAddedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal added successfully!'**
+  String get goalAddedSuccessfully;
+
+  /// No description provided for @errorWithDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {error}'**
+  String errorWithDetails(String error);
+
+  /// No description provided for @noDataAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No data available'**
+  String get noDataAvailable;
+
+  /// No description provided for @youtubeChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Youtube Channel'**
+  String get youtubeChannel;
+
+  /// No description provided for @noData.
+  ///
+  /// In en, this message translates to:
+  /// **'No data'**
+  String get noData;
+
+  /// No description provided for @errorSelectingImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Error selecting image: {error}'**
+  String errorSelectingImage(String error);
+
+  /// No description provided for @takePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take Photo'**
+  String get takePhoto;
+
+  /// No description provided for @selectFromGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Select from Gallery'**
+  String get selectFromGallery;
+
+  /// No description provided for @deletePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Photo'**
+  String get deletePhoto;
+
+  /// No description provided for @mealDataSavedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal data saved successfully'**
+  String get mealDataSavedSuccessfully;
+
+  /// No description provided for @errorOccurredWithDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred: {error}'**
+  String errorOccurredWithDetails(String error);
+
+  /// No description provided for @activeGoals.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Goals'**
+  String get activeGoals;
+
+  /// No description provided for @achievements.
+  ///
+  /// In en, this message translates to:
+  /// **'Achievements'**
+  String get achievements;
+
+  /// No description provided for @addYourFirstGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your first goal'**
+  String get addYourFirstGoal;
+
+  /// No description provided for @addGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Goal'**
+  String get addGoal;
+
+  /// No description provided for @drinkWater.
+  ///
+  /// In en, this message translates to:
+  /// **'Drink Water'**
+  String get drinkWater;
+
+  /// No description provided for @sleepGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep'**
+  String get sleepGoal;
+
+  /// No description provided for @weightGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight'**
+  String get weightGoal;
+
+  /// No description provided for @glasses.
+  ///
+  /// In en, this message translates to:
+  /// **'glasses'**
+  String get glasses;
+
+  /// No description provided for @minutes.
+  ///
+  /// In en, this message translates to:
+  /// **'minutes'**
+  String get minutes;
+
+  /// No description provided for @hours.
+  ///
+  /// In en, this message translates to:
+  /// **'hours'**
+  String get hours;
+
+  /// No description provided for @kg.
+  ///
+  /// In en, this message translates to:
+  /// **'kg'**
+  String get kg;
+
+  /// No description provided for @general.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get general;
+
+  /// No description provided for @goalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal Title'**
+  String get goalTitle;
+
+  /// No description provided for @description.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get description;
+
+  /// No description provided for @category.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get category;
+
+  /// No description provided for @targetValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Target Value ({unit})'**
+  String targetValue(String unit);
+
+  /// No description provided for @goal.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal'**
+  String get goal;
+
+  /// No description provided for @mealLogging.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal Logging'**
+  String get mealLogging;
+
+  /// No description provided for @selectMealTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Select meal time'**
+  String get selectMealTime;
+
+  /// No description provided for @breakfast.
+  ///
+  /// In en, this message translates to:
+  /// **'Breakfast'**
+  String get breakfast;
+
+  /// No description provided for @lunch.
+  ///
+  /// In en, this message translates to:
+  /// **'Lunch'**
+  String get lunch;
+
+  /// No description provided for @dinner.
+  ///
+  /// In en, this message translates to:
+  /// **'Dinner'**
+  String get dinner;
+
+  /// No description provided for @snack.
+  ///
+  /// In en, this message translates to:
+  /// **'Snack'**
+  String get snack;
+
+  /// No description provided for @foodName.
+  ///
+  /// In en, this message translates to:
+  /// **'Food Name'**
+  String get foodName;
+
+  /// No description provided for @enterFoodName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter food name'**
+  String get enterFoodName;
+
+  /// No description provided for @mealPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal Photo'**
+  String get mealPhoto;
+
+  /// No description provided for @addPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Photo'**
+  String get addPhoto;
+
+  /// No description provided for @mealDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal Description'**
+  String get mealDescription;
+
+  /// No description provided for @enterMealDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter meal description, e.g., portion size, restaurant, cooking method, etc.'**
+  String get enterMealDescription;
+
+  /// No description provided for @saveMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Meal'**
+  String get saveMeal;
+
+  /// No description provided for @pleaseEnterFoodName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter food name'**
+  String get pleaseEnterFoodName;
+
+  /// No description provided for @imageSelectionError.
+  ///
+  /// In en, this message translates to:
+  /// **'Image selection error: {error}'**
+  String imageSelectionError(String error);
 }
 
 class _AppLocalizationsDelegate

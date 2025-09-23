@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/habit_notifier.dart';
 import '../theme/app_colors.dart';
+import '../l10n/app_localizations.dart';
 
 class SleepScreen extends StatefulWidget {
   const SleepScreen({super.key});
@@ -33,23 +34,21 @@ class _SleepScreenState extends State<SleepScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final dur = _calcDuration(_bed, _wake);
     final stars = _stars(dur);
 
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
-        title: const Text('Sleep'),
-        foregroundColor: AppColors.primary,
+        centerTitle: true,
+        title: Text(t.sleep, style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black)),
         actions: [
           GestureDetector(
             onTap: () => Navigator.of(context).pushNamed('/settings'),
             child: const Padding(
               padding: EdgeInsets.only(right: 16.0),
-              child: CircleAvatar(
-                radius: 18,
-                child: Icon(Icons.person, size: 20),
-              ),
+              child: CircleAvatar(child: Icon(Icons.person)),
             ),
           ),
         ],
@@ -74,7 +73,7 @@ class _SleepScreenState extends State<SleepScreen> {
 
             // เลือกเวลานอน
             _TimeTile(
-              title: 'Bedtime',
+              title: t.bedtime,
               value: _hhmm(_bed),
               icon: Icons.nightlight_round,
               onTap: () async {
@@ -87,7 +86,7 @@ class _SleepScreenState extends State<SleepScreen> {
 
             // เลือกเวลาตื่น
             _TimeTile(
-              title: 'Wake-up Time',
+              title: t.wakeUpTime,
               value: _hhmm(_wake),
               icon: Icons.wb_sunny,
               onTap: () async {
@@ -130,9 +129,9 @@ class _SleepScreenState extends State<SleepScreen> {
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
-                    'Log Sleep',
-                    style: TextStyle(
+                  child: Text(
+                    t.logSleep,
+                    style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),
@@ -173,7 +172,8 @@ class _SleepScreenState extends State<SleepScreen> {
 
   String _formatDuration(Duration d) {
     final h = d.inHours, m = d.inMinutes.remainder(60);
-    return '${h}h ${m}m last night';
+    final t = AppLocalizations.of(context);
+    return '${h}h ${m}m ${t.lastNight}';
   }
 
   int _stars(Duration d) {

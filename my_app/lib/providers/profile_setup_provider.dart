@@ -7,6 +7,7 @@ class ProfileSetupProvider extends ChangeNotifier {
   String? _nickname;
   DateTime? _birthDate;
   String? _gender;
+  String? _profileImageUrl;
   
   // Step 2: Physical Info
   double? _height;
@@ -28,6 +29,7 @@ class ProfileSetupProvider extends ChangeNotifier {
   String? get nickname => _nickname;
   DateTime? get birthDate => _birthDate;
   String? get gender => _gender;
+  String? get profileImageUrl => _profileImageUrl;
   double? get height => _height;
   double? get weight => _weight;
   String? get activityLevel => _activityLevel;
@@ -58,6 +60,11 @@ class ProfileSetupProvider extends ChangeNotifier {
 
   void setGender(String? value) {
     _gender = value;
+    notifyListeners();
+  }
+
+  void setProfileImageUrl(String? value) {
+    _profileImageUrl = value;
     notifyListeners();
   }
 
@@ -140,6 +147,7 @@ class ProfileSetupProvider extends ChangeNotifier {
         nickname: _nickname!,
         birthDate: _birthDate!,
         gender: _gender!,
+        profileImageUrl: _profileImageUrl,
       );
     }
   }
@@ -178,6 +186,7 @@ class ProfileSetupProvider extends ChangeNotifier {
       _nickname = profile['nickname'];
       _birthDate = profile['birth_date'] != null ? DateTime.parse(profile['birth_date']) : null;
       _gender = profile['gender'];
+      _profileImageUrl = profile['profile_image_url'];
       _height = profile['height'];
       _weight = profile['weight'];
       _activityLevel = profile['activity_level'];
@@ -198,6 +207,7 @@ class ProfileSetupProvider extends ChangeNotifier {
     _nickname = null;
     _birthDate = null;
     _gender = null;
+    _profileImageUrl = null;
     _height = null;
     _weight = null;
     _activityLevel = null;
