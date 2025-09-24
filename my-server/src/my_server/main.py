@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import RedirectResponse
 from my_server.api.auth import router as auth_router
 from my_server.api.protected import router as protected_router
 from my_server.api.users import router as users_router
@@ -20,6 +21,14 @@ app = FastAPI()
 @app.get("/")
 def read_root():
     return {"message": "Hello Server!"}
+
+@app.get("/swagger")
+def swagger_redirect():
+    return RedirectResponse(url="/docs")
+
+@app.get("/favicon.ico")
+def favicon():
+    return {"message": "No favicon configured"}
 
 # Include API
 app.include_router(auth_router, prefix="/auth")
