@@ -6,6 +6,7 @@ import '../models/goal.dart';
 import '../models/achievement.dart';
 import '../theme/app_colors.dart';
 import '../l10n/app_localizations.dart';
+import '../shared/custom_top_app_bar.dart';
 
 class GoalsAchievementsScreen extends StatefulWidget {
   const GoalsAchievementsScreen({super.key});
@@ -24,21 +25,9 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        elevation: 0,
+      appBar: CustomTopAppBar(
+        title: t.goalAndAchievement,
         automaticallyImplyLeading: canPop,
-        title: Text(t.goalAndAchievement, style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black)),
-        centerTitle: true,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: GestureDetector(
-              onTap: () => Navigator.of(context).pushNamed('/settings'),
-              child: const CircleAvatar(child: Icon(Icons.person)),
-            ),
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

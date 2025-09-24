@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/habit_notifier.dart';
 import '../theme/app_colors.dart';
 import '../l10n/app_localizations.dart';
+import '../shared/custom_top_app_bar.dart';
 
 class SleepScreen extends StatefulWidget {
   const SleepScreen({super.key});
@@ -39,19 +40,9 @@ class _SleepScreenState extends State<SleepScreen> {
     final stars = _stars(dur);
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomTopAppBar(
+        title: t.sleep,
         automaticallyImplyLeading: false,
-        centerTitle: true,
-        title: Text(t.sleep, style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black)),
-        actions: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pushNamed('/settings'),
-            child: const Padding(
-              padding: EdgeInsets.only(right: 16.0),
-              child: CircleAvatar(child: Icon(Icons.person)),
-            ),
-          ),
-        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

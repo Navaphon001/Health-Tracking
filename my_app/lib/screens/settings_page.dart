@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/language_provider.dart';
 import '../providers/theme_provider.dart';
+import '../shared/custom_top_app_bar.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -13,8 +14,9 @@ class SettingsPage extends StatelessWidget {
     // Avoid top-level watches to minimize rebuilds of the whole page.
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(t.settings),
+      appBar: CustomTopAppBar(
+        title: t.settings,
+        automaticallyImplyLeading: true,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),

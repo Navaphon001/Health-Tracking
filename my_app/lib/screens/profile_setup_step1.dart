@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/profile_setup_provider.dart';
 import '../theme/app_colors.dart';
 import '../shared/profile_image_picker.dart';
+import '../shared/custom_top_app_bar.dart';
 
 class ProfileSetupStep1 extends StatefulWidget {
   const ProfileSetupStep1({super.key});
@@ -68,8 +69,10 @@ class _ProfileSetupStep1State extends State<ProfileSetupStep1> {
   }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(t.profileSetup),
+      appBar: CustomTopAppBar(
+        title: t.profileSetup,
+        automaticallyImplyLeading: true,
+        showProfileIcon: false,
       ),
       body: SafeArea(
         child: ListView(

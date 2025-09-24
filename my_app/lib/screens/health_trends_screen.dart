@@ -6,6 +6,7 @@ import '../charts/trend_line_chart.dart';
 import '../services/habit_local_repository.dart';
 import '../providers/habit_notifier.dart';
 import '../l10n/app_localizations.dart';
+import '../shared/custom_top_app_bar.dart';
 
 class HealthTrendsScreen extends StatelessWidget {
   final HabitLocalRepository repo;
@@ -27,7 +28,10 @@ class HealthTrendsScreen extends StatelessWidget {
     const double exerciseKcalGoal = 300; // เป้าหมาย kcal/วัน (ตั้งค่าได้ตามต้องการ)
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).healthTrends)),
+      appBar: CustomTopAppBar(
+        title: AppLocalizations.of(context).healthTrends,
+        automaticallyImplyLeading: true,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(12),
         children: [

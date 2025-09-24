@@ -6,141 +6,6 @@ import '../providers/habit_notifier.dart';
 import '../theme/app_colors.dart';
 import '../shared/custom_top_app_bar.dart';
 
-// Water Loading Animation Widget
-class WaterLoadingAnimation extends StatefulWidget {
-  final double size;
-  final Color waterColor;
-  final Color borderColor;
-  final double waterLevel; // 0.0 to 1.0
-
-  const WaterLoadingAnimation({
-    super.key,
-    required this.size,
-    required this.waterColor,
-    required this.borderColor,
-    required this.waterLevel,
-  });
-
-  @override
-  State<WaterLoadingAnimation> createState() => _WaterLoadingAnimationState();
-}
-
-class _WaterLoadingAnimationState extends State<WaterLoadingAnimation>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _waveAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat();
-
-    _waveAnimation = Tween(begin: 0.0, end: 2 * math.pi).animate(_controller);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: widget.size,
-      height: widget.size,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        border: Border.all(color: widget.borderColor, width: 4),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipOval(
-        child: AnimatedBuilder(
-          animation: _waveAnimation,
-          builder: (context, child) {
-            return CustomPaint(
-              painter: WaterPainter(
-                waterHeight: widget.waterLevel,
-                waterColor: widget.waterColor,
-                waveAnimationValue: _waveAnimation.value,
-              ),
-              child: Center(
-                child: Text(
-                  '${(widget.waterLevel * 100).round()}%',
-                  style: TextStyle(
-                    fontSize: widget.size * 0.15,
-                    fontWeight: FontWeight.bold,
-                    color: widget.waterLevel > 0.5 ? Colors.white : widget.waterColor,
-                  ),
-                ),
-              ),
-            );
-          },
-        ),
-      ),
-    );
-  }
-}
-
-class WaterPainter extends CustomPainter {
-  final double waterHeight;
-  final Color waterColor;
-  final double waveAnimationValue;
-
-  WaterPainter({
-    required this.waterHeight,
-    required this.waterColor,
-    required this.waveAnimationValue,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final height = size.height;
-    final width = size.width;
-
-    final wavePaint = Paint()..color = waterColor.withOpacity(0.8);
-
-    final path = Path()
-      ..moveTo(0, height)
-      ..lineTo(0, height * (1 - waterHeight));
-
-    final mid = width / 2.0;
-    final fullWave = math.pi * 2.0;
-    final norm = 0.4;
-
-    for (var i = -1; i <= 1; i++) {
-      final dx = mid + i * width * norm;
-      path.lineTo(
-          dx,
-          height * (1 - waterHeight) +
-              math.sin(waveAnimationValue + i * 0.5 * fullWave) * 8);
-    }
-
-    path.lineTo(width, height * (1 - waterHeight));
-    path.lineTo(width, height);
-    path.close();
-
-    canvas.drawPath(path, wavePaint);
-  }
-
-  @override
-  bool shouldRepaint(WaterPainter oldDelegate) {
-    return oldDelegate.waterHeight != waterHeight ||
-        oldDelegate.waterColor != waterColor ||
-        oldDelegate.waveAnimationValue != waveAnimationValue;
-  }
-}
-
 // Water intake entry for tracking individual drinks
 class WaterIntakeEntry {
   final int amount;
@@ -157,7 +22,65 @@ class WaterIntakeEntry {
 }
 
 // Water segment data class
+class WaterSegment {
+  final double percentage;
+  final Color color;
+  
+  WaterSegment({required this.percentage, required this.color});
+}
 
+// Custom painter for segmented circle
+class SegmentedCirclePainter extends CustomPainter {
+  final List<WaterSegment> segments;
+  final double strokeWidth;
+  final Color backgroundColor;
+  
+  SegmentedCirclePainter({
+    required this.segments,
+    required this.strokeWidth,
+    required this.backgroundColor,
+  });
+  
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width - strokeWidth) / 2;
+    
+    // Draw background circle
+    final backgroundPaint = Paint()
+      ..color = backgroundColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+    
+    canvas.drawCircle(center, radius, backgroundPaint);
+    
+    // Draw segments
+    double startAngle = -math.pi / 2; // Start from top
+    
+    for (final segment in segments) {
+      final sweepAngle = 2 * math.pi * segment.percentage;
+      
+      final segmentPaint = Paint()
+        ..color = segment.color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round;
+      
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweepAngle,
+        false,
+        segmentPaint,
+      );
+      
+      startAngle += sweepAngle;
+    }
+  }
+  
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
 
 class WaterScreen extends StatefulWidget {
   const WaterScreen({super.key});
@@ -205,7 +128,9 @@ class _WaterScreenState extends State<WaterScreen> {
 
     // เตรียมข้อมูลเครื่องดื่มและสี
     final beverageName = _selectedBeverage?.name ?? 'Water';
-    const beverageColor = Colors.blue; // ใช้สีเดียวกันสำหรับทุกเครื่องดื่ม
+    final beverageColor = _selectedBeverage != null 
+        ? Color(_selectedBeverage!.color) 
+        : AppColors.tagColors[0]; // สีเริ่มต้นสำหรับน้ำธรรมดา
     
     // เก็บรายการการดื่มพร้อมสี
     _todayIntakes.add(WaterIntakeEntry(
@@ -260,45 +185,86 @@ class _WaterScreenState extends State<WaterScreen> {
 
   void _showAddBeverageDialog() {
     final nameController = TextEditingController();
-    const Color defaultColor = Colors.blue; // Use a default color
+    Color selectedColor = AppColors.tagColors[0]; // Default to first color
     
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('เพิ่มเครื่องดื่มใหม่'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'ชื่อเครื่องดื่ม',
-                hintText: 'เช่น นมเย็น, ชาเขียว',
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('เพิ่มเครื่องดื่มใหม่'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'ชื่อเครื่องดื่ม',
+                  hintText: 'เช่น นมเย็น, ชาเขียว',
+                ),
               ),
+              const SizedBox(height: 16),
+              const Text(
+                'เลือกสี Tag:',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: AppColors.tagColors.map((color) {
+                  final isSelected = selectedColor.value == color.value;
+                  return GestureDetector(
+                    onTap: () {
+                      setState(() {
+                        selectedColor = color;
+                      });
+                    },
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: color,
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected ? Colors.black : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      child: isSelected
+                          ? const Icon(
+                              Icons.check,
+                              color: Colors.white,
+                              size: 18,
+                            )
+                          : null,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text(AppLocalizations.of(context).cancel),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final name = nameController.text.trim();
+                
+                if (name.isNotEmpty) {
+                  context.read<HabitNotifier>().addDrinkPreset(name, 250, selectedColor);
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('เพิ่ม $name เรียบร้อยแล้ว')),
+                  );
+                }
+              },
+              child: Text(AppLocalizations.of(context).add),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(AppLocalizations.of(context).cancel),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final name = nameController.text.trim();
-              
-              if (name.isNotEmpty) {
-                context.read<HabitNotifier>().addDrinkPreset(name, 250, defaultColor);
-                Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('เพิ่ม $name เรียบร้อยแล้ว')),
-                );
-              }
-            },
-            child: Text(AppLocalizations.of(context).add),
-          ),
-        ],
       ),
     );
   }
@@ -395,7 +361,16 @@ class _WaterScreenState extends State<WaterScreen> {
                       textAlign: TextAlign.center,
                       overflow: TextOverflow.ellipsis,
                     ),
-
+                    const SizedBox(height: 4),
+                    // Color Tag Capsule
+                    Container(
+                      width: 24,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: Color(preset.color),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -464,41 +439,95 @@ class _WaterScreenState extends State<WaterScreen> {
   }
 
   Widget _buildProgressCircle(int currentAmount, int goalAmount) {
-    final progress = currentAmount / goalAmount;
-    
-    return Column(
-      children: [
-        // Water Loading Animation Circle
-        WaterLoadingAnimation(
-          size: 200,
-          waterColor: const Color(0xFF2196F3),
-          borderColor: const Color(0xFF42A5F5),
-          waterLevel: progress.clamp(0.0, 1.0),
-        ),
-        const SizedBox(height: 20),
-        // Amount text below
-        Text(
-          '$currentAmount',
-          style: const TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
+    return Consumer<HabitNotifier>(
+      builder: (context, habitNotifier, child) {
+        // Get today's water entries to calculate segments
+        final segments = _calculateWaterSegments(habitNotifier, goalAmount);
+        
+        return Container(
+          width: 140,
+          height: 140,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 140,
+                height: 140,
+                child: CustomPaint(
+                  painter: SegmentedCirclePainter(
+                    segments: segments,
+                    strokeWidth: 16,
+                    backgroundColor: Colors.grey[300]!,
+                  ),
+                ),
+              ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Current amount - large text in center
+                  Text(
+                    '$currentAmount',
+                    style: const TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  // Goal amount - small text below
+                  Text(
+                    '/ ${goalAmount}ml',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '/$goalAmount mL',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 
-
+  List<WaterSegment> _calculateWaterSegments(HabitNotifier habitNotifier, int goalAmount) {
+    final segments = <WaterSegment>[];
+    
+    if (goalAmount <= 0 || _todayIntakes.isEmpty) return segments;
+    
+    // รวมปริมาณการดื่มตามสี
+    final colorAmountMap = <int, int>{}; // color.value -> total amount
+    
+    for (final intake in _todayIntakes) {
+      final colorValue = intake.color.value;
+      colorAmountMap[colorValue] = (colorAmountMap[colorValue] ?? 0) + intake.amount;
+    }
+    
+    // แปลงเป็น segments ตามสัดส่วน
+    double totalSegmentPercentage = 0.0;
+    
+    for (final entry in colorAmountMap.entries) {
+      final colorValue = entry.key;
+      final amount = entry.value;
+      final color = Color(colorValue);
+      final percentage = (amount / goalAmount).clamp(0.0, 1.0);
+      
+      if (percentage > 0 && totalSegmentPercentage < 1.0) {
+        final adjustedPercentage = math.min(percentage, 1.0 - totalSegmentPercentage);
+        segments.add(WaterSegment(
+          percentage: adjustedPercentage,
+          color: color,
+        ));
+        totalSegmentPercentage += adjustedPercentage;
+      }
+      
+      if (totalSegmentPercentage >= 1.0) break;
+    }
+    
+    return segments;
+  }
 
   Widget _buildBeverageGrid() {
     return Consumer<HabitNotifier>(

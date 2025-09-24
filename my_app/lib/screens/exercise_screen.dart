@@ -5,6 +5,7 @@ import '../providers/habit_notifier.dart';
 import '../models/exercise_activity.dart';
 import '../theme/app_colors.dart';
 import '../l10n/app_localizations.dart';
+import '../shared/custom_top_app_bar.dart';
 
 class ExerciseScreen extends StatefulWidget {
   const ExerciseScreen({super.key});
@@ -28,19 +29,9 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     return Scaffold(
-      appBar: AppBar(
+      appBar: CustomTopAppBar(
+        title: t.exercise,
         automaticallyImplyLeading: false,
-        centerTitle: true,
-        title: Text(t.exercise, style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black)),
-        actions: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pushNamed('/settings'),
-            child: const Padding(
-              padding: EdgeInsets.only(right: 16.0),
-              child: CircleAvatar(child: Icon(Icons.person)),
-            ),
-          ),
-        ],
       ),
       floatingActionButton: FloatingActionButton(onPressed: _addOrEdit, child: const Icon(Icons.add)),
       body: Consumer<HabitNotifier>(builder: (context, n, _) {

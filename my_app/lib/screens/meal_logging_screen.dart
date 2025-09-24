@@ -6,6 +6,7 @@ import '../models/meal.dart';
 import '../providers/meal_provider.dart';
 import '../theme/app_colors.dart';
 import '../l10n/app_localizations.dart';
+import '../shared/custom_top_app_bar.dart';
 
 class MealLoggingScreen extends StatefulWidget {
   const MealLoggingScreen({super.key});
@@ -155,21 +156,9 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
       builder: (context, mealProvider, child) {
         return Scaffold(
       backgroundColor: colorScheme.surface,
-      appBar: AppBar(
+      appBar: CustomTopAppBar(
+        title: t.mealLogging,
         automaticallyImplyLeading: false,
-        centerTitle: true,
-        title: Text(t.mealLogging, style: const TextStyle(fontWeight: FontWeight.w700, color: Colors.black)),
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
-        actions: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pushNamed('/settings'),
-            child: const Padding(
-              padding: EdgeInsets.only(right: 16.0),
-              child: CircleAvatar(child: Icon(Icons.person)),
-            ),
-          ),
-        ],
       ),
       body: Form(
         key: _formKey,
@@ -243,7 +232,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
                   hintText: t.enterFoodName,
                   hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6)),
                   filled: true,
-                  fillColor: colorScheme.surfaceContainerHighest,
+                  fillColor: AppColors.darkIvory,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(color: colorScheme.outline),
@@ -278,7 +267,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
                   width: double.infinity,
                   height: 200,
                   decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
+                    color: AppColors.darkIvory,
                     border: Border.all(color: colorScheme.outline),
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -347,7 +336,7 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
                   hintText: t.enterMealDescription,
                   hintStyle: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6)),
                   filled: true,
-                  fillColor: colorScheme.surfaceContainerHighest,
+                  fillColor: AppColors.darkIvory,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                     borderSide: BorderSide(color: colorScheme.outline),

@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/physical_info_provider.dart';
 import '../providers/profile_setup_provider.dart';
 import '../theme/app_colors.dart';
+import '../shared/custom_top_app_bar.dart';
 
 class ProfileSetupStep3 extends StatelessWidget {
   const ProfileSetupStep3({super.key});
@@ -29,8 +30,10 @@ class ProfileSetupStep3 extends StatelessWidget {
     final goals = context.select<ProfileSetupProvider, List<String>>((p) => p.goals);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(t.profileSetup),
+      appBar: CustomTopAppBar(
+        title: t.profileSetup,
+        automaticallyImplyLeading: true,
+        showProfileIcon: false,
       ),
       body: SafeArea(
         child: ListView(

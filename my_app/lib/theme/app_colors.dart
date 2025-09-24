@@ -26,4 +26,20 @@ class AppColors {
   static const Color chartSecondary = Color(0xFF56DFCF);
   static const Color chartAccent = Color(0xFF7FDBDA);
   static const Color chartGrey = Color(0xFFE5E7EB);
+
+  // Tag Colors for Beverages
+  static const List<Color> tagColors = [
+    Color(0xFF0ABAB5), // Teal (Primary)
+    Color(0xFF56DFCF), // Light Teal
+    Color(0xFFFF6B6B), // Red
+    Color(0xFF4ECDC4), // Cyan
+    Color(0xFFFFE66D), // Yellow
+    Color(0xFF95E1D3), // Mint
+    Color(0xFFF38BA8), // Pink
+    Color(0xFFA8E6CF), // Light Green
+    Color(0xFFFFD93D), // Golden Yellow
+    Color(0xFF6BCF7F), // Green
+    Color(0xFF4D96FF), // Blue
+    Color(0xFFFFB347), // Orange
+  ];
 }

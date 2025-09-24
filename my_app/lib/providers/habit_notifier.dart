@@ -11,16 +11,18 @@ import '../services/habit_local_repository.dart';
 import '../services/app_db.dart';
 import '../shared/snack_fn.dart';
 import '../charts/chart_point.dart';
+import '../theme/app_colors.dart';
 
 class DrinkPreset {
   final String id;
   String name;
   int ml;
-  DrinkPreset({required this.id, required this.name, required this.ml});
+  int color; // เก็บเป็น int (Color value)
+  DrinkPreset({required this.id, required this.name, required this.ml, this.color = 0xFF0ABAB5}); // Default เป็นสี primary
 
-  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'ml': ml};
+  Map<String, dynamic> toJson() => {'id': id, 'name': name, 'ml': ml, 'color': color};
   static DrinkPreset fromJson(Map<String, dynamic> j) =>
-      DrinkPreset(id: j['id'], name: j['name'], ml: j['ml']);
+      DrinkPreset(id: j['id'], name: j['name'], ml: j['ml'], color: j['color'] ?? 0xFF0ABAB5);
 }
 
 class HabitNotifier extends ChangeNotifier {
@@ -156,9 +158,10 @@ class HabitNotifier extends ChangeNotifier {
     }
   }
 
-  Future<void> addDrinkPreset(String name, [int ml = baseGlassMl]) async {
+  Future<void> addDrinkPreset(String name, [int ml = baseGlassMl, Color? color]) async {
     final id = DateTime.now().millisecondsSinceEpoch.toString();
-    drinkPresets.insert(0, DrinkPreset(id: id, name: name, ml: ml));
+    final colorValue = color?.value ?? AppColors.tagColors[0].value;
+    drinkPresets.insert(0, DrinkPreset(id: id, name: name, ml: ml, color: colorValue));
     final p = await _prefs;
     await _savePresetsToPrefs(p);
     notifyListeners();

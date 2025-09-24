@@ -11,6 +11,7 @@ import '../providers/meal_provider.dart';
 import 'meal_logging_screen.dart';
 import '../theme/app_colors.dart';
 import '../l10n/app_localizations.dart';
+import '../shared/custom_top_app_bar.dart';
 
 
 class DashboardPage extends StatelessWidget {
@@ -33,40 +34,16 @@ class DashboardPage extends StatelessWidget {
     final formattedDate = date.toLocal().toString().split(' ')[0];
 
     return Scaffold(
+      appBar: DashboardTopAppBar(
+        greeting: t.goodMorning,
+        date: t.date(formattedDate),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Greeting
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        t.goodMorning,
-                        style: const TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        t.date(formattedDate),
-                        style: const TextStyle(fontSize: 16),
-                      ),
-                    ],
-                  ),
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).pushNamed('/settings'),
-                    child: const CircleAvatar(child: Icon(Icons.person)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 15),
-
               // TableCalendar
               Container(
                 padding: const EdgeInsets.all(0),
