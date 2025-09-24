@@ -1,8 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- ✅ อนุญาตแจ้งเตือน -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
+    <!-- ✅ ให้ระบบปลุกหลังรีบูต (คุณใส่ไว้แล้ว ดีมาก) -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+    <!-- ✅ สำคัญ: ขอสิทธิ์ Exact alarm เพื่อยิงตรงเวลา -->
+    <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
+
     <application
         android:label="my_app"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:enableOnBackInvokedCallback="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -30,6 +39,27 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
+        <!-- ✅ ต้องมีตัวนี้! รับสัญญาณตอนถึงเวลานัด -->
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
+            android:exported="false" />
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+            </intent-filter>
+        </receiver>
+
+        <!-- ✅ ปรับตารางเมื่อเปลี่ยนโซนเวลา -->
+        <receiver
+            android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationTimeZoneChangeReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
+            </intent-filter>
+        </receiver>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
@@ -42,4 +72,5 @@
             <data android:mimeType="text/plain"/>
         </intent>
     </queries>
+    
 </manifest>

@@ -89,16 +89,21 @@ class TrendLineChart extends StatelessWidget {
         lineTouchData: LineTouchData(
           handleBuiltInTouches: true,
           touchTooltipData: LineTouchTooltipData(
-            tooltipRoundedRadius: 8,
+            // แทน tooltipRoundedRadius: 8, ด้วยบรรทัดนี้
+            tooltipBorderRadius: const BorderRadius.all(Radius.circular(8)),
             fitInsideHorizontally: true,
             fitInsideVertically: true,
             getTooltipItems: (items) => items.map((it) {
               final d = start.add(Duration(days: it.x.toInt()));
               final y = it.y % 1 == 0 ? it.y.toInt().toString() : it.y.toStringAsFixed(1);
-              return LineTooltipItem('${ddmm(d)}\n$y $unit', ChartStyle.tooltipText(context));
+              return LineTooltipItem(
+                '${ddmm(d)}\n$y $unit',
+                ChartStyle.tooltipText(context),
+              );
             }).toList(),
           ),
         ),
+
         extraLinesData: ExtraLinesData(
           horizontalLines: [
             if (goal != null)
