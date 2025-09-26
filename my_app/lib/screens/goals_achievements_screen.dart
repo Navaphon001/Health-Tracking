@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../providers/goal_provider.dart';
 import '../providers/achievement_provider.dart';
 import '../models/goal.dart';
@@ -9,7 +10,9 @@ import '../l10n/app_localizations.dart';
 import '../shared/custom_top_app_bar.dart';
 
 class GoalsAchievementsScreen extends StatefulWidget {
-  const GoalsAchievementsScreen({super.key});
+  final bool? fromSettings;
+  
+  const GoalsAchievementsScreen({super.key, this.fromSettings});
 
   @override
   State<GoalsAchievementsScreen> createState() => _GoalsAchievementsScreenState();
@@ -23,11 +26,16 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
     // ตรวจสอบว่ามาจากการ navigate ปกติหรือไม่ (เช่น จากหน้า Settings)
     final canPop = Navigator.of(context).canPop();
     
+    // ถ้าเข้ามาจาก Settings (fromSettings == true) หรือมี canPop ให้ซ่อน profile icon
+    // ถ้าเข้ามาจาก NavBar (fromSettings == null หรือ false) ให้แสดง profile icon
+    final shouldShowProfileIcon = widget.fromSettings != true && !canPop;
+    
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: CustomTopAppBar(
         title: t.goalAndAchievement,
         automaticallyImplyLeading: canPop,
+        showProfileIcon: shouldShowProfileIcon,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -280,6 +288,7 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
   Widget _buildAchievementCard(Achievement achievement) {
     final isLocked = !achievement.isUnlocked;
     final hasProgress = achievement.isInProgress;
+    final isCompleted = achievement.isUnlocked && !achievement.isInProgress;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -294,8 +303,40 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
         ),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
+      child: Stack(
         children: [
+          // Share button for completed achievements
+          if (isCompleted)
+            Positioned(
+              top: 0,
+              right: 0,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: IconButton(
+                  onPressed: () => _showAchievementShareBottomSheet(achievement),
+                  icon: const Icon(
+                    Icons.share,
+                    color: AppColors.primary,
+                    size: 18,
+                  ),
+                  tooltip: AppLocalizations.of(context).share,
+                  padding: const EdgeInsets.all(8),
+                  constraints: const BoxConstraints(
+                    minWidth: 32,
+                    minHeight: 32,
+                  ),
+                ),
+              ),
+            ),
+          
+          // Center the content
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
           // Icon and Title
           Expanded(
             child: Column(
@@ -360,6 +401,8 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
               ],
             ),
           ],
+            ],
+          ),
         ],
       ),
     );
@@ -419,6 +462,188 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
         ],
       ),
     );
+  }
+
+  // Achievement sharing functionality
+  void _showAchievementShareBottomSheet(Achievement achievement) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            
+            // Title
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+              child: Text(
+                AppLocalizations.of(context).shareAchievement,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textDark,
+                ),
+              ),
+            ),
+            
+            // Share options
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                children: [
+                  _buildAchievementShareOption(
+                    icon: Icons.share,
+                    title: AppLocalizations.of(context).shareData,
+                    subtitle: AppLocalizations.of(context).shareToOtherApps,
+                    color: AppColors.primary,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      await _shareAchievement(achievement);
+                    },
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 32),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAchievementShareOption({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Colors.grey[200]!),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textDark,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[600],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios,
+              size: 16,
+              color: Colors.grey[400],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _shareAchievement(Achievement achievement) async {
+    try {
+      final shareText = '''
+🏆 ${AppLocalizations.of(context).newAchievement}
+
+${achievement.iconPath} ${achievement.title}
+
+${achievement.description}
+
+${AppLocalizations.of(context).justCompletedChallenge}
+
+#HealthTracking #Achievement #Wellness
+      '''.trim();
+      
+      final result = await Share.share(shareText);
+      
+      // Handle share result
+      if (result.status == ShareResultStatus.unavailable) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('ไม่มีแอพที่รองรับการแชร์ในอุปกรณ์นี้'),
+              backgroundColor: Colors.orange,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        // More specific error handling
+        String errorMessage;
+        if (e.toString().contains('MissingPluginException')) {
+          errorMessage = 'การแชร์ไม่รองรับในโหมดนี้ (โปรดทดสอบบนอุปกรณ์จริง)';
+        } else if (e.toString().contains('No implementation found')) {
+          errorMessage = 'ไม่พบแอพที่รองรับการแชร์';
+        } else {
+          errorMessage = 'เกิดข้อผิดพลาด: ${e.toString()}';
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red[600],
+            action: SnackBarAction(
+              label: 'ตกลง',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+    }
   }
 }
 

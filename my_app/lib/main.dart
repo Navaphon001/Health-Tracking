@@ -31,9 +31,12 @@ import 'providers/bmi_provider.dart';
 import 'providers/mood_provider.dart';
 import 'providers/goal_provider.dart';
 import 'providers/achievement_provider.dart';
+import 'providers/notification_provider.dart';
 import 'screens/goals_achievements_screen.dart';
-
+import 'screens/notification_settings_screen.dart';
+import 'screens/statistics_screen.dart';
 import 'package:flutter/foundation.dart'; // kDebugMode, debugPrint
+import 'package:sqflite/sqflite.dart';
 import 'services/app_db.dart';
 
 Future<void> _devSmokeTest() async {
@@ -96,6 +99,7 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => MoodProvider()),
         ChangeNotifierProvider(create: (_) => GoalProvider()),
         ChangeNotifierProvider(create: (_) => AchievementProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider()..load()),
       ],
       child: const MyApp(),
     ),
@@ -120,20 +124,65 @@ class MyApp extends StatelessWidget {
       supportedLocales: AppLocalizations.supportedLocales,
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       home: const SplashScreen(),
-      routes: {
-        '/login': (_) => const LoginScreen(),
-        '/register': (_) => const RegisterScreen(),
-        '/main': (_) => const AppNavigation(),
-        '/water': (_) => const WaterScreen(),
-        '/exercise': (_) => const ExerciseScreen(),
-        '/sleep': (_) => const SleepScreen(),
-        '/onboarding': (_) => const OnboardingMain(),
-        '/dashboard': (_) => const DashboardPage(),
-        '/settings': (_) => const SettingsPage(),
-        '/profile-setup': (_) => const ProfileSetupStep1(),
-        '/profile-setup-step2': (_) => const ProfileSetupStep2(),
-        '/profile-setup-step3': (_) => const ProfileSetupStep3(),
-        '/goals-achievements': (_) => const GoalsAchievementsScreen(),
+      onGenerateRoute: (settings) {
+        switch (settings.name) {
+          case '/login':
+            return MaterialPageRoute(builder: (_) => const LoginScreen());
+          case '/register':
+            return MaterialPageRoute(builder: (_) => const RegisterScreen());
+          case '/main':
+            return MaterialPageRoute(builder: (_) => const AppNavigation());
+          case '/water':
+            return MaterialPageRoute(builder: (_) => const WaterScreen());
+          case '/exercise':
+            return MaterialPageRoute(builder: (_) => const ExerciseScreen());
+          case '/sleep':
+            return MaterialPageRoute(builder: (_) => const SleepScreen());
+          case '/onboarding':
+            return MaterialPageRoute(builder: (_) => const OnboardingMain());
+          case '/dashboard':
+            return MaterialPageRoute(builder: (_) => const DashboardPage());
+          case '/settings':
+            return MaterialPageRoute(builder: (_) => const SettingsPage());
+          case '/profile-setup':
+            return MaterialPageRoute(builder: (_) => const ProfileSetupStep1());
+          case '/profile-setup-step2':
+            return MaterialPageRoute(builder: (_) => const ProfileSetupStep2());
+          case '/profile-setup-step3':
+            return MaterialPageRoute(builder: (_) => const ProfileSetupStep3());
+          case '/goals-achievements':
+            final args = settings.arguments as Map<String, dynamic>?;
+            return MaterialPageRoute(
+              builder: (_) => GoalsAchievementsScreen(
+                fromSettings: args?['fromSettings'] as bool?,
+              ),
+            );
+          case '/notification-settings':
+            return MaterialPageRoute(builder: (_) => const NotificationSettingsScreen());
+          case '/statistics':
+            return MaterialPageRoute(
+              builder: (_) => FutureBuilder<Database>(
+                future: AppDb.instance.database,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (snapshot.hasError) {
+                    return Scaffold(
+                      body: Center(child: Text('Error: ${snapshot.error}')),
+                    );
+                  }
+                  return StatisticsScreen(
+                    repo: HabitLocalRepository(snapshot.data!),
+                  );
+                },
+              ),
+            );
+          default:
+            return MaterialPageRoute(builder: (_) => const SplashScreen());
+        }
       },
     );
   }

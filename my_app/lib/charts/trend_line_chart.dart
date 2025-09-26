@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'chart_point.dart';
 import 'chart_style.dart';
 import 'nice_scale.dart';
+import '../l10n/app_localizations.dart';
 
 class TrendLineChart extends StatelessWidget {
   final List<ChartPoint> data;
@@ -22,7 +23,8 @@ class TrendLineChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (data.isEmpty) return const Center(child: Text('ไม่มีข้อมูล'));
+    final t = AppLocalizations.of(context);
+    if (data.isEmpty) return Center(child: Text(t.noDataAvailable));
 
     final start = DateTime(data.first.day.year, data.first.day.month, data.first.day.day);
     double toX(DateTime d) => DateTime(d.year, d.month, d.day).difference(start).inDays.toDouble();
@@ -38,7 +40,12 @@ class TrendLineChart extends StatelessWidget {
 
     final lineColor = ChartStyle.seriesColor(context);
     final spots = [for (final p in data) FlSpot(toX(p.day), p.value)];
-    final bottomInterval = (data.length / targetXTicks).clamp(1, 999).toDouble();
+    // ปรับ interval ให้เหมาะสมกับจำนวนข้อมูล เพื่อป้องกันวันที่ซ้อนกัน
+    final bottomInterval = data.length <= 7 
+        ? 1.0 // ถ้าข้อมูลน้อย แสดงทุกวัน
+        : data.length <= 14 
+            ? 2.0 // แสดงเว้นวัน
+            : (data.length / 4).clamp(2, 999).toDouble(); // แสดง 4-5 วันที่
 
     final todayX = toX(DateTime.now());
     final showToday = todayX >= 0 && todayX <= maxX;
@@ -61,12 +68,17 @@ class TrendLineChart extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               interval: yInterval,
-              reservedSize: 44,
-              getTitlesWidget: (v, _) => Text(
-                v % yInterval == 0
-                    ? (v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(1))
-                    : '',
-                style: ChartStyle.axisLabel(context),
+              reservedSize: 50,
+              getTitlesWidget: (v, _) => Container(
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 8),
+                child: Text(
+                  v % yInterval == 0
+                      ? (v % 1 == 0 ? v.toInt().toString() : v.toStringAsFixed(1))
+                      : '',
+                  style: ChartStyle.axisLabel(context),
+                  textAlign: TextAlign.right,
+                ),
               ),
             ),
           ),
@@ -74,17 +86,28 @@ class TrendLineChart extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               interval: bottomInterval,
+              reservedSize: 36,
               getTitlesWidget: (x, _) {
+                // แสดงเฉพาะวันที่ที่ตรงกับ interval เพื่อป้องกันการซ้อนกัน
+                if (x % bottomInterval != 0) return const SizedBox.shrink();
+                
                 final d = start.add(Duration(days: x.toInt()));
-                return Padding(
-                  padding: const EdgeInsets.only(top: 4),
-                  child: Text(ddmm(d), style: ChartStyle.axisLabel(context)),
+                return Container(
+                  width: 50, // กำหนดความกว้างให้ชัดเจน
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    ddmm(d), 
+                    style: ChartStyle.axisLabel(context).copyWith(fontSize: 11),
+                    textAlign: TextAlign.center,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 );
               },
             ),
           ),
-          rightTitles: const AxisTitles(),
-          topTitles: const AxisTitles(),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false, reservedSize: 0)),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false, reservedSize: 0)),
         ),
         lineTouchData: LineTouchData(
           handleBuiltInTouches: true,
@@ -109,9 +132,9 @@ class TrendLineChart extends StatelessWidget {
                 dashArray: [6, 4],
                 label: HorizontalLineLabel(
                   show: true,
-                  labelResolver: (_) => 'เป้าหมาย ${goal!.toStringAsFixed(0)} $unit',
+                  labelResolver: (_) => '${t.goalLabel} ${goal!.toStringAsFixed(0)} $unit',
                   style: ChartStyle.axisLabel(context),
-                  alignment: Alignment.topRight,
+                  alignment: Alignment.topLeft,
                 ),
               ),
           ],
@@ -123,8 +146,8 @@ class TrendLineChart extends StatelessWidget {
                 strokeWidth: 1,
                 dashArray: [2, 3],
                 label: VerticalLineLabel(
-                  show: true,
-                  labelResolver: (_) => 'วันนี้',
+                  show: false, // ซ่อน label "วันนี้" เพื่อไม่ให้อยู่นอก card
+                  labelResolver: (_) => '',
                   alignment: Alignment.bottomRight,
                   style: ChartStyle.axisLabel(context),
                 ),

@@ -920,6 +920,108 @@ abstract class AppLocalizations {
   /// **'Height (cm)'**
   String get heightCm;
 
+  /// No description provided for @share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// No description provided for @shareData.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Data'**
+  String get shareData;
+
+  /// No description provided for @exportToPDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Export to PDF'**
+  String get exportToPDF;
+
+  /// No description provided for @saveDataAsPDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Save data as PDF file'**
+  String get saveDataAsPDF;
+
+  /// No description provided for @shareToOtherApps.
+  ///
+  /// In en, this message translates to:
+  /// **'Share to other apps'**
+  String get shareToOtherApps;
+
+  /// No description provided for @noDataToShare.
+  ///
+  /// In en, this message translates to:
+  /// **'No data to share'**
+  String get noDataToShare;
+
+  /// No description provided for @errorOccurredMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred: {error}'**
+  String errorOccurredMessage(String error);
+
+  /// No description provided for @noDataToPDF.
+  ///
+  /// In en, this message translates to:
+  /// **'No data to create PDF'**
+  String get noDataToPDF;
+
+  /// No description provided for @errorCreatingPDF.
+  ///
+  /// In en, this message translates to:
+  /// **'Error creating PDF: {error}'**
+  String errorCreatingPDF(String error);
+
+  /// No description provided for @copyText.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy Text'**
+  String get copyText;
+
+  /// No description provided for @copyToClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy data to clipboard'**
+  String get copyToClipboard;
+
+  /// No description provided for @noDataToCopy.
+  ///
+  /// In en, this message translates to:
+  /// **'No data to copy'**
+  String get noDataToCopy;
+
+  /// No description provided for @copiedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Data copied successfully!'**
+  String get copiedSuccessfully;
+
+  /// No description provided for @errorCopying.
+  ///
+  /// In en, this message translates to:
+  /// **'Error copying: {error}'**
+  String errorCopying(String error);
+
+  /// No description provided for @shareAchievement.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Achievement'**
+  String get shareAchievement;
+
+  /// No description provided for @newAchievement.
+  ///
+  /// In en, this message translates to:
+  /// **'New Achievement!'**
+  String get newAchievement;
+
+  /// No description provided for @justCompletedChallenge.
+  ///
+  /// In en, this message translates to:
+  /// **'I just completed this challenge in Health Tracking App! 💪'**
+  String get justCompletedChallenge;
+
   /// No description provided for @volumeMl.
   ///
   /// In en, this message translates to:
@@ -1157,7 +1259,7 @@ abstract class AppLocalizations {
   /// No description provided for @hours.
   ///
   /// In en, this message translates to:
-  /// **'hours'**
+  /// **'hrs'**
   String get hours;
 
   /// No description provided for @kg.
@@ -1291,6 +1393,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Image selection error: {error}'**
   String imageSelectionError(String error);
+
+  /// No description provided for @notificationSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification Settings'**
+  String get notificationSettings;
+
+  /// No description provided for @notificationSettingsDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Customize your reminder preferences'**
+  String get notificationSettingsDescription;
+
+  /// No description provided for @healthReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Health Reminders'**
+  String get healthReminders;
+
+  /// No description provided for @waterReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Water Reminder'**
+  String get waterReminder;
+
+  /// No description provided for @waterReminderDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me to stay hydrated throughout the day'**
+  String get waterReminderDescription;
+
+  /// No description provided for @exerciseReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise Reminder'**
+  String get exerciseReminder;
+
+  /// No description provided for @exerciseReminderDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me to exercise regularly'**
+  String get exerciseReminderDescription;
+
+  /// No description provided for @sleepReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Reminder'**
+  String get sleepReminder;
+
+  /// No description provided for @sleepReminderDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me to maintain healthy sleep schedule'**
+  String get sleepReminderDescription;
+
+  /// No description provided for @mealLoggingReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Meal Logging Reminder'**
+  String get mealLoggingReminder;
+
+  /// No description provided for @mealLoggingReminderDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Remind me to log my meals'**
+  String get mealLoggingReminderDescription;
+
+  /// No description provided for @quickActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Actions'**
+  String get quickActions;
+
+  /// No description provided for @resetToDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset to Default'**
+  String get resetToDefault;
+
+  /// No description provided for @resetNotificationConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to reset all notification settings to default? This will enable all reminders.'**
+  String get resetNotificationConfirmation;
+
+  /// No description provided for @notificationSettingsReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification settings have been reset to default'**
+  String get notificationSettingsReset;
+
+  /// No description provided for @statistics.
+  ///
+  /// In en, this message translates to:
+  /// **'Statistics'**
+  String get statistics;
+
+  /// No description provided for @daily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get daily;
+
+  /// No description provided for @weekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly'**
+  String get weekly;
+
+  /// No description provided for @monthly.
+  ///
+  /// In en, this message translates to:
+  /// **'Monthly'**
+  String get monthly;
+
+  /// No description provided for @sleepHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep Hours'**
+  String get sleepHours;
+
+  /// No description provided for @waterIntakeML.
+  ///
+  /// In en, this message translates to:
+  /// **'Water Intake (ml)'**
+  String get waterIntakeML;
+
+  /// No description provided for @exerciseCalories.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise (kcal)'**
+  String get exerciseCalories;
+
+  /// No description provided for @latest.
+  ///
+  /// In en, this message translates to:
+  /// **'Latest'**
+  String get latest;
+
+  /// No description provided for @average.
+  ///
+  /// In en, this message translates to:
+  /// **'Average'**
+  String get average;
+
+  /// No description provided for @goalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal'**
+  String get goalLabel;
+
+  /// No description provided for @milliliters.
+  ///
+  /// In en, this message translates to:
+  /// **'ml'**
+  String get milliliters;
+
+  /// No description provided for @calories.
+  ///
+  /// In en, this message translates to:
+  /// **'kcal'**
+  String get calories;
 }
 
 class _AppLocalizationsDelegate

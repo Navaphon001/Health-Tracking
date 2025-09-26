@@ -429,6 +429,64 @@ class AppLocalizationsEn extends AppLocalizations {
   String get heightCm => 'Height (cm)';
 
   @override
+  String get share => 'Share';
+
+  @override
+  String get shareData => 'Share Data';
+
+  @override
+  String get exportToPDF => 'Export to PDF';
+
+  @override
+  String get saveDataAsPDF => 'Save data as PDF file';
+
+  @override
+  String get shareToOtherApps => 'Share to other apps';
+
+  @override
+  String get noDataToShare => 'No data to share';
+
+  @override
+  String errorOccurredMessage(String error) {
+    return 'An error occurred: $error';
+  }
+
+  @override
+  String get noDataToPDF => 'No data to create PDF';
+
+  @override
+  String errorCreatingPDF(String error) {
+    return 'Error creating PDF: $error';
+  }
+
+  @override
+  String get copyText => 'Copy Text';
+
+  @override
+  String get copyToClipboard => 'Copy data to clipboard';
+
+  @override
+  String get noDataToCopy => 'No data to copy';
+
+  @override
+  String get copiedSuccessfully => 'Data copied successfully!';
+
+  @override
+  String errorCopying(String error) {
+    return 'Error copying: $error';
+  }
+
+  @override
+  String get shareAchievement => 'Share Achievement';
+
+  @override
+  String get newAchievement => 'New Achievement!';
+
+  @override
+  String get justCompletedChallenge =>
+      'I just completed this challenge in Health Tracking App! 💪';
+
+  @override
   String get volumeMl => 'Volume (ml)';
 
   @override
@@ -558,7 +616,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get minutes => 'minutes';
 
   @override
-  String get hours => 'hours';
+  String get hours => 'hrs';
 
   @override
   String get kg => 'kg';
@@ -630,4 +688,90 @@ class AppLocalizationsEn extends AppLocalizations {
   String imageSelectionError(String error) {
     return 'Image selection error: $error';
   }
+
+  @override
+  String get notificationSettings => 'Notification Settings';
+
+  @override
+  String get notificationSettingsDescription =>
+      'Customize your reminder preferences';
+
+  @override
+  String get healthReminders => 'Health Reminders';
+
+  @override
+  String get waterReminder => 'Water Reminder';
+
+  @override
+  String get waterReminderDescription =>
+      'Remind me to stay hydrated throughout the day';
+
+  @override
+  String get exerciseReminder => 'Exercise Reminder';
+
+  @override
+  String get exerciseReminderDescription => 'Remind me to exercise regularly';
+
+  @override
+  String get sleepReminder => 'Sleep Reminder';
+
+  @override
+  String get sleepReminderDescription =>
+      'Remind me to maintain healthy sleep schedule';
+
+  @override
+  String get mealLoggingReminder => 'Meal Logging Reminder';
+
+  @override
+  String get mealLoggingReminderDescription => 'Remind me to log my meals';
+
+  @override
+  String get quickActions => 'Quick Actions';
+
+  @override
+  String get resetToDefault => 'Reset to Default';
+
+  @override
+  String get resetNotificationConfirmation =>
+      'Are you sure you want to reset all notification settings to default? This will enable all reminders.';
+
+  @override
+  String get notificationSettingsReset =>
+      'Notification settings have been reset to default';
+
+  @override
+  String get statistics => 'Statistics';
+
+  @override
+  String get daily => 'Daily';
+
+  @override
+  String get weekly => 'Weekly';
+
+  @override
+  String get monthly => 'Monthly';
+
+  @override
+  String get sleepHours => 'Sleep Hours';
+
+  @override
+  String get waterIntakeML => 'Water Intake (ml)';
+
+  @override
+  String get exerciseCalories => 'Exercise (kcal)';
+
+  @override
+  String get latest => 'Latest';
+
+  @override
+  String get average => 'Average';
+
+  @override
+  String get goalLabel => 'Goal';
+
+  @override
+  String get milliliters => 'ml';
+
+  @override
+  String get calories => 'kcal';
 }

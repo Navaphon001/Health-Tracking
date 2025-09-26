@@ -49,7 +49,10 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
                             color: Colors.white,
                             size: 22,
                           ),
-                        ),
+                        )
+                      else
+                        // Invisible placeholder when no back button
+                        const SizedBox(width: 48),
                       
                       // Title centered
                       Expanded(
@@ -88,7 +91,10 @@ class CustomTopAppBar extends StatelessWidget implements PreferredSizeWidget {
                               size: 24,
                             ),
                           ),
-                        ),
+                        )
+                      else
+                        // Invisible placeholder when no profile icon  
+                        const SizedBox(width: 42),
                     ],
                   ),
                 ),

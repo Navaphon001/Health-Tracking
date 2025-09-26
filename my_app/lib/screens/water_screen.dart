@@ -35,10 +35,12 @@ class _WaterLoadingAnimationState extends State<WaterLoadingAnimation>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
+      duration: const Duration(milliseconds: 4000), // ทำให้ช้าลงเพื่อความพริ้วไหว
     )..repeat();
 
-    _waveAnimation = Tween(begin: 0.0, end: 2 * math.pi).animate(_controller);
+    _waveAnimation = Tween(begin: 0.0, end: 2 * math.pi).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.linear), // ใช้ linear เพื่อการเคลื่อนไหวสม่ำเสมอ
+    );
   }
 
   @override
@@ -108,25 +110,70 @@ class WaterPainter extends CustomPainter {
     final height = size.height;
     final width = size.width;
 
-    final wavePaint = Paint()..color = waterColor.withOpacity(0.8);
+    // ไม่วาดอะไรถ้าไม่มีน้ำ
+    if (waterHeight <= 0) return;
 
-    final path = Path()
-      ..moveTo(0, height)
-      ..lineTo(0, height * (1 - waterHeight));
+    final wavePaint = Paint()
+      ..color = waterColor
+      ..style = PaintingStyle.fill;
 
-    final mid = width / 2.0;
-    final fullWave = math.pi * 2.0;
-    final norm = 0.4;
+    // สร้าง path สำหรับน้ำ
+    final path = Path();
+    
+    // กำหนดตำแหน่งผิวน้ำ
+    final waterLevel = height * (1 - waterHeight);
+    
+    // เริ่มจากมุมล่างซ้าย
+    path.moveTo(0, height);
+    path.lineTo(0, waterLevel);
 
-    for (var i = -1; i <= 1; i++) {
-      final dx = mid + i * width * norm;
-      path.lineTo(
-          dx,
-          height * (1 - waterHeight) +
-              math.sin(waveAnimationValue + i * 0.5 * fullWave) * 8);
+    // สร้างคลื่นแบบเรียบง่าย มีความโค้งนุ่มนวล
+    final waveAmplitude = math.min(8.0, height * 0.03); // ความสูงของคลื่น
+    final waveLength = width * 1.5; // ความยาวของคลื่น (ทำให้โค้งกว้างขึ้น)
+    
+    // สร้างจุดคลื่นสำหรับ cubic bezier curve
+    final wavePoints = <Offset>[];
+    
+    // สร้างจุดคลื่นแบบ smooth
+    for (double x = 0; x <= width; x += width / 20) {
+      final normalizedX = x / width;
+      final waveOffset = math.sin((normalizedX * 2 * math.pi * width / waveLength) + waveAnimationValue) * waveAmplitude;
+      wavePoints.add(Offset(x, waterLevel + waveOffset));
+    }
+    
+    // เพิ่มจุดสุดท้าย
+    if (wavePoints.last.dx < width) {
+      final waveOffset = math.sin((1.0 * 2 * math.pi * width / waveLength) + waveAnimationValue) * waveAmplitude;
+      wavePoints.add(Offset(width, waterLevel + waveOffset));
     }
 
-    path.lineTo(width, height * (1 - waterHeight));
+    // วาดเส้นโค้งด้วย cubic bezier เพื่อความนุ่มนวล
+    if (wavePoints.isNotEmpty) {
+      path.lineTo(wavePoints[0].dx, wavePoints[0].dy);
+      
+      for (int i = 1; i < wavePoints.length; i++) {
+        final current = wavePoints[i];
+        final previous = wavePoints[i - 1];
+        
+        // สร้าง control points สำหรับ cubic bezier
+        final controlPoint1 = Offset(
+          previous.dx + (current.dx - previous.dx) * 0.3,
+          previous.dy
+        );
+        final controlPoint2 = Offset(
+          current.dx - (current.dx - previous.dx) * 0.3,
+          current.dy
+        );
+        
+        path.cubicTo(
+          controlPoint1.dx, controlPoint1.dy,
+          controlPoint2.dx, controlPoint2.dy,
+          current.dx, current.dy
+        );
+      }
+    }
+
+    // ปิด path
     path.lineTo(width, height);
     path.close();
 

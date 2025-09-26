@@ -30,7 +30,7 @@ class _AppNavigationState extends State<AppNavigation> {
     const WaterScreen(),
     const ExerciseScreen(),
     const SleepScreen(),
-    const GoalsAchievementsScreen(),
+    const GoalsAchievementsScreen(fromSettings: false), // เข้ามาจาก NavBar
   ];
 
   @override

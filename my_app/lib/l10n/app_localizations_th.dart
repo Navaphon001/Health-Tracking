@@ -428,6 +428,64 @@ class AppLocalizationsTh extends AppLocalizations {
   String get heightCm => 'ส่วนสูง (cm)';
 
   @override
+  String get share => 'แชร์';
+
+  @override
+  String get shareData => 'แชร์ข้อมูล';
+
+  @override
+  String get exportToPDF => 'ส่งออกเป็น PDF';
+
+  @override
+  String get saveDataAsPDF => 'บันทึกข้อมูลเป็นไฟล์ PDF';
+
+  @override
+  String get shareToOtherApps => 'แชร์ไปยังแอพอื่น';
+
+  @override
+  String get noDataToShare => 'ไม่มีข้อมูลสำหรับแชร์';
+
+  @override
+  String errorOccurredMessage(String error) {
+    return 'เกิดข้อผิดพลาด: $error';
+  }
+
+  @override
+  String get noDataToPDF => 'ไม่มีข้อมูลสำหรับสร้าง PDF';
+
+  @override
+  String errorCreatingPDF(String error) {
+    return 'เกิดข้อผิดพลาดในการสร้าง PDF: $error';
+  }
+
+  @override
+  String get copyText => 'คัดลอกข้อความ';
+
+  @override
+  String get copyToClipboard => 'คัดลอกข้อมูลไปยังคลิปบอร์ด';
+
+  @override
+  String get noDataToCopy => 'ไม่มีข้อมูลสำหรับคัดลอก';
+
+  @override
+  String get copiedSuccessfully => 'คัดลอกข้อมูลเรียบร้อยแล้ว!';
+
+  @override
+  String errorCopying(String error) {
+    return 'เกิดข้อผิดพลาดในการคัดลอก: $error';
+  }
+
+  @override
+  String get shareAchievement => 'แชร์ความสำเร็จ';
+
+  @override
+  String get newAchievement => 'ความสำเร็จใหม่!';
+
+  @override
+  String get justCompletedChallenge =>
+      'ฉันเพิ่งทำสำเร็จความท้าทายนี้ใน Health Tracking App! 💪';
+
+  @override
   String get volumeMl => 'ปริมาณ (ml)';
 
   @override
@@ -557,7 +615,7 @@ class AppLocalizationsTh extends AppLocalizations {
   String get minutes => 'นาที';
 
   @override
-  String get hours => 'ชั่วโมง';
+  String get hours => 'ชม.';
 
   @override
   String get kg => 'กก.';
@@ -629,4 +687,89 @@ class AppLocalizationsTh extends AppLocalizations {
   String imageSelectionError(String error) {
     return 'เกิดข้อผิดพลาดในการเลือกรูป: $error';
   }
+
+  @override
+  String get notificationSettings => 'การตั้งค่าการแจ้งเตือน';
+
+  @override
+  String get notificationSettingsDescription =>
+      'ปรับแต่งการแจ้งเตือนตามความต้องการ';
+
+  @override
+  String get healthReminders => 'การแจ้งเตือนสุขภาพ';
+
+  @override
+  String get waterReminder => 'แจ้งเตือนดื่มน้ำ';
+
+  @override
+  String get waterReminderDescription => 'แจ้งเตือนให้ดื่มน้ำให้เพียงพอตลอดวัน';
+
+  @override
+  String get exerciseReminder => 'แจ้งเตือนออกกำลังกาย';
+
+  @override
+  String get exerciseReminderDescription =>
+      'แจ้งเตือนให้ออกกำลังกายอย่างสม่ำเสมอ';
+
+  @override
+  String get sleepReminder => 'แจ้งเตือนการนอนหลับ';
+
+  @override
+  String get sleepReminderDescription => 'แจ้งเตือนให้รักษาเวลานอนที่ดี';
+
+  @override
+  String get mealLoggingReminder => 'แจ้งเตือนบันทึกมื้ออาหาร';
+
+  @override
+  String get mealLoggingReminderDescription => 'แจ้งเตือนให้บันทึกมื้ออาหาร';
+
+  @override
+  String get quickActions => 'การดำเนินการด่วน';
+
+  @override
+  String get resetToDefault => 'รีเซ็ตเป็นค่าเริ่มต้น';
+
+  @override
+  String get resetNotificationConfirmation =>
+      'คุณแน่ใจหรือไม่ที่จะรีเซ็ตการตั้งค่าการแจ้งเตือนทั้งหมดเป็นค่าเริ่มต้น? การกระทำนี้จะเปิดการแจ้งเตือนทั้งหมด';
+
+  @override
+  String get notificationSettingsReset =>
+      'การตั้งค่าการแจ้งเตือนได้รีเซ็ตเป็นค่าเริ่มต้นแล้ว';
+
+  @override
+  String get statistics => 'สถิติ';
+
+  @override
+  String get daily => 'รายวัน';
+
+  @override
+  String get weekly => 'รายสัปดาห์';
+
+  @override
+  String get monthly => 'รายเดือน';
+
+  @override
+  String get sleepHours => 'ชั่วโมงการนอน';
+
+  @override
+  String get waterIntakeML => 'การดื่มน้ำ (มล.)';
+
+  @override
+  String get exerciseCalories => 'การออกกำลังกาย (แคล)';
+
+  @override
+  String get latest => 'ล่าสุด';
+
+  @override
+  String get average => 'เฉลี่ย';
+
+  @override
+  String get goalLabel => 'เป้าหมาย';
+
+  @override
+  String get milliliters => 'มล.';
+
+  @override
+  String get calories => 'แคล';
 }

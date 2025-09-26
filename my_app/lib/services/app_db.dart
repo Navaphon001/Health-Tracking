@@ -16,7 +16,7 @@ class AppDb {
 
     return openDatabase(
       dbPath,
-      version: 6, // ⬅️ บัมป์เป็น 6: เพิ่ม is_synced ให้ทุกตาราง
+      version: 7, // ⬅️ บัมป์เป็น 7: เพิ่ม notification_settings table
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -147,6 +147,22 @@ class AppDb {
           );
         ''');
         await db.execute('CREATE INDEX IF NOT EXISTS idx_user_profile_is_synced ON user_profile(is_synced);');
+
+        // 7) Notification Settings
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS notification_settings (
+            id                        TEXT PRIMARY KEY,
+            user_id                   TEXT,
+            water_reminder_enabled    INTEGER NOT NULL DEFAULT 1,
+            exercise_reminder_enabled INTEGER NOT NULL DEFAULT 1,
+            meal_logging_enabled      INTEGER NOT NULL DEFAULT 1,
+            sleep_reminder_enabled    INTEGER NOT NULL DEFAULT 1,
+            updated_at                TEXT NOT NULL,
+            is_synced                 INTEGER NOT NULL DEFAULT 0
+          );
+        ''');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_notification_settings_user ON notification_settings(user_id);');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_notification_settings_is_synced ON notification_settings(is_synced);');
       },
       onUpgrade: (db, oldV, newV) async {
         // v1 -> v2 : เดิม (exercise_daily แบบรวม)
@@ -350,6 +366,24 @@ class AppDb {
           await db.execute('CREATE INDEX IF NOT EXISTS idx_exercise_is_synced ON exercise_daily(is_synced);');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_basic_profile_is_synced ON basic_profile(is_synced);');
           await db.execute('CREATE INDEX IF NOT EXISTS idx_physical_info_is_synced ON physical_info(is_synced);');
+        }
+
+        // v6 -> v7 : เพิ่ม notification_settings table
+        if (oldV < 7) {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS notification_settings (
+              id                        TEXT PRIMARY KEY,
+              user_id                   TEXT,
+              water_reminder_enabled    INTEGER NOT NULL DEFAULT 1,
+              exercise_reminder_enabled INTEGER NOT NULL DEFAULT 1,
+              meal_logging_enabled      INTEGER NOT NULL DEFAULT 1,
+              sleep_reminder_enabled    INTEGER NOT NULL DEFAULT 1,
+              updated_at                TEXT NOT NULL,
+              is_synced                 INTEGER NOT NULL DEFAULT 0
+            );
+          ''');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_notification_settings_user ON notification_settings(user_id);');
+          await db.execute('CREATE INDEX IF NOT EXISTS idx_notification_settings_is_synced ON notification_settings(is_synced);');
         }
       },
     );

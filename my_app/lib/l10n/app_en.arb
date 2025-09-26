@@ -148,6 +148,38 @@
   "weightKg": "Weight (kg)",
   "heightCm": "Height (cm)",
   "save": "Save",
+  "share": "Share",
+  "shareData": "Share Data",
+  "exportToPDF": "Export to PDF",
+  "saveDataAsPDF": "Save data as PDF file",
+  "shareToOtherApps": "Share to other apps",
+  "noDataToShare": "No data to share",
+  "errorOccurredMessage": "An error occurred: {error}",
+  "@errorOccurredMessage": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "noDataToPDF": "No data to create PDF",
+  "errorCreatingPDF": "Error creating PDF: {error}",
+  "@errorCreatingPDF": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "copyText": "Copy Text",
+  "copyToClipboard": "Copy data to clipboard",
+  "noDataToCopy": "No data to copy",
+  "copiedSuccessfully": "Data copied successfully!",
+  "errorCopying": "Error copying: {error}",
+  "@errorCopying": {
+    "placeholders": {
+      "error": {"type": "String"}
+    }
+  },
+  "shareAchievement": "Share Achievement",
+  "newAchievement": "New Achievement!",
+  "justCompletedChallenge": "I just completed this challenge in Health Tracking App! 💪",
   "edit": "Edit",
   "done": "Done",
   "volumeMl": "Volume (ml)",
@@ -251,5 +283,38 @@
     "placeholders": {
       "error": {"type": "String"}
     }
-  }
+  },
+  "notificationSettings": "Notification Settings",
+  "notificationSettingsDescription": "Manage your health reminder notifications",
+  "healthReminders": "Health Reminders",
+  "waterReminder": "Water Reminder",
+  "waterReminderDescription": "Remind me to stay hydrated throughout the day",
+  "exerciseReminder": "Exercise Reminder",
+  "exerciseReminderDescription": "Remind me to exercise regularly",
+  "sleepReminder": "Sleep Reminder", 
+  "sleepReminderDescription": "Remind me to maintain healthy sleep schedule",
+  "mealLoggingReminder": "Meal Logging Reminder",
+  "mealLoggingReminderDescription": "Remind me to log my meals",
+  "quickActions": "Quick Actions",
+  "resetToDefault": "Reset to Default",
+  "resetNotificationConfirmation": "Are you sure you want to reset all notification settings to default? This will enable all reminders.",
+  "notificationSettingsReset": "Notification settings have been reset to default",
+  "notificationSettings": "Notification Settings",
+  "notificationSettingsDescription": "Customize your reminder preferences",
+  "healthReminders": "Health Reminders",
+  "statistics": "Statistics",
+  "daily": "Daily",
+  "weekly": "Weekly",
+  "monthly": "Monthly",
+  "sleepHours": "Sleep Hours",
+  "waterIntakeML": "Water Intake (ml)",
+  "exerciseCalories": "Exercise (kcal)",
+  "latest": "Latest",
+  "average": "Average",
+  "goalLabel": "Goal",
+  "hours": "hrs",
+  "milliliters": "ml",
+  "calories": "kcal",
+  "noDataAvailable": "No data available",
+  "errorOccurred": "An error occurred"
 }

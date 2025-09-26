@@ -17,6 +17,7 @@ class SettingsPage extends StatelessWidget {
       appBar: CustomTopAppBar(
         title: t.settings,
         automaticallyImplyLeading: true,
+        showProfileIcon: false,
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -36,13 +37,31 @@ class SettingsPage extends StatelessWidget {
           Card(
             child: ListTile(
               leading: const CircleAvatar(
+                backgroundColor: Color(0xFFE3F2FD), 
+                child: Icon(Icons.bar_chart, color: Color(0xFF2196F3))
+              ),
+              title: Text(t.statistics),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.pushNamed(context, '/statistics');
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          Card(
+            child: ListTile(
+              leading: const CircleAvatar(
                 backgroundColor: Color(0xFFE8F5E8), 
                 child: Icon(Icons.emoji_events, color: Color(0xFF4CAF50))
               ),
               title: Text(t.goalAndAchievement),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
-                Navigator.pushNamed(context, '/goals-achievements');
+                Navigator.pushNamed(
+                  context, 
+                  '/goals-achievements',
+                  arguments: {'fromSettings': true},
+                );
               },
             ),
           ),
@@ -75,13 +94,15 @@ class SettingsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Notifications (placeholder, no nav)
+          // Notifications
           Card(
             child: ListTile(
               leading: const CircleAvatar(backgroundColor: Color(0xFFE3F2FD), child: Icon(Icons.notifications, color: Color(0xFF2196F3))),
               title: Text(t.notifications),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, '/notification-settings');
+              },
             ),
           ),
           const SizedBox(height: 12),
