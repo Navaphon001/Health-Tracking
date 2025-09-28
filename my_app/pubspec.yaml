@@ -49,6 +49,8 @@ dependencies:
   pdf: ^3.11.1
   printing: ^5.13.2
   screenshot: ^3.0.0
+  http: ^1.1.0
+  flutter_secure_storage: ^8.0.0
 
 dev_dependencies:
   flutter_test:

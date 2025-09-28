@@ -38,8 +38,8 @@ class _LoginScreenState extends State<LoginScreen> {
     final auth = context.read<AuthNotifier>();
     if (!_formKey.currentState!.validate()) return;
 
-    await auth.login(_email.text.trim(), _password.text.trim());
-    if (!auth.isLoading && auth.emailError == null && auth.passwordError == null) {
+    final success = await auth.login(_email.text.trim(), _password.text.trim());
+    if (success) {
       if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(context, '/profile-setup', (r) => false);
     }

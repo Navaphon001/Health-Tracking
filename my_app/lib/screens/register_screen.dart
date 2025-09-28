@@ -49,16 +49,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     final auth = context.read<AuthNotifier>();
-    await auth.register(
+    final success = await auth.register(
       username: _username.text.trim(),
       email: _email.text.trim(),
       password: _password.text.trim(),
     );
 
-    if (!auth.isLoading &&
-        auth.usernameError == null &&
-        auth.emailError == null &&
-        auth.passwordError == null) {
+    if (success) {
       if (!mounted) return;
       Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
     }
