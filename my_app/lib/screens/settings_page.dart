@@ -30,7 +30,9 @@ class SettingsPage extends StatelessWidget {
               title: Text(AppLocalizations.of(context).uranusCode),
               subtitle: const Text('Youtube Channel'),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () {},
+              onTap: () {
+                Navigator.pushNamed(context, '/profile-settings');
+              },
             ),
           ),
           const SizedBox(height: 12),

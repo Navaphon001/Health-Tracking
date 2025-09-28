@@ -162,24 +162,15 @@ class _ProfileSetupStep1State extends State<ProfileSetupStep1> {
               ],
             ),
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: _GenderCard(
-                    label: t.other,
-                    icon: Icons.transgender,
-                    selected: gender == 'other',
-                    isDark: isDark,
-                    ivory: ivory,
-                    primary: primary,
-                    onTap: () => context.read<ProfileSetupProvider>().setGender('other'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Expanded(child: SizedBox()),
-              ],
+            _GenderCard(
+              label: t.other,
+              icon: Icons.transgender,
+              selected: gender == 'other',
+              isDark: isDark,
+              ivory: ivory,
+              primary: primary,
+              onTap: () => context.read<ProfileSetupProvider>().setGender('other'),
             ),
-
             const SizedBox(height: 32),
 
             // Next button with gradient
@@ -252,13 +243,26 @@ class _RoundedTextField extends StatelessWidget {
         hintText: hint,
         filled: true,
         fillColor: theme.colorScheme.surface,
-        labelStyle: theme.textTheme.bodyMedium?.copyWith(color: dark ? ivoryColor.withOpacity(0.9) : null),
-        hintStyle: theme.textTheme.bodyMedium?.copyWith(color: dark ? ivoryColor.withOpacity(0.7) : theme.hintColor),
-        suffixIconColor: dark ? ivoryColor : null,
+        labelStyle: theme.textTheme.bodyMedium?.copyWith(
+          color: dark ? ivoryColor.withOpacity(0.9) : Colors.black,
+        ),
+        hintStyle: theme.textTheme.bodyMedium?.copyWith(
+          color: dark ? ivoryColor.withOpacity(0.7) : theme.hintColor,
+        ),
+        suffixIconColor: AppColors.primary,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: dark ? ivoryColor.withOpacity(0.4) : theme.colorScheme.outline)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: dark ? ivoryColor.withOpacity(0.3) : theme.colorScheme.outline)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(16), borderSide: BorderSide(color: dark ? ivoryColor : theme.colorScheme.primary, width: 1.6)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide(color: AppColors.primary, width: 2),
+        ),
         suffixIcon: suffixIcon,
       ),
       style: textStyle,
@@ -287,83 +291,51 @@ class _GenderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dark = isDark ?? theme.brightness == Brightness.dark;
-    final primaryColor = primary ?? theme.colorScheme.primary;
+    final primaryColor = primary ?? AppColors.primary;
     
-    // Define colors based on selection state and theme
-    Color backgroundColor;
-    Color borderColor;
-    Color textColor;
-    Color iconColor;
-    
-    if (selected) {
-      if (dark) {
-        backgroundColor = primaryColor.withOpacity(0.15);
-        borderColor = primaryColor;
-        textColor = primaryColor;
-        iconColor = primaryColor;
-      } else {
-        backgroundColor = primaryColor.withOpacity(0.1);
-        borderColor = primaryColor;
-        textColor = primaryColor;
-        iconColor = primaryColor;
-      }
-    } else {
-      if (dark) {
-        backgroundColor = theme.colorScheme.surface;
-        borderColor = theme.colorScheme.outline.withOpacity(0.3);
-        textColor = theme.colorScheme.onSurface;
-        iconColor = theme.colorScheme.onSurface.withOpacity(0.7);
-      } else {
-        backgroundColor = Colors.grey[50]!;
-        borderColor = Colors.grey[300]!;
-        textColor = Colors.grey[700]!;
-        iconColor = Colors.grey[600]!;
-      }
-    }
-    
-    return InkWell(
-      borderRadius: BorderRadius.circular(16),
+    return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        height: 90,
+        padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
-          color: backgroundColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: borderColor,
-            width: selected ? 2 : 1,
-          ),
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: primaryColor.withOpacity(0.15),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
+          gradient: selected
+              ? const LinearGradient(
+                  colors: [AppColors.primaryLight, AppColors.gradientLightEnd],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                )
               : null,
+          color: selected
+              ? null
+              : (theme.brightness == Brightness.dark
+                  ? Colors.grey[800]
+                  : Colors.grey[100]),
+          borderRadius: BorderRadius.circular(12),
+          border: selected
+              ? null
+              : Border.all(color: AppColors.primary.withOpacity(0.3)),
         ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                label,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  color: textColor,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-                ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: selected
+                  ? Colors.white
+                  : primaryColor,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: selected
+                    ? Colors.white
+                    : theme.textTheme.bodyLarge?.color,
+                fontWeight: FontWeight.w500,
               ),
-              const SizedBox(height: 6),
-              Icon(
-                icon,
-                size: 28,
-                color: iconColor,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

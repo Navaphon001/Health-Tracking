@@ -21,6 +21,16 @@ class AppColors {
   // ===== Dark mode =====
   static const Color darkIvory = Color(0xFFFFFCFB); // FFFFCFB
 
+  // ===== Status Colors =====
+  static const Color success = Color(0xFF4CAF50);
+  static const Color error = Color(0xFFF44336);
+  static const Color warning = Color(0xFFFF9800);
+  static const Color info = Color(0xFF2196F3);
+
+  // ===== Gray Scale =====
+  static const Color lightGray = Color(0xFFF5F5F5);
+  static const Color darkGray = Color(0xFF757575);
+
   // Chart Colors
   static const Color chartPrimary = Color(0xFF0ABAB5);
   static const Color chartSecondary = Color(0xFF56DFCF);

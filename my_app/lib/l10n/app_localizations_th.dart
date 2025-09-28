@@ -772,4 +772,43 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get calories => 'แคล';
+
+  @override
+  String get profileSettings => 'ตั้งค่าโปรไฟล์';
+
+  @override
+  String get fullName => 'ชื่อเต็ม';
+
+  @override
+  String get nickname => 'ชื่อเล่น';
+
+  @override
+  String get birthDate => 'วันเกิด';
+
+  @override
+  String get enterFullName => 'กรอกชื่อเต็มของคุณ';
+
+  @override
+  String get enterNickname => 'กรอกชื่อเล่นของคุณ';
+
+  @override
+  String get selectBirthDate => 'เลือกวันเกิด';
+
+  @override
+  String get pleaseEnterFullName => 'กรุณากรอกชื่อเต็มของคุณ';
+
+  @override
+  String get pleaseEnterNickname => 'กรุณากรอกชื่อเล่นของคุณ';
+
+  @override
+  String get pleaseSelectBirthDate => 'กรุณาเลือกวันเกิดของคุณ';
+
+  @override
+  String get pleaseSelectGender => 'กรุณาเลือกเพศของคุณ';
+
+  @override
+  String get saveChanges => 'บันทึกการเปลี่ยนแปลง';
+
+  @override
+  String get profileUpdatedSuccessfully => 'อัปเดตโปรไฟล์สำเร็จแล้ว';
 }

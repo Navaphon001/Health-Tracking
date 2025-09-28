@@ -774,4 +774,43 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get calories => 'kcal';
+
+  @override
+  String get profileSettings => 'Profile Settings';
+
+  @override
+  String get fullName => 'Full Name';
+
+  @override
+  String get nickname => 'Nickname';
+
+  @override
+  String get birthDate => 'Birth Date';
+
+  @override
+  String get enterFullName => 'Enter your full name';
+
+  @override
+  String get enterNickname => 'Enter your nickname';
+
+  @override
+  String get selectBirthDate => 'Select birth date';
+
+  @override
+  String get pleaseEnterFullName => 'Please enter your full name';
+
+  @override
+  String get pleaseEnterNickname => 'Please enter your nickname';
+
+  @override
+  String get pleaseSelectBirthDate => 'Please select your birth date';
+
+  @override
+  String get pleaseSelectGender => 'Please select your gender';
+
+  @override
+  String get saveChanges => 'Save Changes';
+
+  @override
+  String get profileUpdatedSuccessfully => 'Profile updated successfully';
 }

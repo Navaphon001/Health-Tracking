@@ -1555,6 +1555,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'kcal'**
   String get calories;
+
+  /// No description provided for @profileSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile Settings'**
+  String get profileSettings;
+
+  /// No description provided for @fullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get fullName;
+
+  /// No description provided for @nickname.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname'**
+  String get nickname;
+
+  /// No description provided for @birthDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Birth Date'**
+  String get birthDate;
+
+  /// No description provided for @enterFullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your full name'**
+  String get enterFullName;
+
+  /// No description provided for @enterNickname.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your nickname'**
+  String get enterNickname;
+
+  /// No description provided for @selectBirthDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select birth date'**
+  String get selectBirthDate;
+
+  /// No description provided for @pleaseEnterFullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your full name'**
+  String get pleaseEnterFullName;
+
+  /// No description provided for @pleaseEnterNickname.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your nickname'**
+  String get pleaseEnterNickname;
+
+  /// No description provided for @pleaseSelectBirthDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select your birth date'**
+  String get pleaseSelectBirthDate;
+
+  /// No description provided for @pleaseSelectGender.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select your gender'**
+  String get pleaseSelectGender;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get saveChanges;
+
+  /// No description provided for @profileUpdatedSuccessfully.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated successfully'**
+  String get profileUpdatedSuccessfully;
 }
 
 class _AppLocalizationsDelegate

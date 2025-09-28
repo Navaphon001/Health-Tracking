@@ -316,5 +316,18 @@
   "milliliters": "มล.",
   "calories": "แคล",
   "noDataAvailable": "ยังไม่มีข้อมูล",
-  "errorOccurred": "เกิดข้อผิดพลาด"
+  "errorOccurred": "เกิดข้อผิดพลาด",
+  "profileSettings": "ตั้งค่าโปรไฟล์",
+  "fullName": "ชื่อเต็ม",
+  "nickname": "ชื่อเล่น",
+  "birthDate": "วันเกิด",
+  "enterFullName": "กรอกชื่อเต็มของคุณ",
+  "enterNickname": "กรอกชื่อเล่นของคุณ",
+  "selectBirthDate": "เลือกวันเกิด",
+  "pleaseEnterFullName": "กรุณากรอกชื่อเต็มของคุณ",
+  "pleaseEnterNickname": "กรุณากรอกชื่อเล่นของคุณ",
+  "pleaseSelectBirthDate": "กรุณาเลือกวันเกิดของคุณ",
+  "pleaseSelectGender": "กรุณาเลือกเพศของคุณ",
+  "saveChanges": "บันทึกการเปลี่ยนแปลง",
+  "profileUpdatedSuccessfully": "อัปเดตโปรไฟล์สำเร็จแล้ว"
 }

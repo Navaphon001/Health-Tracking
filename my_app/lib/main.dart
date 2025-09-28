@@ -35,6 +35,7 @@ import 'providers/notification_provider.dart';
 import 'screens/goals_achievements_screen.dart';
 import 'screens/notification_settings_screen.dart';
 import 'screens/statistics_screen.dart';
+import 'screens/profile_settings_screen.dart';
 import 'package:flutter/foundation.dart'; // kDebugMode, debugPrint
 import 'package:sqflite/sqflite.dart';
 import 'services/app_db.dart';
@@ -159,6 +160,8 @@ class MyApp extends StatelessWidget {
             );
           case '/notification-settings':
             return MaterialPageRoute(builder: (_) => const NotificationSettingsScreen());
+          case '/profile-settings':
+            return MaterialPageRoute(builder: (_) => const ProfileSettingsScreen());
           case '/statistics':
             return MaterialPageRoute(
               builder: (_) => FutureBuilder<Database>(

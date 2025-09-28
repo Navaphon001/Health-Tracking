@@ -316,5 +316,18 @@
   "milliliters": "ml",
   "calories": "kcal",
   "noDataAvailable": "No data available",
-  "errorOccurred": "An error occurred"
+  "errorOccurred": "An error occurred",
+  "profileSettings": "Profile Settings",
+  "fullName": "Full Name",
+  "nickname": "Nickname",
+  "birthDate": "Birth Date",
+  "enterFullName": "Enter your full name",
+  "enterNickname": "Enter your nickname",
+  "selectBirthDate": "Select birth date",
+  "pleaseEnterFullName": "Please enter your full name",
+  "pleaseEnterNickname": "Please enter your nickname",
+  "pleaseSelectBirthDate": "Please select your birth date",
+  "pleaseSelectGender": "Please select your gender",
+  "saveChanges": "Save Changes",
+  "profileUpdatedSuccessfully": "Profile updated successfully"
 }
