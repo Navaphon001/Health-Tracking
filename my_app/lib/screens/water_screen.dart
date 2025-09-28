@@ -280,30 +280,7 @@ class _WaterScreenState extends State<WaterScreen> {
     );
   }
 
-  // Temporary reset method for testing segmented circle feature
-  void _resetWaterIntake() async {
-    final notifier = context.read<HabitNotifier>();
-    
-    // Reset water data
-    notifier.dailyWaterMl = 0;
-    notifier.dailyWaterCount = 0;
-    
-    // ล้างรายการการดื่มวันนี้
-    _todayIntakes.clear();
-    
-    // Reset form
-    setState(() {
-      _selectedBeverage = null;
-      _amountController.text = _selectedAmount;
-    });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Water intake reset (TEST MODE)'),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
 
   void _showAddBeverageDialog() {
     final nameController = TextEditingController();
@@ -660,27 +637,6 @@ class _WaterScreenState extends State<WaterScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Header
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.local_drink,
-                              color: AppColors.primary,
-                              size: 24,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Add Water Intake',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.grey[800],
-                              ),
-                            ),
-                          ],
-                        ),
-                        
-                        const SizedBox(height: 20),
                         
                         // Selected Beverage Info
                         if (_selectedBeverage != null) ...[
@@ -750,58 +706,29 @@ class _WaterScreenState extends State<WaterScreen> {
                         
                         const SizedBox(height: 24),
                         
-                        // Action Buttons
-                        Row(
-                          children: [
-                            // Reset Button (temporary for testing)
-                            Expanded(
-                              child: ElevatedButton(
-                                onPressed: _resetWaterIntake,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.red[50],
-                                  foregroundColor: Colors.red[600],
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  elevation: 0,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                    side: BorderSide(color: Colors.red[200]!),
-                                  ),
-                                ),
-                                child: const Text(
-                                  'Reset',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+                        // Action Button  
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            onPressed: _addWaterIntake,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppColors.primary,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              elevation: 2,
+                              shadowColor: AppColors.primary.withOpacity(0.3),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            const SizedBox(width: 12),
-                            // Save Button
-                            Expanded(
-                              flex: 2,
-                              child: ElevatedButton(
-                                onPressed: _addWaterIntake,
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.primary,
-                                  foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(vertical: 14),
-                                  elevation: 2,
-                                  shadowColor: AppColors.primary.withOpacity(0.3),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                                child: Text(
-                                  t.save,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
+                            child: Text(
+                              t.save,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ],
+                          ),
                         ),
                       ],
                     ),
