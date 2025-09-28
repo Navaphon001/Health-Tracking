@@ -14,7 +14,11 @@ class ProfileSetupStep1 extends StatefulWidget {
 }
 
 class _ProfileSetupStep1State extends State<ProfileSetupStep1> {
+  final _formKey = GlobalKey<FormState>();
   late final TextEditingController _nameController;
+  String? _nameError;
+  String? _dobError;
+  String? _genderError;
 
   @override
   void initState() {
@@ -39,7 +43,10 @@ class _ProfileSetupStep1State extends State<ProfileSetupStep1> {
       lastDate: now,
       initialDate: current ?? initial,
     );
-    if (picked != null) provider.setBirthDate(picked);
+    if (picked != null) {
+      provider.setBirthDate(picked);
+      if (_dobError != null) setState(() => _dobError = null);
+    }
   }
 
 
@@ -97,79 +104,126 @@ class _ProfileSetupStep1State extends State<ProfileSetupStep1> {
             ),
             const SizedBox(height: 24),
 
-            // Profile Image Picker
+            const SizedBox(height: 16),
+
+            // Profile image
             const ProfileImagePicker(),
             const SizedBox(height: 32),
 
-            // Name
-            _RoundedTextField(
-              controller: _nameController,
-              label: t.name,
-              hint: t.nameHint,
-              onChanged: context.read<ProfileSetupProvider>().setFullName,
-              textStyle: textStyle,
-              isDark: isDark,
-              ivory: ivory,
-            ),
-            const SizedBox(height: 20),
-
-            // DOB
-            _RoundedTextField(
-              readOnly: true,
-              controller: TextEditingController(
-                text: dob == null ? '' : '${dob.day.toString().padLeft(2, '0')}/${dob.month.toString().padLeft(2, '0')}/${dob.year}',
-              ),
-              label: t.dob,
-              hint: t.dobHint,
-              suffixIcon: IconButton(
-                icon: const Icon(Icons.calendar_today),
-                onPressed: () => _pickDob(context),
-              ),
-              textStyle: textStyle,
-              isDark: isDark,
-              ivory: ivory,
-            ),
-            const SizedBox(height: 12),
-
-            // Gender section
-            Text(t.gender, style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary)),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: _GenderCard(
-                    label: t.male,
-                    icon: Icons.male,
-                    selected: gender == 'male',
-                    isDark: isDark,
-                    ivory: ivory,
-                    primary: primary,
-                    onTap: () => context.read<ProfileSetupProvider>().setGender('male'),
-                  ),
+            Form(
+              key: _formKey,
+              child: Column(children: [
+                // Name
+                _RoundedTextField(
+                  controller: _nameController,
+                  label: t.name,
+                  hint: t.nameHint,
+                  onChanged: (v) {
+                    context.read<ProfileSetupProvider>().setFullName(v);
+                    if (_nameError != null) setState(() => _nameError = null);
+                  },
+                  textStyle: textStyle,
+                  isDark: isDark,
+                  ivory: ivory,
+                  borderColor: _nameError != null ? Colors.red : Colors.grey.shade300,
+                  errorText: _nameError,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _GenderCard(
-                    label: t.female,
-                    icon: Icons.female,
-                    selected: gender == 'female',
-                    isDark: isDark,
-                    ivory: ivory,
-                    primary: primary,
-                    onTap: () => context.read<ProfileSetupProvider>().setGender('female'),
+                const SizedBox(height: 12),
+
+                // DOB
+                _RoundedTextField(
+                  readOnly: true,
+                  controller: TextEditingController(
+                    text: dob == null ? '' : '${dob.day.toString().padLeft(2, '0')}/${dob.month.toString().padLeft(2, '0')}/${dob.year}',
                   ),
+                  label: t.dob,
+                  hint: t.dobHint,
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: () => _pickDob(context),
+                  ),
+                  textStyle: textStyle,
+                  isDark: isDark,
+                  ivory: ivory,
+                  borderColor: _dobError != null ? Colors.red : Colors.grey.shade300,
+                  errorText: _dobError,
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _GenderCard(
-              label: t.other,
-              icon: Icons.transgender,
-              selected: gender == 'other',
-              isDark: isDark,
-              ivory: ivory,
-              primary: primary,
-              onTap: () => context.read<ProfileSetupProvider>().setGender('other'),
+                const SizedBox(height: 12),
+
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(t.gender, style: theme.textTheme.titleSmall?.copyWith(color: theme.colorScheme.primary)),
+                ),
+                const SizedBox(height: 8),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _GenderCard(
+                        label: t.male,
+                        icon: Icons.male,
+                        selected: gender == 'male',
+                        isDark: isDark,
+                        ivory: ivory,
+                        primary: primary,
+                        onTap: () {
+                              final provider = context.read<ProfileSetupProvider>();
+                              // toggle: if already selected, clear selection
+                              if (provider.gender == 'male') {
+                                provider.setGender(null);
+                              } else {
+                                provider.setGender('male');
+                              }
+                              if (_genderError != null) setState(() => _genderError = null);
+                            },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _GenderCard(
+                        label: t.female,
+                        icon: Icons.female,
+                        selected: gender == 'female',
+                        isDark: isDark,
+                        ivory: ivory,
+                        primary: primary,
+                        onTap: () {
+                          final provider = context.read<ProfileSetupProvider>();
+                          if (provider.gender == 'female') {
+                            provider.setGender(null);
+                          } else {
+                            provider.setGender('female');
+                          }
+                          if (_genderError != null) setState(() => _genderError = null);
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _GenderCard(
+                  label: t.other,
+                  icon: Icons.transgender,
+                  selected: gender == 'other',
+                  isDark: isDark,
+                  ivory: ivory,
+                  primary: primary,
+                  onTap: () {
+                    final provider = context.read<ProfileSetupProvider>();
+                    if (provider.gender == 'other') {
+                      provider.setGender(null);
+                    } else {
+                      provider.setGender('other');
+                    }
+                    if (_genderError != null) setState(() => _genderError = null);
+                  },
+                ),
+                // show gender error below buttons
+                if (_genderError != null) ...[
+                  const SizedBox(height: 8),
+                  Align(alignment: Alignment.centerLeft, child: Text(_genderError!, style: const TextStyle(color: Colors.red, fontSize: 12))),
+                ],
+              ]),
             ),
             const SizedBox(height: 32),
 
@@ -194,7 +248,22 @@ class _ProfileSetupStep1State extends State<ProfileSetupStep1> {
                     foregroundColor: btnTextColor,
                   ),
                   onPressed: () {
-                    Navigator.of(context).pushNamed('/profile-setup-step2');
+                    // Validate form: require name, dob, gender. Avatar is optional.
+                    final provider = context.read<ProfileSetupProvider>();
+                    final nameValid = _nameController.text.trim().isNotEmpty;
+                    final dobValid = provider.birthDate != null;
+                    final genderValid = (provider.gender ?? '').isNotEmpty;
+
+                    // Validate and set inline errors (avatar optional)
+                    setState(() {
+                      _nameError = nameValid ? null : 'Please enter your name';
+                      _dobError = dobValid ? null : 'Please pick your date of birth';
+                      _genderError = genderValid ? null : 'Please select gender';
+                    });
+
+                    if (_nameError == null && _dobError == null && _genderError == null) {
+                      Navigator.of(context).pushNamed('/profile-setup-step2');
+                    }
                   },
                   child: Text(t.next),
                 ),
@@ -214,9 +283,11 @@ class _RoundedTextField extends StatelessWidget {
   final bool readOnly;
   final Widget? suffixIcon;
   final ValueChanged<String>? onChanged;
+  final String? errorText;
   final TextStyle? textStyle;
   final bool? isDark;
   final Color? ivory;
+  final Color? borderColor;
   const _RoundedTextField({
     required this.controller,
     required this.label,
@@ -227,6 +298,8 @@ class _RoundedTextField extends StatelessWidget {
     this.textStyle,
     this.isDark,
     this.ivory,
+    this.borderColor,
+    this.errorText,
   });
 
   @override
@@ -234,11 +307,12 @@ class _RoundedTextField extends StatelessWidget {
     final theme = Theme.of(context);
     final dark = isDark ?? theme.brightness == Brightness.dark;
     final ivoryColor = ivory ?? const Color(0xFFFFFDF6);
+    final hasError = errorText != null && errorText!.isNotEmpty;
     return TextField(
       controller: controller,
       readOnly: readOnly,
       onChanged: onChanged,
-      decoration: InputDecoration(
+        decoration: InputDecoration(
         labelText: label,
         hintText: hint,
         filled: true,
@@ -253,16 +327,20 @@ class _RoundedTextField extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+          gapPadding: 4.0,
+          borderSide: BorderSide(color: hasError ? Colors.red : (borderColor ?? Colors.black), width: 1.0),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.primary.withOpacity(0.3)),
+          gapPadding: 4.0,
+          borderSide: BorderSide(color: hasError ? Colors.red : (borderColor ?? Colors.black), width: 1.2),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
+          gapPadding: 4.0,
+          borderSide: BorderSide(color: hasError ? Colors.red : (borderColor ?? Colors.black), width: 2),
         ),
+        errorText: errorText,
         suffixIcon: suffixIcon,
       ),
       style: textStyle,
@@ -287,7 +365,6 @@ class _GenderCard extends StatelessWidget {
     this.ivory,
     this.primary,
   });
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -312,9 +389,9 @@ class _GenderCard extends StatelessWidget {
                   ? Colors.grey[800]
                   : Colors.grey[100]),
           borderRadius: BorderRadius.circular(12),
-          border: selected
-              ? null
-              : Border.all(color: AppColors.primary.withOpacity(0.3)),
+      border: selected
+        ? null
+        : Border.all(color: Colors.grey.shade300, width: 1.2),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,

@@ -18,7 +18,6 @@ class ProfileSettingsScreen extends StatefulWidget {
 class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   final _formKey = GlobalKey<FormState>();
   final _fullNameController = TextEditingController();
-  final _nicknameController = TextEditingController();
   
   DateTime? _selectedBirthDate;
   String? _selectedGender;
@@ -37,7 +36,6 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   @override
   void dispose() {
     _fullNameController.dispose();
-    _nicknameController.dispose();
     super.dispose();
   }
 
@@ -54,13 +52,12 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
       if (profile != null) {
         setState(() {
           _fullNameController.text = profile['full_name'] ?? '';
-          _nicknameController.text = profile['nickname'] ?? '';
           _currentImageUrl = profile['profile_image_url'];
-          
+
           if (profile['birth_date'] != null) {
             _selectedBirthDate = DateTime.parse(profile['birth_date']);
           }
-          
+
           _selectedGender = profile['gender'];
         });
       }
@@ -124,54 +121,34 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
   }
 
   Future<void> _saveProfile() async {
-    if (!_formKey.currentState!.validate()) return;
-    
-    if (_selectedBirthDate == null) {
-      final t = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.pleaseSelectBirthDate)),
-      );
-      return;
-    }
-    
-    if (_selectedGender == null) {
-      final t = AppLocalizations.of(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(t.pleaseSelectGender)),
-      );
-      return;
-    }
-
+    // This screen updates profile info; don't block on validation.
     setState(() => _isLoading = true);
-    
+
     try {
       const userId = 'demo_user';
-      
-      // In a real app, you would upload the image to a server first
+
+      // In a real app, upload the image to a server first
       String? imageUrl = _currentImageUrl;
       if (_selectedImage != null) {
-        // For demo purposes, we'll use the local file path
-        // In production, upload to cloud storage and get URL
         imageUrl = _selectedImage!.path;
       }
-      
-      await UserProfileService.instance.saveStep1(
+
+      // Use updateStep1 to allow partial updates (fields may be null)
+      await UserProfileService.instance.updateStep1(
         userId: userId,
-        fullName: _fullNameController.text.trim(),
-        nickname: _nicknameController.text.trim(),
-        birthDate: _selectedBirthDate!,
-        gender: _selectedGender!,
+        fullName: _fullNameController.text.trim().isNotEmpty ? _fullNameController.text.trim() : null,
+        birthDate: _selectedBirthDate,
+        gender: _selectedGender,
         profileImageUrl: imageUrl,
       );
-      
+
       // Update the provider as well
       final provider = context.read<ProfileSetupProvider>();
       provider.setFullName(_fullNameController.text.trim());
-      provider.setNickname(_nicknameController.text.trim());
-      provider.setBirthDate(_selectedBirthDate!);
-      provider.setGender(_selectedGender!);
+      if (_selectedBirthDate != null) provider.setBirthDate(_selectedBirthDate!);
+      if (_selectedGender != null) provider.setGender(_selectedGender!);
       provider.setProfileImageUrl(imageUrl);
-      
+
       if (mounted) {
         final t = AppLocalizations.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -548,73 +525,76 @@ class _ProfileSettingsScreenState extends State<ProfileSettingsScreen> {
               padding: const EdgeInsets.all(20),
               child: Form(
                 key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SizedBox(height: 20),
-                    _buildProfileImage(),
-                    const SizedBox(height: 32),
-                    _buildTextField(
-                      controller: _fullNameController,
-                      label: t.fullName,
-                      hint: t.enterFullName,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return t.pleaseEnterFullName;
-                        }
-                        return null;
-                      },
+                child: Container(
+                  margin: const EdgeInsets.only(top:0),
+                  child: Card(
+                    color: Colors.white,
+                    elevation: 10,
+                    shadowColor: Colors.black.withOpacity(0.12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                      side: BorderSide(color: Colors.grey[200]!),
                     ),
-                    const SizedBox(height: 20),
-                    _buildTextField(
-                      controller: _nicknameController,
-                      label: t.nickname,
-                      hint: t.enterNickname,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return t.pleaseEnterNickname;
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    _buildDateField(),
-                    const SizedBox(height: 20),
-                    _buildGenderField(),
-                    const SizedBox(height: 40),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _saveProfile,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
+                          _buildProfileImage(),
+                          const SizedBox(height: 24),
+                          _buildTextField(
+                            controller: _fullNameController,
+                            label: t.fullName,
+                            hint: t.enterFullName,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return t.pleaseEnterFullName;
+                              }
+                              return null;
+                            },
                           ),
-                          elevation: 2,
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          const SizedBox(height: 12),
+                          _buildDateField(),
+                          const SizedBox(height: 20),
+                          _buildGenderField(),
+                          const SizedBox(height: 28),
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: _isLoading ? null : _saveProfile,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                              )
-                            : Text(
-                                t.saveChanges,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                elevation: 2,
                               ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      ),
+                                    )
+                                  : Text(
+                                      t.saveChanges,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 20),
-                  ],
+                  ),
                 ),
               ),
             ),

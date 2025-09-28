@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/physical_info_provider.dart';
@@ -6,8 +7,71 @@ import '../providers/profile_setup_provider.dart';
 import '../theme/app_colors.dart';
 import '../shared/custom_top_app_bar.dart';
 
-class ProfileSetupStep2 extends StatelessWidget {
+class ProfileSetupStep2 extends StatefulWidget {
   const ProfileSetupStep2({super.key});
+
+  @override
+  State<ProfileSetupStep2> createState() => _ProfileSetupStep2State();
+}
+
+class _ProfileSetupStep2State extends State<ProfileSetupStep2> {
+  String? _weightError;
+  String? _heightError;
+  late final TextEditingController _weightCtrl;
+  late final TextEditingController _heightCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    final phys = context.read<PhysicalInfoProvider>();
+    _weightCtrl = TextEditingController(text: phys.weight ?? '');
+    _heightCtrl = TextEditingController(text: phys.height ?? '');
+
+    _weightCtrl.addListener(() {
+      final raw = _weightCtrl.text;
+      final normalized = _normalizeNumber(raw);
+      if (normalized != raw) {
+        _weightCtrl.value = TextEditingValue(
+          text: normalized,
+          selection: TextSelection.collapsed(offset: normalized.length),
+        );
+      }
+      context.read<PhysicalInfoProvider>().setWeight(normalized);
+    });
+
+    _heightCtrl.addListener(() {
+      final raw = _heightCtrl.text;
+      final normalized = _normalizeNumber(raw);
+      if (normalized != raw) {
+        _heightCtrl.value = TextEditingValue(
+          text: normalized,
+          selection: TextSelection.collapsed(offset: normalized.length),
+        );
+      }
+      context.read<PhysicalInfoProvider>().setHeight(normalized);
+    });
+  }
+
+  @override
+  void dispose() {
+    _weightCtrl.dispose();
+    _heightCtrl.dispose();
+    super.dispose();
+  }
+
+  String _normalizeNumber(String input) {
+    // allow digits and a single decimal point (dot). Replace comma with dot.
+    var s = input.replaceAll(',', '.');
+    // remove all chars except digits and dot
+    s = s.replaceAll(RegExp('[^0-9.]'), '');
+    final firstDot = s.indexOf('.');
+    if (firstDot >= 0) {
+      final before = s.substring(0, firstDot);
+      final after = s.substring(firstDot + 1).replaceAll('.', '');
+      s = '$before.${after}';
+    }
+    return s;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,12 +90,11 @@ class ProfileSetupStep2 extends StatelessWidget {
     );
 
     // Use selectors for granular updates
-    final weight = context.select<PhysicalInfoProvider, String?>((p) => p.weight);
-    final height = context.select<PhysicalInfoProvider, String?>((p) => p.height);
-    final activityLevel = context.select<ProfileSetupProvider, String?>((p) => p.activityLevel);
+  final activityLevel = context.select<ProfileSetupProvider, String?>((p) => p.activityLevel);
     
-    final weightCtrl = TextEditingController(text: weight ?? '');
-    final heightCtrl = TextEditingController(text: height ?? '');
+  // use persistent controllers created in state
+  final weightCtrl = _weightCtrl;
+  final heightCtrl = _heightCtrl;
 
     return Scaffold(
       appBar: CustomTopAppBar(
@@ -70,11 +133,16 @@ class ProfileSetupStep2 extends StatelessWidget {
                     controller: weightCtrl,
                     label: t.weight,
                     hint: 'กก.',
-                    onChanged: context.read<PhysicalInfoProvider>().setWeight,
+                    onChanged: (_) {
+                      if (_weightError != null) setState(() => _weightError = null);
+                    },
                     textStyle: textStyle,
                     isDark: isDark,
                     ivory: ivory,
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9\.,]'))],
+                    borderColor: _weightError != null ? Colors.red : null,
+                    errorText: _weightError,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -83,11 +151,16 @@ class ProfileSetupStep2 extends StatelessWidget {
                     controller: heightCtrl,
                     label: t.height,
                     hint: 'ซม.',
-                    onChanged: context.read<PhysicalInfoProvider>().setHeight,
+                    onChanged: (_) {
+                      if (_heightError != null) setState(() => _heightError = null);
+                    },
                     textStyle: textStyle,
                     isDark: isDark,
                     ivory: ivory,
-                    keyboardType: TextInputType.number,
+                    keyboardType: TextInputType.numberWithOptions(decimal: false),
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    borderColor: _heightError != null ? Colors.red : null,
+                    errorText: _heightError,
                   ),
                 ),
               ],
@@ -106,7 +179,14 @@ class ProfileSetupStep2 extends StatelessWidget {
               isDark: isDark,
               ivory: ivory,
               primary: primary,
-              onTap: () => context.read<ProfileSetupProvider>().setActivityLevel('sedentary'),
+              onTap: () {
+                final provider = context.read<ProfileSetupProvider>();
+                if (provider.activityLevel == 'sedentary') {
+                  provider.setActivityLevel(null);
+                } else {
+                  provider.setActivityLevel('sedentary');
+                }
+              },
             ),
             const SizedBox(height: 8),
             
@@ -118,7 +198,14 @@ class ProfileSetupStep2 extends StatelessWidget {
               isDark: isDark,
               ivory: ivory,
               primary: primary,
-              onTap: () => context.read<ProfileSetupProvider>().setActivityLevel('lightly_active'),
+              onTap: () {
+                final provider = context.read<ProfileSetupProvider>();
+                if (provider.activityLevel == 'lightly_active') {
+                  provider.setActivityLevel(null);
+                } else {
+                  provider.setActivityLevel('lightly_active');
+                }
+              },
             ),
             const SizedBox(height: 8),
             
@@ -130,7 +217,14 @@ class ProfileSetupStep2 extends StatelessWidget {
               isDark: isDark,
               ivory: ivory,
               primary: primary,
-              onTap: () => context.read<ProfileSetupProvider>().setActivityLevel('moderately_active'),
+              onTap: () {
+                final provider = context.read<ProfileSetupProvider>();
+                if (provider.activityLevel == 'moderately_active') {
+                  provider.setActivityLevel(null);
+                } else {
+                  provider.setActivityLevel('moderately_active');
+                }
+              },
             ),
             const SizedBox(height: 8),
             
@@ -142,7 +236,14 @@ class ProfileSetupStep2 extends StatelessWidget {
               isDark: isDark,
               ivory: ivory,
               primary: primary,
-              onTap: () => context.read<ProfileSetupProvider>().setActivityLevel('very_active'),
+              onTap: () {
+                final provider = context.read<ProfileSetupProvider>();
+                if (provider.activityLevel == 'very_active') {
+                  provider.setActivityLevel(null);
+                } else {
+                  provider.setActivityLevel('very_active');
+                }
+              },
             ),
 
             const SizedBox(height: 32),
@@ -168,6 +269,33 @@ class ProfileSetupStep2 extends StatelessWidget {
                     foregroundColor: btnTextColor,
                   ),
                   onPressed: () {
+                    final phys = context.read<PhysicalInfoProvider>();
+                    final profile = context.read<ProfileSetupProvider>();
+                    final weightVal = (phys.weight ?? '').trim();
+                    final heightVal = (phys.height ?? '').trim();
+                    final activity = (profile.activityLevel ?? '').trim();
+
+                    bool hasError = false;
+                    setState(() {
+                      _weightError = null;
+                      _heightError = null;
+                    });
+
+                    if (weightVal.isEmpty || double.tryParse(weightVal) == null) {
+                      setState(() => _weightError = 'Please enter a valid weight');
+                      hasError = true;
+                    }
+                    if (heightVal.isEmpty || double.tryParse(heightVal) == null) {
+                      setState(() => _heightError = 'Please enter a valid height');
+                      hasError = true;
+                    }
+                    if (activity.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please select activity level')));
+                      hasError = true;
+                    }
+
+                    if (hasError) return;
+
                     Navigator.of(context).pushNamed('/profile-setup-step3');
                   },
                   child: Text(t.next),
@@ -185,7 +313,10 @@ class _RoundedTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
   final String? hint;
+  final String? errorText;
+  final Color? borderColor;
   final ValueChanged<String>? onChanged;
+  final List<TextInputFormatter>? inputFormatters;
   final TextStyle? textStyle;
   final bool? isDark;
   final Color? ivory;
@@ -195,7 +326,10 @@ class _RoundedTextField extends StatelessWidget {
     required this.controller,
     required this.label,
     this.hint,
-    this.onChanged,
+  this.onChanged,
+  this.inputFormatters,
+    this.errorText,
+    this.borderColor,
     this.textStyle,
     this.isDark,
     this.ivory,
@@ -207,6 +341,7 @@ class _RoundedTextField extends StatelessWidget {
     final theme = Theme.of(context);
     final dark = isDark ?? theme.brightness == Brightness.dark;
     final ivoryColor = ivory ?? const Color(0xFFFFFDF6);
+    final hasError = errorText != null && errorText!.isNotEmpty;
     return TextField(
       controller: controller,
       onChanged: onChanged,
@@ -221,16 +356,17 @@ class _RoundedTextField extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16), 
-          borderSide: BorderSide(color: dark ? ivoryColor.withValues(alpha: 0.4) : theme.colorScheme.outline)
+          borderSide: BorderSide(color: hasError ? Colors.red : (borderColor ?? (dark ? ivoryColor.withValues(alpha: 0.4) : theme.colorScheme.outline)))
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16), 
-          borderSide: BorderSide(color: dark ? ivoryColor.withValues(alpha: 0.3) : theme.colorScheme.outline)
+          borderSide: BorderSide(color: hasError ? Colors.red : (borderColor ?? (dark ? ivoryColor.withValues(alpha: 0.3) : theme.colorScheme.outline)))
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16), 
-          borderSide: BorderSide(color: dark ? ivoryColor : theme.colorScheme.primary, width: 1.6)
+          borderSide: BorderSide(color: hasError ? Colors.red : (borderColor ?? (dark ? ivoryColor : theme.colorScheme.primary)), width: 1.6)
         ),
+        errorText: errorText,
       ),
       style: textStyle,
     );

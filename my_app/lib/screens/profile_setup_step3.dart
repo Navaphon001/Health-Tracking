@@ -77,7 +77,14 @@ class ProfileSetupStep3 extends StatelessWidget {
                   label: t.healthPoor,
                   value: 'poor',
                   selected: healthRating == 'poor',
-                  onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('poor'),
+                  onTap: () {
+                    final provider = context.read<PhysicalInfoProvider>();
+                    if (provider.healthRating == 'poor') {
+                      provider.setHealthRating(null);
+                    } else {
+                      provider.setHealthRating('poor');
+                    }
+                  },
                   textStyle: textStyle,
                   isDark: isDark,
                   primary: primary,
@@ -87,7 +94,14 @@ class ProfileSetupStep3 extends StatelessWidget {
                   label: t.healthFair,
                   value: 'fair',
                   selected: healthRating == 'fair',
-                  onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('fair'),
+                  onTap: () {
+                    final provider = context.read<PhysicalInfoProvider>();
+                    if (provider.healthRating == 'fair') {
+                      provider.setHealthRating(null);
+                    } else {
+                      provider.setHealthRating('fair');
+                    }
+                  },
                   textStyle: textStyle,
                   isDark: isDark,
                   primary: primary,
@@ -97,7 +111,14 @@ class ProfileSetupStep3 extends StatelessWidget {
                   label: t.healthGood,
                   value: 'good',
                   selected: healthRating == 'good',
-                  onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('good'),
+                  onTap: () {
+                    final provider = context.read<PhysicalInfoProvider>();
+                    if (provider.healthRating == 'good') {
+                      provider.setHealthRating(null);
+                    } else {
+                      provider.setHealthRating('good');
+                    }
+                  },
                   textStyle: textStyle,
                   isDark: isDark,
                   primary: primary,
@@ -107,7 +128,14 @@ class ProfileSetupStep3 extends StatelessWidget {
                   label: t.healthGreat,
                   value: 'great',
                   selected: healthRating == 'great',
-                  onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('great'),
+                  onTap: () {
+                    final provider = context.read<PhysicalInfoProvider>();
+                    if (provider.healthRating == 'great') {
+                      provider.setHealthRating(null);
+                    } else {
+                      provider.setHealthRating('great');
+                    }
+                  },
                   textStyle: textStyle,
                   isDark: isDark,
                   primary: primary,
@@ -117,7 +145,14 @@ class ProfileSetupStep3 extends StatelessWidget {
                   label: t.healthExcellent,
                   value: 'excellent',
                   selected: healthRating == 'excellent',
-                  onTap: () => context.read<PhysicalInfoProvider>().setHealthRating('excellent'),
+                  onTap: () {
+                    final provider = context.read<PhysicalInfoProvider>();
+                    if (provider.healthRating == 'excellent') {
+                      provider.setHealthRating(null);
+                    } else {
+                      provider.setHealthRating('excellent');
+                    }
+                  },
                   textStyle: textStyle,
                   isDark: isDark,
                   primary: primary,
@@ -219,6 +254,16 @@ class ProfileSetupStep3 extends StatelessWidget {
                     foregroundColor: btnTextColor,
                   ),
                   onPressed: () {
+                    final phys = context.read<PhysicalInfoProvider>();
+                    final profile = context.read<ProfileSetupProvider>();
+                    final health = (phys.healthRating ?? '').trim();
+                    final goalsList = profile.goals;
+
+                    if (health.isEmpty && (goalsList.isEmpty)) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please select a health rating or at least one goal')));
+                      return;
+                    }
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(AppLocalizations.of(context).profileSetupCompleted)),
                     );

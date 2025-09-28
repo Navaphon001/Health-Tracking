@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/language_provider.dart';
 import '../providers/theme_provider.dart';
 import '../shared/custom_top_app_bar.dart';
+import '../theme/app_colors.dart';
 
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
@@ -128,13 +129,80 @@ class SettingsPage extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // Sign Out tile (placeholder only)
+          // Sign Out tile
           Card(
             child: ListTile(
               leading: const CircleAvatar(backgroundColor: Color(0xFFFFEBEE), child: Icon(Icons.logout, color: Color(0xFFF44336))),
               title: Text(t.signOut),
               trailing: const Icon(Icons.chevron_right),
-              onTap: () {},
+              onTap: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) {
+                    final theme = Theme.of(ctx);
+                    final primary = theme.colorScheme.primary;
+                    return Dialog(
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                      elevation: 12,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(Icons.logout, color: primary),
+                                const SizedBox(width: 12),
+                                Expanded(child: Text(t.signOut, style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600))),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Text('ต้องการออกจากระบบใช่หรือไม่?', style: theme.textTheme.bodyMedium),
+                            const SizedBox(height: 20),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    style: OutlinedButton.styleFrom(
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                    onPressed: () => Navigator.of(ctx).pop(false),
+                                    child: Text(AppLocalizations.of(ctx).cancel),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: DecoratedBox(
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(colors: [AppColors.primaryLight, AppColors.gradientLightEnd]),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.transparent,
+                                        shadowColor: Colors.transparent,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                      ),
+                                      onPressed: () => Navigator.of(ctx).pop(true),
+                                      child: Text('ตกลง', style: const TextStyle(color: Colors.white)),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+                );
+
+                if (confirmed == true) {
+                  // Navigate to login and clear history
+                  Navigator.pushNamedAndRemoveUntil(context, '/login', (r) => false);
+                }
+              },
             ),
           ),
         ],

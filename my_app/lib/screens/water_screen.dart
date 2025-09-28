@@ -605,7 +605,7 @@ class _WaterScreenState extends State<WaterScreen> {
             padding: const EdgeInsets.all(20),
             child: Column(
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: 2),
                 // Progress Circle
                 _buildProgressCircle(totalAmount, goalAmount),
                 

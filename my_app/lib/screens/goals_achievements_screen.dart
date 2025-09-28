@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:screenshot/screenshot.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'dart:typed_data';
 import '../providers/goal_provider.dart';
 import '../providers/achievement_provider.dart';
 import '../models/goal.dart';
@@ -19,6 +23,8 @@ class GoalsAchievementsScreen extends StatefulWidget {
 }
 
 class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
+  final ScreenshotController _screenshotController = ScreenshotController();
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
@@ -294,18 +300,18 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: isLocked 
-            ? Theme.of(context).colorScheme.surfaceContainerHighest
+            ? Colors.grey.shade300  // More opaque background for incomplete achievements
             : Theme.of(context).cardColor,
         border: Border.all(
           color: isLocked 
-              ? Theme.of(context).dividerColor 
+              ? Colors.grey.shade400  // Darker border for incomplete achievements
               : Theme.of(context).colorScheme.primary.withOpacity(0.2),
         ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Stack(
         children: [
-          // Share button for completed achievements
+          // Share button for completed achievements (top-right corner)
           if (isCompleted)
             Positioned(
               top: 0,
@@ -332,22 +338,19 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
               ),
             ),
           
-          // Center the content
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-          // Icon and Title
-          Expanded(
+          // Centered content layout
+          Positioned.fill(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
+                // Icon/Image centered in the middle
                 Container(
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
                     color: isLocked 
-                        ? Colors.grey.shade200 
+                        ? Colors.grey.shade400  // More opaque background for incomplete achievements
                         : AppColors.primary.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(25),
                   ),
@@ -356,52 +359,58 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
                       achievement.iconPath,
                       style: TextStyle(
                         fontSize: 24,
-                        color: isLocked ? Theme.of(context).colorScheme.onSurfaceVariant : null,
+                        color: isLocked 
+                            ? Colors.grey.shade600  // Dimmed icon color for incomplete achievements
+                            : null,
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 8),
+                
+                // Title
                 Text(
                   achievement.title,
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: isLocked 
-                        ? Theme.of(context).colorScheme.onSurfaceVariant
+                        ? Colors.grey.shade600  // Dimmed text color for incomplete achievements
                         : Theme.of(context).textTheme.titleMedium?.color,
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-              ],
-            ),
-          ),
-          
-          // Progress bar (only if in progress)
-          if (hasProgress) ...[
-            const SizedBox(height: 8),
-            Column(
-              children: [
-                Text(
-                  '${achievement.currentProgress}/${achievement.maxProgress}',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Theme.of(context).textTheme.bodySmall?.color,
+                
+                // Progress bar (only if in progress)
+                if (hasProgress) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    '${achievement.currentProgress}/${achievement.maxProgress}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: isLocked 
+                          ? Colors.grey.shade600  // Dimmed progress text for incomplete achievements
+                          : Theme.of(context).textTheme.bodySmall?.color,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                LinearProgressIndicator(
-                  value: achievement.progressPercentage,
-                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).colorScheme.primary),
-                  minHeight: 3,
-                ),
+                  const SizedBox(height: 4),
+                  LinearProgressIndicator(
+                    value: achievement.progressPercentage,
+                    backgroundColor: isLocked 
+                        ? Colors.grey.shade400  // Dimmed progress background for incomplete achievements
+                        : Theme.of(context).colorScheme.surfaceContainerHighest,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      isLocked 
+                          ? Colors.grey.shade500  // Dimmed progress color for incomplete achievements
+                          : Theme.of(context).colorScheme.primary
+                    ),
+                    minHeight: 3,
+                  ),
+                ],
               ],
             ),
-          ],
-            ],
           ),
         ],
       ),
@@ -501,19 +510,19 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
               ),
             ),
             
-            // Share options
+            // Share options (only image share)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 children: [
                   _buildAchievementShareOption(
-                    icon: Icons.share,
-                    title: AppLocalizations.of(context).shareData,
-                    subtitle: AppLocalizations.of(context).shareToOtherApps,
-                    color: AppColors.primary,
+                    icon: Icons.image,
+                    title: AppLocalizations.of(context).shareAchievement,
+                    subtitle: 'แชร์ achievement',
+                    color: Colors.green,
                     onTap: () async {
                       Navigator.pop(context);
-                      await _shareAchievement(achievement);
+                      await _shareAchievementAsImage(achievement);
                     },
                   ),
                 ],
@@ -592,48 +601,205 @@ class _GoalsAchievementsScreenState extends State<GoalsAchievementsScreen> {
     );
   }
 
-  Future<void> _shareAchievement(Achievement achievement) async {
+  // Note: text sharing removed; only image sharing is supported now.
+
+  // Build a shareable achievement image widget
+  Widget _buildShareableAchievementCard(Achievement achievement) {
+    return Container(
+      width: 400,
+      height: 500,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            AppColors.primary.withOpacity(0.8),
+            AppColors.primary,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // App Title
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            child: Text(
+              'Health Tracking App',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 30),
+          
+          // Achievement Badge
+          Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 10,
+                  offset: Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                achievement.iconPath,
+                style: TextStyle(fontSize: 60),
+              ),
+            ),
+          ),
+          
+          const SizedBox(height: 30),
+          
+          // Achievement Title
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Text(
+              '🏆 Achievement Unlocked!',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          
+          const SizedBox(height: 15),
+          
+          // Achievement Name
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Text(
+              achievement.title,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          
+          const SizedBox(height: 10),
+          
+          // Achievement Description
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Text(
+              achievement.description,
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+          
+          const SizedBox(height: 30),
+          
+          // Motivational Message
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 30),
+            child: Text(
+              'Keep up the great work! 💪',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.9),
+                fontSize: 16,
+                fontStyle: FontStyle.italic,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Share achievement as image
+  Future<void> _shareAchievementAsImage(Achievement achievement) async {
     try {
-      final shareText = '''
-🏆 ${AppLocalizations.of(context).newAchievement}
+      // Show loading indicator
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  ),
+                ),
+                SizedBox(width: 16),
+                Text('กำลังสร้างรูปภาพ...'),
+              ],
+            ),
+            duration: Duration(seconds: 2),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+      }
+
+      // Capture the achievement card as image
+      final Uint8List? imageBytes = await _screenshotController.captureFromWidget(
+        _buildShareableAchievementCard(achievement),
+        context: context,
+        pixelRatio: 2.0,
+      );
+
+      if (imageBytes != null) {
+        // Get temporary directory
+        final directory = await getTemporaryDirectory();
+        final imagePath = '${directory.path}/achievement_${DateTime.now().millisecondsSinceEpoch}.png';
+        
+        // Save image to file
+        final imageFile = File(imagePath);
+        await imageFile.writeAsBytes(imageBytes);
+
+        // Share the image with text
+        final shareText = '''
+🏆 Achievement Unlocked!
 
 ${achievement.iconPath} ${achievement.title}
 
 ${achievement.description}
 
-${AppLocalizations.of(context).justCompletedChallenge}
+Just completed this challenge in Health Tracking App! 💪
 
 #HealthTracking #Achievement #Wellness
-      '''.trim();
-      
-      final result = await Share.share(shareText);
-      
-      // Handle share result
-      if (result.status == ShareResultStatus.unavailable) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('ไม่มีแอพที่รองรับการแชร์ในอุปกรณ์นี้'),
-              backgroundColor: Colors.orange,
-            ),
-          );
-        }
+        '''.trim();
+
+        await Share.shareXFiles(
+          [XFile(imagePath)],
+          text: shareText,
+        );
+
+        // Clean up temporary file after a delay
+        Future.delayed(const Duration(seconds: 10), () {
+          if (imageFile.existsSync()) {
+            imageFile.deleteSync();
+          }
+        });
       }
     } catch (e) {
       if (mounted) {
-        // More specific error handling
-        String errorMessage;
-        if (e.toString().contains('MissingPluginException')) {
-          errorMessage = 'การแชร์ไม่รองรับในโหมดนี้ (โปรดทดสอบบนอุปกรณ์จริง)';
-        } else if (e.toString().contains('No implementation found')) {
-          errorMessage = 'ไม่พบแอพที่รองรับการแชร์';
-        } else {
-          errorMessage = 'เกิดข้อผิดพลาด: ${e.toString()}';
-        }
-        
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(errorMessage),
+            content: Text('เกิดข้อผิดพลาดในการสร้างรูปภาพ: ${e.toString()}'),
             backgroundColor: Colors.red[600],
             action: SnackBarAction(
               label: 'ตกลง',
@@ -706,7 +872,7 @@ class _AddGoalBottomSheetState extends State<_AddGoalBottomSheet> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Add New Goal',
+                  AppLocalizations.of(context).addGoal,
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w600,
@@ -825,24 +991,38 @@ class _AddGoalBottomSheetState extends State<_AddGoalBottomSheet> {
             ),
             const SizedBox(height: 24),
 
-            // Add button
+            // Add button (gradient themed)
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _addGoal,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
+              child: Material(
+                color: Colors.transparent,
+                child: Ink(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.primary,
+                        AppColors.gradientLightEnd,
+                      ],
+                    ),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                ),
-                child: const Text(
-                  'Add Goal',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: _addGoal,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      alignment: Alignment.center,
+                      child: Text(
+                        AppLocalizations.of(context).addGoal,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               ),

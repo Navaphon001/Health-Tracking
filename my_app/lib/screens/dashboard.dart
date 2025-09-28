@@ -103,144 +103,156 @@ class DashboardPage extends StatelessWidget {
 
               const SizedBox(height: 15),
 
-              // น้ำหนักวันนี้
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      t.todayWeight,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _BMISection(),
-                  ],
-                ),
-              ),
-
-              // อารมณ์วันนี้
-              Container(
-                padding: const EdgeInsets.all(12),
-                margin: const EdgeInsets.only(bottom: 20),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black),
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      t.todayMood,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _EmojiMood("😐", t.healthPoor),
-                        _EmojiMood("🙂", t.healthFair),
-                        _EmojiMood("😊", t.healthGood),
-                        _EmojiMood("😁", t.healthGreat),
-                        _EmojiMood("🥳", t.healthExcellent),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              // การดำเนินการวันนี้
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.black),
+              // น้ำหนักวันนี้ (card)
+              Card(
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      t.todayProgress,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
+                elevation: 4,
+                shadowColor: Colors.black12,
+                color: Colors.white,
+                margin: const EdgeInsets.only(bottom: 20),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t.todayWeight,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                      _BMISection(),
+                    ],
+                  ),
+                ),
+              ),
 
-                    const SizedBox(height: 12),
-                    _ProgressItem(
-                      icon: "💧",
-                      label: t.waterIntakeLabel,  
-                      progressText: "${(water / 2000 * 100).toInt()}%",
-                      progress: water / 2000,
-                      onTap: () {
-                        if (onTabChange != null) {
-                          onTabChange!(2); // Water tab index = 2
-                        } else {
-                          Navigator.of(context).pushNamed('/water');
-                        }
-                      },
-                    ),
-                    _ProgressItem(
-                      icon: "🏃‍♂️",
-                      label: t.exerciseLabel,
-                      progressText: exercise >= 30 ? t.done : "${exercise} min",
-                      progress: (exercise / 30).clamp(0.0, 1.0),
-                      onTap: () {
-                        if (onTabChange != null) {
-                          onTabChange!(3); // Exercise tab index = 3
-                        } else {
-                          Navigator.of(context).pushNamed('/exercise');
-                        }
-                      },
-                    ),
-                    _ProgressItem(
-                      icon: "😴",
-                      label: t.sleepLoggedLabel,
-                      progressText: "8h 30m",
-                      progress: 0.85,
-                      onTap: () {
-                        if (onTabChange != null) {
-                          onTabChange!(4); // Sleep tab index = 4
-                        } else {
-                          Navigator.of(context).pushNamed('/sleep');
-                        }
-                      },
-                    ),
-                    Consumer<MealProvider>(
-                      builder: (context, mealProvider, child) {
-                        return _ProgressItem(
-                          icon: "🍽️",
-                          label: t.mealsLoggedLabel,
-                          progressText: mealProvider.mealProgressText,
-                          progress: mealProvider.mealProgress,
-                          onTap: () {
-                            if (onTabChange != null) {
-                              onTabChange!(1); // Meal tab index = 1
-                            } else {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const MealLoggingScreen(),
-                                ),
-                              );
-                            }
-                          },
-                        );
-                      },
-                    ),
-                  ],
+              // อารมณ์วันนี้ (card)
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 4,
+                shadowColor: Colors.black12,
+                color: Colors.white,
+                margin: const EdgeInsets.only(bottom: 20),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t.todayMood,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          _EmojiMood("😐", t.healthPoor),
+                          _EmojiMood("🙂", t.healthFair),
+                          _EmojiMood("😊", t.healthGood),
+                          _EmojiMood("😁", t.healthGreat),
+                          _EmojiMood("🥳", t.healthExcellent),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+
+              // การดำเนินการวันนี้ (card)
+              Card(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                elevation: 4,
+                shadowColor: Colors.black12,
+                color: Colors.white,
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        t.todayProgress,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+                      _ProgressItem(
+                        icon: "💧",
+                        label: t.waterIntakeLabel,  
+                        progressText: "${(water / 2000 * 100).toInt()}%",
+                        progress: water / 2000,
+                        onTap: () {
+                          if (onTabChange != null) {
+                            onTabChange!(2); // Water tab index = 2
+                          } else {
+                            Navigator.of(context).pushNamed('/water');
+                          }
+                        },
+                      ),
+                      _ProgressItem(
+                        icon: "🏃‍♂️",
+                        label: t.exerciseLabel,
+                        progressText: exercise >= 30 ? t.done : "${exercise} min",
+                        progress: (exercise / 30).clamp(0.0, 1.0),
+                        onTap: () {
+                          if (onTabChange != null) {
+                            onTabChange!(3); // Exercise tab index = 3
+                          } else {
+                            Navigator.of(context).pushNamed('/exercise');
+                          }
+                        },
+                      ),
+                      _ProgressItem(
+                        icon: "😴",
+                        label: t.sleepLoggedLabel,
+                        progressText: "8h 30m",
+                        progress: 0.85,
+                        onTap: () {
+                          if (onTabChange != null) {
+                            onTabChange!(4); // Sleep tab index = 4
+                          } else {
+                            Navigator.of(context).pushNamed('/sleep');
+                          }
+                        },
+                      ),
+                      Consumer<MealProvider>(
+                        builder: (context, mealProvider, child) {
+                          return _ProgressItem(
+                            icon: "🍽️",
+                            label: t.mealsLoggedLabel,
+                            progressText: mealProvider.mealProgressText,
+                            progress: mealProvider.mealProgress,
+                            onTap: () {
+                              if (onTabChange != null) {
+                                onTabChange!(1); // Meal tab index = 1
+                              } else {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const MealLoggingScreen(),
+                                  ),
+                                );
+                              }
+                            },
+                          );
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
