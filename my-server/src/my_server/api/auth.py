@@ -51,9 +51,7 @@ def get_db():
 @router.post("/register", response_model=TokenResponse)
 def register(request: RegisterRequest, db=Depends(get_db)):
 	from uuid import uuid4
-	user_exist = db.query(User).filter(User.username == request.username).first()
-	if user_exist:
-		raise HTTPException(status_code=400, detail="Username already registered")
+	# Allow duplicate usernames; enforce unique email only
 	email_exist = db.query(User).filter(User.email == request.email).first()
 	if email_exist:
 		raise HTTPException(status_code=400, detail="Email already registered")
@@ -61,13 +59,15 @@ def register(request: RegisterRequest, db=Depends(get_db)):
 	user = User(id=str(uuid4()), username=request.username, email=request.email, password=hashed_password)
 	db.add(user)
 	db.commit()
-	access_token = create_access_token({"sub": request.username})
-	return {"access_token": access_token}
+	# include user id in token
+	access_token = create_access_token({"sub": request.email, "user_id": user.id})
+	return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/login", response_model=TokenResponse)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db=Depends(get_db)):
-    user = db.query(User).filter(User.username == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.password):
-        raise HTTPException(status_code=401, detail="Incorrect username or password")
-    access_token = create_access_token({"sub": user.username})
-    return {"access_token": access_token, "token_type": "bearer"}
+	# Authenticate by email + password
+	user = db.query(User).filter(User.email == form_data.username).first()
+	if not user or not verify_password(form_data.password, user.password):
+		raise HTTPException(status_code=401, detail="Incorrect email or password")
+	access_token = create_access_token({"sub": user.email, "user_id": user.id})
+	return {"access_token": access_token, "token_type": "bearer"}
