@@ -37,6 +37,9 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   provider: ^6.1.5+1
+  android_alarm_manager_plus: any
+  flutter_local_notifications: any
+  permission_handler: any
   shared_preferences: ^2.3.2
   sqflite: ^2.3.0
   path_provider: ^2.1.3

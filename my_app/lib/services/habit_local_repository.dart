@@ -1,5 +1,6 @@
 // lib/services/habit_local_repository.dart
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -12,6 +13,7 @@ import '../models/sleep_log.dart';
 
 import '../charts/chart_point.dart';
 import '../charts/fill_daily_series.dart';
+import '../models/exercise_log.dart';
 
 class HabitLocalRepository {
   final Database db;
@@ -19,12 +21,21 @@ class HabitLocalRepository {
 
   // ---------- SharedPreferences keys ----------
   static const _kExercisesKey = 'exercises';          // แคตตาล็อกกิจกรรม
-  static const _kExerciseRatesKey = 'exercise:rates'; // { type: kcalPerMinute }
+  static const _kExerciseRatesKey = 'exercise:rates'; // { type: calPerMinute }
 
   // ค่าเริ่มต้น ถ้ายังไม่เคยตั้งค่า
   static const Map<String, double> _kDefaultExerciseRates = {
-    'run': 80.0,
-    'walk': 40.0,
+    // Values are kcal per minute (midpoints from your specifications)
+    // run: 0.22 kcal/sec -> 0.22*60 = 13.2 kcal/min
+    'run': 13.2,
+    // walk: 30 min -> 75-150 kcal => ~2.5 - 5.0 kcal/min -> midpoint 3.75
+    'walk': 3.75,
+    // bike/general defaults: 10 min -> 40-50 kcal => 4.0-5.0 kcal/min -> midpoint 4.5
+    'bike': 4.5,
+    // swim: 0.006-0.02 kcal/sec -> 0.36 - 1.2 kcal/min -> midpoint 0.78
+    'swim': 0.78,
+    // sport: 330 kcal in 10 min -> 33 kcal/min
+    'sport': 33.0,
     'general': 0.0,
   };
 
@@ -143,15 +154,58 @@ class HabitLocalRepository {
   // =========================
   // EXERCISE (SQLite: exercise_daily)
   // =========================
-  // กติกา: แคล = (kcal/นาที ของประเภทนั้น) × นาที
-  // เก็บอัตรา (kcal/นาที) ตาม type ไว้ใน SharedPreferences หรือส่งมาจาก UI ตอนบันทึก
+  // EXERCISE LOGS (SQLite: exercise_logs)
+  // table schema (example):
+  // CREATE TABLE exercise_logs (
+  //   id TEXT PRIMARY KEY,
+  //   user_id TEXT NOT NULL,
+  //   date TEXT NOT NULL, -- YYYY-MM-DD
+  //   activity_type TEXT NOT NULL,
+  //   duration INTEGER NOT NULL, -- seconds
+  //   calories_burned REAL,
+  //   notes TEXT,
+  //   created_at INTEGER,
+  //   updated_at INTEGER
+  // );
 
-  Future<void> setExerciseRate(String type, double kcalPerMinute) async {
+  Future<void> addExerciseLog(ExerciseLog log) async {
+    await db.insert(
+      'exercise_logs',
+      {
+        'id': log.id,
+        'user_id': log.userId,
+        'date': log.date.toIso8601String(),
+        'activity_type': describeEnum(log.activityType),
+        'duration': log.duration,
+        'calories_burned': log.caloriesBurned,
+        'notes': log.notes,
+        'created_at': log.createdAt.millisecondsSinceEpoch,
+        'updated_at': log.updatedAt.millisecondsSinceEpoch,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<ExerciseLog>> getExerciseLogsForUserByDate(String userId, DateTime date) async {
+    final dayStr = DateTime(date.year, date.month, date.day).toIso8601String();
+    final rows = await db.query('exercise_logs', where: 'user_id = ? AND date = ?', whereArgs: [userId, dayStr]);
+    return rows.map((r) {
+      return ExerciseLog.fromJson(Map<String, dynamic>.from(r));
+    }).toList();
+  }
+
+  Future<void> deleteExerciseLog(String id) async {
+    await db.delete('exercise_logs', where: 'id = ?', whereArgs: [id]);
+  }
+  // กติกา: แคล = (cal/นาที ของประเภทนั้น) × นาที
+  // เก็บอัตรา (cal/นาที) ตาม type ไว้ใน SharedPreferences หรือส่งมาจาก UI ตอนบันทึก
+
+  Future<void> setExerciseRate(String type, double calPerMinute) async {
     final sp = await SharedPreferences.getInstance();
     final raw = sp.getString(_kExerciseRatesKey);
     final Map<String, dynamic> map =
         raw == null || raw.isEmpty ? {} : Map<String, dynamic>.from(jsonDecode(raw));
-    map[type.toLowerCase()] = kcalPerMinute; // เก็บเป็นตัวพิมพ์เล็กเสมอ
+    map[type.toLowerCase()] = calPerMinute; // เก็บเป็นตัวพิมพ์เล็กเสมอ
     await sp.setString(_kExerciseRatesKey, jsonEncode(map));
   }
 
@@ -205,7 +259,7 @@ class HabitLocalRepository {
     final now = nowEpochMillis();
 
     final rate = caloriesPerMinute ?? (await getExerciseRate(type)) ?? 0.0;
-    final double kcal = rate * deltaMinutes;
+  final double cal = rate * deltaMinutes;
 
     await db.rawInsert('''
       INSERT INTO exercise_daily(date_key, type, duration_min, calories_burned, notes, created_at, updated_at)
@@ -215,7 +269,7 @@ class HabitLocalRepository {
         calories_burned = COALESCE(exercise_daily.calories_burned,0) + excluded.calories_burned,
         notes           = COALESCE(excluded.notes, exercise_daily.notes),
         updated_at      = excluded.updated_at;
-    ''', [key, type, deltaMinutes, kcal, notes, now, now]);
+  ''', [key, type, deltaMinutes, cal, notes, now, now]);
   }
 
   /// รวมทุกชนิดของวันนั้น

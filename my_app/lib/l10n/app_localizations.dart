@@ -1523,7 +1523,7 @@ abstract class AppLocalizations {
   /// No description provided for @exerciseCalories.
   ///
   /// In en, this message translates to:
-  /// **'Exercise (kcal)'**
+  /// **'Exercise (cal)'**
   String get exerciseCalories;
 
   /// No description provided for @latest.
@@ -1553,7 +1553,7 @@ abstract class AppLocalizations {
   /// No description provided for @calories.
   ///
   /// In en, this message translates to:
-  /// **'kcal'**
+  /// **'cal'**
   String get calories;
 
   /// No description provided for @profileSettings.

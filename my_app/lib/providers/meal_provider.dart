@@ -60,21 +60,24 @@ class MealProvider with ChangeNotifier {
 
   /// บันทึกมื้ออาหารใหม่และอัปเดต count
   Future<void> saveMeal(Meal meal, {String userId = 'default_user'}) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
 
+    try {
       await MealService.instance.saveMealWithLog(meal, userId);
-      
+
       // รีเฟรชข้อมูลหลังบันทึก
       await loadTodayMealCount(userId: userId);
-      
     } catch (e) {
       _error = e.toString();
+      if (kDebugMode) {
+        print('Error saving meal: $e');
+      }
+      rethrow;
+    } finally {
       _isLoading = false;
       notifyListeners();
-      rethrow; // ส่งต่อ error ไปยัง UI
     }
   }
 
