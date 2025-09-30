@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:provider/provider.dart';
+import 'dart:math' as math;
 import '../providers/habit_notifier.dart';
+import '../services/alarm_service.dart';
 import '../theme/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../shared/custom_top_app_bar.dart';
@@ -11,9 +14,109 @@ class SleepScreen extends StatefulWidget {
   State<SleepScreen> createState() => _SleepScreenState();
 }
 
+class _SleepQualityChart extends StatelessWidget {
+  final Duration duration;
+  final double size;
+
+  const _SleepQualityChart({required this.duration, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final totalHours = duration.inMinutes / 60.0;
+    // Map hours to a 0..1 quality value assuming 0..10 hours scale
+    final quality = (totalHours / 10.0).clamp(0.0, 1.0);
+    final percent = (quality * 100).round();
+
+  // texts: use existing localization for sleep hours label; Quality isn't defined so use literal
+  final qualityText = 'Quality';
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          width: size,
+          height: size,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              CustomPaint(
+                size: Size(size, size),
+                painter: _RingPainter(quality: quality),
+              ),
+              // Inner texts
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(qualityText, style: TextStyle(color: AppColors.textSecondary)),
+                  const SizedBox(height: 6),
+                  Text(
+                    '$percent',
+                    style: TextStyle(fontSize: 36, fontWeight: FontWeight.bold, color: AppColors.textDark),
+                  ),
+                  const SizedBox(height: 6),
+                  // show only percent sign as requested
+                  Text('%', style: TextStyle(color: AppColors.textSecondary)),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        // External duration texts
+        Text('${totalHours.toStringAsFixed(1)} h', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+  
+      ],
+    );
+  }
+}
+
+class _RingPainter extends CustomPainter {
+  final double quality; // 0..1
+  _RingPainter({required this.quality});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = size.center(Offset.zero);
+    final radius = math.min(size.width, size.height) / 2;
+    final strokeWidth = radius * 0.22; // narrow ring
+
+    final bgPaint = Paint()
+      ..color = AppColors.chartGrey
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+
+    final fgPaint = Paint()
+      ..shader = SweepGradient(
+        startAngle: -math.pi / 2,
+        endAngle: -math.pi / 2 + 2 * math.pi * quality,
+        colors: [AppColors.chartPrimary, AppColors.chartSecondary],
+      ).createShader(Rect.fromCircle(center: center, radius: radius))
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round;
+                          // final star = _stars(d);
+    canvas.drawCircle(center, radius - strokeWidth / 2, bgPaint);
+
+    final sweep = 2 * math.pi * quality;
+    // Avoid a visible seam at the arc join by drawing a full circle when quality is nearly 1.0
+    if ((quality - 1.0).abs() < 0.002) {
+      // draw full circle with fgPaint
+      canvas.drawCircle(center, radius - strokeWidth / 2, fgPaint);
+    } else {
+      canvas.drawArc(Rect.fromCircle(center: center, radius: radius - strokeWidth / 2), -math.pi / 2, sweep, false, fgPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RingPainter old) => old.quality != quality;
+}
+
 class _SleepScreenState extends State<SleepScreen> {
   TimeOfDay _bed = const TimeOfDay(hour: 22, minute: 0);
   TimeOfDay _wake = const TimeOfDay(hour: 6, minute: 0);
+  bool _bedEnabled = true;
+  bool _wakeEnabled = true;
 
   @override
   void initState() {
@@ -32,12 +135,10 @@ class _SleepScreenState extends State<SleepScreen> {
       }
     });
   }
-
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final dur = _calcDuration(_bed, _wake);
-    final stars = _stars(dur);
 
     return Scaffold(
       appBar: CustomTopAppBar(
@@ -48,88 +149,61 @@ class _SleepScreenState extends State<SleepScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            // สรุปชั่วโมงและดาว (อัปเดตทันทีเมื่อเลือกเวลา)
-            Text(_formatDuration(dur),
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                5,
-                (i) => Icon(i < stars ? Icons.star : Icons.star_border, color: Colors.amber),
+            // Compact rounded pie chart (quality) + duration labels
+            Center(
+              child: _SleepQualityChart(
+                duration: dur,
+                size: 180,
               ),
             ),
 
             const SizedBox(height: 24),
 
             // เลือกเวลานอน
-            _TimeTile(
+            _ScheduleCard(
               title: t.bedtime,
-              value: _hhmm(_bed),
+              time: _bed,
               icon: Icons.nightlight_round,
-              onTap: () async {
-                final picked = await _pickTime(context, _bed);
+              enabled: _bedEnabled,
+              onTimeChanged: (picked) {
                 if (!mounted) return;
-                if (picked != null) setState(() => _bed = picked);
+                setState(() => _bed = picked);
+              },
+              onEnabledChanged: (v) async {
+                if (!mounted) return;
+                setState(() => _bedEnabled = v);
+                if (v) {
+                  // schedule alarm after 10 seconds for demo
+                  await AlarmService.scheduleAlarmInSeconds(100, 10);
+                } else {
+                  await AlarmService.cancel(100);
+                }
               },
             ),
             const SizedBox(height: 12),
 
             // เลือกเวลาตื่น
-            _TimeTile(
+            _ScheduleCard(
               title: t.wakeUpTime,
-              value: _hhmm(_wake),
+              time: _wake,
               icon: Icons.wb_sunny,
-              onTap: () async {
-                final picked = await _pickTime(context, _wake);
+              enabled: _wakeEnabled,
+              onTimeChanged: (picked) {
                 if (!mounted) return;
-                if (picked != null) setState(() => _wake = picked);
+                setState(() => _wake = picked);
+              },
+              onEnabledChanged: (v) async {
+                if (!mounted) return;
+                setState(() => _wakeEnabled = v);
+                if (v) {
+                  await AlarmService.scheduleAlarmInSeconds(101, 10);
+                } else {
+                  await AlarmService.cancel(101);
+                }
               },
             ),
 
             const Spacer(),
-
-            // บันทึก
-            SizedBox(
-              width: double.infinity,
-              child: DecoratedBox(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppColors.primaryLight, AppColors.gradientLightEnd],
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                  ),
-                  borderRadius: BorderRadius.all(Radius.circular(12)),
-                ),
-                child: ElevatedButton(
-                  onPressed: () async {
-                    final n = context.read<HabitNotifier>();
-                    final d = _calcDuration(_bed, _wake);
-                    final star = _stars(d);
-                    await n.saveSleepLog(bedTime: _bed, wakeTime: _wake, starCount: star);
-                    if (!mounted) return;
-                    // SnackBar จะมาเองจาก callback ใน Notifier (ถ้าตั้งไว้แล้ว)
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.transparent,
-                    shadowColor: Colors.transparent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    t.logSleep,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -137,21 +211,6 @@ class _SleepScreenState extends State<SleepScreen> {
   }
 
   // ---------- helpers ----------
-  Future<TimeOfDay?> _pickTime(BuildContext ctx, TimeOfDay initial) async {
-    final picked = await showTimePicker(
-      context: ctx,
-      initialTime: initial,
-      initialEntryMode: TimePickerEntryMode.input, // พิมพ์ได้
-      builder: (context, child) {
-        // บังคับ 24 ชั่วโมง
-        return MediaQuery(
-          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
-          child: child!,
-        );
-      },
-    );
-    return picked;
-  }
 
   Duration _calcDuration(TimeOfDay bed, TimeOfDay wake) {
     final now = DateTime.now();
@@ -161,61 +220,159 @@ class _SleepScreenState extends State<SleepScreen> {
     return wdt.difference(bdt);
   }
 
-  String _formatDuration(Duration d) {
-    final h = d.inHours, m = d.inMinutes.remainder(60);
-    final t = AppLocalizations.of(context);
-    return '${h}h ${m}m ${t.lastNight}';
-  }
+  // (removed unused _formatDuration)
 
-  int _stars(Duration d) {
-    final h = d.inHours;
-    if (h > 10) return 2;
-    if (h >= 8) return 5;
-    if (h >= 6) return 4;
-    if (h >= 5) return 3;
-    if (h >= 3) return 2;
-    if (h > 0)  return 1;
-    return 0;
-  }
-
-  String _hhmm(TimeOfDay t) =>
-      '${t.hour.toString().padLeft(2,'0')}:${t.minute.toString().padLeft(2,'0')}';
+  // _stars removed: it was used only by the removed Log Sleep button
 
   TimeOfDay _parseTod(String s) {
     final p = s.split(':');
     return TimeOfDay(hour: int.parse(p[0]), minute: int.parse(p[1]));
   }
 }
-
-class _TimeTile extends StatelessWidget {
+class _ScheduleCard extends StatefulWidget {
   final String title;
-  final String value;
+  final TimeOfDay time;
   final IconData icon;
-  final VoidCallback onTap;
+  final bool enabled;
+  final ValueChanged<bool> onEnabledChanged;
+  final ValueChanged<TimeOfDay>? onTimeChanged;
 
-  const _TimeTile({
+  const _ScheduleCard({
     required this.title,
-    required this.value,
+    required this.time,
     required this.icon,
-    required this.onTap,
+    required this.enabled,
+  required this.onEnabledChanged,
+  this.onTimeChanged,
   });
 
   @override
+  State<_ScheduleCard> createState() => _ScheduleCardState();
+}
+
+class _ScheduleCardState extends State<_ScheduleCard> {
+  late bool _enabled;
+
+  @override
+  void initState() {
+    super.initState();
+    _enabled = widget.enabled;
+  }
+
+  String _timeUntilText(TimeOfDay t) {
+    final now = DateTime.now();
+    var dt = DateTime(now.year, now.month, now.day, t.hour, t.minute);
+    if (!dt.isAfter(now)) dt = dt.add(const Duration(days: 1));
+    final diff = dt.difference(now);
+    final hours = diff.inHours;
+    final minutes = diff.inMinutes % 60;
+    if (hours > 0) return 'in ${hours}hours ${minutes}minutes';
+    return 'in ${minutes}minutes';
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    final timeText = '${widget.time.hour.toString().padLeft(2,'0')}:${widget.time.minute.toString().padLeft(2,'0')}';
+    return GestureDetector(
+      onTap: () async {
+        if (widget.onTimeChanged == null) return;
+        DateTime initial = DateTime.now();
+        initial = DateTime(initial.year, initial.month, initial.day, widget.time.hour, widget.time.minute);
+        DateTime temp = initial;
+        final picked = await showModalBottomSheet<DateTime>(
+          context: context,
+          builder: (ctx) {
+            return SizedBox(
+              height: 300,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: CupertinoDatePicker(
+                      mode: CupertinoDatePickerMode.time,
+                      use24hFormat: true,
+                      initialDateTime: initial,
+                      onDateTimeChanged: (dt) => temp = dt,
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        TextButton(
+                          onPressed: () => Navigator.of(ctx).pop(),
+                          child: Text(AppLocalizations.of(context).cancel),
+                          style: TextButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 18),
+                        ElevatedButton(
+                          onPressed: () => Navigator.of(ctx).pop(temp),
+                          child: Text(AppLocalizations.of(context).done),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+        if (picked != null) {
+          final tod = TimeOfDay(hour: picked.hour, minute: picked.minute);
+          widget.onTimeChanged!(tod);
+        }
+      },
+      child: Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.grey.shade100,
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade300),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 8, offset: const Offset(0,2)),
+        ],
       ),
-      child: ListTile(
-        contentPadding: EdgeInsets.zero,
-        leading: Icon(icon, color: AppColors.textSecondary),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        subtitle: Text(value, style: const TextStyle(color: AppColors.textSecondary)),
-        trailing: const Icon(Icons.edit),
-        onTap: onTap,
+      child: Row(
+        children: [
+          CircleAvatar(
+            backgroundColor: AppColors.primary.withOpacity(0.12),
+            child: Icon(widget.icon, color: AppColors.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(widget.title, style: const TextStyle(fontWeight: FontWeight.w600)),
+                    const SizedBox(width: 8),
+                    Text(timeText, style: const TextStyle(fontWeight: FontWeight.w600)),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(_timeUntilText(widget.time), style: TextStyle(color: AppColors.textSecondary)),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Switch(
+            value: _enabled,
+            activeColor: AppColors.primary,
+            onChanged: (v) {
+              setState(() => _enabled = v);
+              widget.onEnabledChanged(v);
+            },
+          ),
+        ],
+      ),
       ),
     );
   }

@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:table_calendar/table_calendar.dart';
+// removed TableCalendar; custom week picker implemented below
 
-import '../providers/water_provider.dart';
-import '../providers/exercise_provider.dart';
+import '../providers/habit_notifier.dart';
 import '../providers/date_provider.dart';
 import '../providers/bmi_provider.dart';
 import '../providers/mood_provider.dart';  
 import '../providers/meal_provider.dart';
-import 'meal_logging_screen.dart';
+// ...existing imports
 import '../theme/app_colors.dart';
 import '../l10n/app_localizations.dart';
 import '../shared/custom_top_app_bar.dart';
@@ -22,8 +21,9 @@ class DashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final water = context.watch<WaterProvider>().water;
-    final exercise = context.watch<ExerciseProvider>().exercise;
+  final habit = context.watch<HabitNotifier>();
+  final water = habit.dailyWaterMl; // ml
+  // exercise value not used in this layout; keep provider available if needed later
     final date = context.watch<DateProvider>().date;
 
     // โหลดข้อมูล meal count เมื่อเริ่มต้น
@@ -44,61 +44,15 @@ class DashboardPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // TableCalendar
+              // Horizontal week date cards (custom)
               Container(
-                padding: const EdgeInsets.all(0),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade800),
+                  border: Border.all(color: Colors.grey.shade300),
                   borderRadius: BorderRadius.circular(15),
+                  color: Theme.of(context).scaffoldBackgroundColor,
                 ),
-                child: Column(
-                  children: [
-                    TableCalendar(
-                      firstDay: DateTime.utc(2020, 1, 1),
-                      lastDay: DateTime.utc(2100, 12, 31),
-                      focusedDay: date,
-                      selectedDayPredicate: (day) => isSameDay(day, date),
-                      onDaySelected: (selectedDay, focusedDay) {
-                        context.read<DateProvider>().setDate(selectedDay);
-                      },
-                      calendarFormat: CalendarFormat.week,
-                      headerStyle: HeaderStyle(
-                        titleCentered: true, // ทำให้ข้อความเดือนปีอยู่ตรงกลาง
-                        formatButtonVisible:
-                            false, // ซ่อนปุ่มเปลี่ยนรูปแบบปฏิทิน
-                        decoration: BoxDecoration(
-                          color: Colors.grey,
-                          border: Border(
-                            bottom: BorderSide(color: Colors.grey.shade800),
-                          ),
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(14), // ✅ มนเฉพาะมุมบนซ้าย
-                            topRight: Radius.circular(14), // ✅ มนเฉพาะมุมบนขวา
-                          ),
-                        ),
-                      ),
-                      calendarStyle: CalendarStyle(
-                        outsideDaysVisible: true,
-                        outsideTextStyle: TextStyle(
-                          color: Colors.grey.shade500,
-                        ),
-                        selectedDecoration: BoxDecoration(
-                          color: Colors.black, // ✅ พื้นหลังวันที่ถูกเลือก
-                          shape: BoxShape.rectangle, // หรือ BoxShape.rectangle
-                        ),
-                        selectedTextStyle: TextStyle(
-                          color: Colors.white, // ✅ สีข้อความของวันที่ถูกเลือก
-                          fontWeight: FontWeight.bold,
-                        ),
-                        todayDecoration: BoxDecoration(
-                          color:
-                              Colors.grey, // ✅ พื้นหลังของวันนี้ (ไม่ได้เลือก)
-                        ),
-                        todayTextStyle: TextStyle(color: Colors.white),
-                      ),
-                    ),
-                  ],
-                ),
+                child: _WeekDatePicker(selectedDate: date),
               ),
 
               const SizedBox(height: 15),
@@ -168,96 +122,260 @@ class DashboardPage extends StatelessWidget {
                 ),
               ),
 
-              // การดำเนินการวันนี้ (card)
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 4,
-                shadowColor: Colors.black12,
-                color: Colors.white,
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        t.todayProgress,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
+              // Today's Progress header and custom layout (no outer Card)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.todayProgress,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
                       ),
-
-                      const SizedBox(height: 12),
-                      _ProgressItem(
-                        icon: "💧",
-                        label: t.waterIntakeLabel,  
-                        progressText: "${(water / 2000 * 100).toInt()}%",
-                        progress: water / 2000,
-                        onTap: () {
-                          if (onTabChange != null) {
-                            onTabChange!(2); // Water tab index = 2
-                          } else {
-                            Navigator.of(context).pushNamed('/water');
-                          }
-                        },
-                      ),
-                      _ProgressItem(
-                        icon: "🏃‍♂️",
-                        label: t.exerciseLabel,
-                        progressText: exercise >= 30 ? t.done : "${exercise} min",
-                        progress: (exercise / 30).clamp(0.0, 1.0),
-                        onTap: () {
-                          if (onTabChange != null) {
-                            onTabChange!(3); // Exercise tab index = 3
-                          } else {
-                            Navigator.of(context).pushNamed('/exercise');
-                          }
-                        },
-                      ),
-                      _ProgressItem(
-                        icon: "😴",
-                        label: t.sleepLoggedLabel,
-                        progressText: "8h 30m",
-                        progress: 0.85,
-                        onTap: () {
-                          if (onTabChange != null) {
-                            onTabChange!(4); // Sleep tab index = 4
-                          } else {
-                            Navigator.of(context).pushNamed('/sleep');
-                          }
-                        },
-                      ),
-                      Consumer<MealProvider>(
-                        builder: (context, mealProvider, child) {
-                          return _ProgressItem(
-                            icon: "🍽️",
-                            label: t.mealsLoggedLabel,
-                            progressText: mealProvider.mealProgressText,
-                            progress: mealProvider.mealProgress,
-                            onTap: () {
-                              if (onTabChange != null) {
-                                onTabChange!(1); // Meal tab index = 1
-                              } else {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const MealLoggingScreen(),
+                    ),
+                    const SizedBox(height: 12),
+                    // Main layout: left = tall water card, right = stacked sleep & calories
+                    Builder(builder: (context) {
+                      final screenH = MediaQuery.of(context).size.height;
+                      // Tweak card height slightly downward to better match the reference guideline.
+                      final double cardHeight = (screenH * 0.44).clamp(290.0, 500.0);
+                      // Keep the inner water bar proportional to the card but with some padding.
+                      final double innerBarHeight = (cardHeight - 90).clamp(130.0, 460.0);
+                      // split right column into two equal-height children (minus spacing)
+                      final double childHeight = (cardHeight - 8) / 2;
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Water (left) — make it half the row
+                          Expanded(
+                            flex: 1,
+                            child: SizedBox(
+                              // make the water card the same height as the right column so tops align
+                              height: cardHeight,
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0,2))],
+                                ),
+                                  child: _WaterProgressCard(
+                                  waterMl: water,
+                                  goalMl: 2000,
+                                  timeline: habit.buildWaterTimeline(water),
+                                  // use the full innerBarHeight so the inner bar scales with the card
+                                  barHeight: innerBarHeight,
+                                  onTap: () {
+                                    if (onTabChange != null) {
+                                      onTabChange!(2);
+                                    } else {
+                                      Navigator.of(context).pushNamed('/water');
+                                    }
+                                  },
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          // Right column: Sleep (top) and Calories (bottom) stacked to match left height
+                          Expanded(
+                            flex: 1,
+                            child: SizedBox(
+                              height: cardHeight,
+                              child: Column(
+                                children: [
+                                  // Sleep card: fixed to half the available cardHeight so it
+                                  // matches the Calories card height
+                                  SizedBox(
+                                    height: childHeight,
+                                    child: Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0,2))],
+                                      ),
+                                      child: _SleepCard(
+                                        hoursText: '8h 30m',
+                                        quality: habit.latestSleepLog?['starCount'] as int?,
+                                        onTap: () {
+                                          if (onTabChange != null) {
+                                            onTabChange!(4);
+                                          } else {
+                                            Navigator.of(context).pushNamed('/sleep');
+                                          }
+                                        },
+                                      ),
+                                    ),
                                   ),
-                                );
-                              }
-                            },
-                          );
-                        },
-                      ),
-                    ],
-                  ),
+                                  const SizedBox(height: 8),
+                                  // Calories card: match the same height as sleep card
+                                  SizedBox(
+                                    height: childHeight,
+                                    child: Container(
+                                      width: double.infinity,
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6, offset: Offset(0,2))],
+                                      ),
+                                      child: _CaloriesCard(
+                                        kcal: 760,
+                                        goalKcal: 2000,
+                                        onTap: () {
+                                          if (onTabChange != null) {
+                                            onTabChange!(1);
+                                          } else {
+                                            Navigator.of(context).pushNamed('/meal');
+                                          }
+                                        },
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    }),
+                  ],
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// Custom horizontal week date picker (shows 7 days centered on selected date)
+class _WeekDatePicker extends StatelessWidget {
+  final DateTime selectedDate;
+
+  const _WeekDatePicker({required this.selectedDate});
+
+  List<DateTime> _buildWeek(DateTime center) {
+    // build 7-day window where center is the middle (index 3)
+    final start = DateTime(center.year, center.month, center.day).subtract(const Duration(days: 3));
+    return List.generate(7, (i) => start.add(Duration(days: i)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dates = _buildWeek(selectedDate);
+    final today = DateTime.now();
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: dates.map((d) {
+          final isSelected = d.year == selectedDate.year && d.month == selectedDate.month && d.day == selectedDate.day;
+          final isToday = d.year == today.year && d.month == today.month && d.day == today.day;
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+            child: GestureDetector(
+              onTap: () => context.read<DateProvider>().setDate(d),
+              child: _DateCard(date: d, selected: isSelected, isToday: isToday),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _DateCard extends StatelessWidget {
+  final DateTime date;
+  final bool selected;
+  final bool isToday;
+
+  const _DateCard({required this.date, required this.selected, this.isToday = false});
+
+  String get dayName {
+    // short localized day names could be used; keep English fallback
+    const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    return names[date.weekday % 7];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+  final primary = AppColors.primary;
+    final cardBg = selected
+        ? null
+        : Colors.white;
+
+    return Container(
+      width: 72,
+      height: 90,
+      decoration: BoxDecoration(
+        color: cardBg,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: selected
+            ? [
+                BoxShadow(
+                  color: primary.withOpacity(0.25),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                )
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                )
+              ],
+        gradient: selected
+            ? LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [primary.withOpacity(0.9), primary.withOpacity(0.6)],
+              )
+            : null,
+        border: Border.all(color: selected ? primary : Colors.grey.shade200),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            dayName,
+            style: TextStyle(
+              color: selected ? Colors.white : Colors.grey.shade600,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: selected ? Colors.white.withOpacity(0.15) : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              date.day.toString().padLeft(2, '0'),
+              style: TextStyle(
+                color: selected ? Colors.white : Colors.black,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          // Today marker
+          if (isToday)
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: selected ? Colors.white : AppColors.primary,
+                shape: BoxShape.circle,
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -310,50 +428,225 @@ class _EmojiMood extends StatelessWidget {
   }
 }
 
-class _ProgressItem extends StatelessWidget {
-  final String icon;
-  final String label;
-  final String progressText;
-  final double progress;
+// ... removed old _ProgressItem; new visual cards added below
+
+class _WaterProgressCard extends StatelessWidget {
+  final int waterMl;
+  final int? goalMl;
+  final List<Map<String, String>>? timeline;
+  final double? barHeight;
   final VoidCallback onTap;
 
-  const _ProgressItem({
-    required this.icon,
-    required this.label,
-    required this.progressText,
-    required this.progress,
-    required this.onTap,
-  });
+  const _WaterProgressCard({required this.waterMl, this.goalMl, this.timeline, this.barHeight, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+  final target = (goalMl ?? 2000);
+  final pct = (waterMl / target).clamp(0, 1).toDouble();
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(t.waterIntakeLabel, style: const TextStyle(fontWeight: FontWeight.bold)),
+                // show goal as 2 Liters per request
+                Text('2 Liters', style: TextStyle(color: Colors.grey.shade600, fontSize: 12)),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                // Vertical bar + timeline
+                Column(
+                  children: [
+            Container(
+              width: 28,
+              height: barHeight ?? 140,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16),
+                        color: Colors.grey.shade100,
+                      ),
+                      child: Stack(
+                        alignment: Alignment.bottomCenter,
+                        children: [
+                          Container(
+                            height: (barHeight ?? 140) * pct,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(16),
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [AppColors.gradientLightEnd, AppColors.primary],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 12),
+                // timeline / text — make the timeline area match the bar height and space items evenly
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('${(waterMl / 1000).toStringAsFixed(1)} Liters', style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: barHeight ?? 140,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // render reversed so the first (earliest) time is placed at the bottom
+                            for (final item in (timeline ?? const []).reversed)
+                              _WaterTimelineItem(time: item['time'] ?? '', amount: item['amount'] ?? ''),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _WaterTimelineItem extends StatelessWidget {
+  final String time;
+  final String amount;
+
+  const _WaterTimelineItem({required this.time, required this.amount});
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
-          Text(icon, style: const TextStyle(fontSize: 20)),
+          Container(width: 8, height: 8, decoration: BoxDecoration(color: AppColors.chartPrimary, shape: BoxShape.circle)),
           const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(label),
-                LinearProgressIndicator(
-                  value: progress,
-                  backgroundColor: Colors.grey[200],
-                  color: Colors.blue,
-                  minHeight: 6,
-                ),
-              ],
-            ),
-          ),
+          Expanded(child: Text(time, style: const TextStyle(fontSize: 12, color: Colors.grey))),
           const SizedBox(width: 8),
-          Text(progressText),
-          IconButton(onPressed: onTap, icon: const Icon(Icons.arrow_forward_ios)),
+          Text(amount, style: const TextStyle(fontSize: 12)),
         ],
       ),
     );
   }
+}
+
+class _SleepCard extends StatelessWidget {
+  final String hoursText;
+  final int? quality;
+  final VoidCallback onTap;
+
+  const _SleepCard({required this.hoursText, this.quality, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(t.sleep, style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            // placeholder for stylized sleep graphic (use asset if available)
+            SizedBox(
+              height: 48,
+              child: Center(
+                child: Image.asset(
+                  'images/sleep-dashboard.png',
+                  fit: BoxFit.contain,
+                  errorBuilder: (c, e, s) => Icon(Icons.bedtime, size: 40, color: AppColors.primary),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // center the hours text while keeping the "Sleep" label at top-left
+            Center(child: Text(hoursText, style: const TextStyle(fontWeight: FontWeight.bold))),
+            if (quality != null) ...[
+              const SizedBox(height: 6),
+              Center(child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(quality!.clamp(0,5), (i) => Icon(Icons.star, size: 14, color: AppColors.primary))
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CaloriesCard extends StatelessWidget {
+  final int kcal;
+  final int goalKcal;
+  final VoidCallback onTap;
+
+  const _CaloriesCard({required this.kcal, required this.goalKcal, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = (kcal / goalKcal).clamp(0.0, 1.0);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Calories', style: TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            // show a centered plate/cup icon and the kcal number beneath it
+            Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.restaurant_menu, size: 48, color: AppColors.chartPrimary),
+                  const SizedBox(height: 8),
+                  Text('$kcal KCal', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+            // remaining kcal text and progress bar directly under the main metric
+            Center(child: Text('${goalKcal - kcal} kCal left', style: const TextStyle(color: Colors.grey))),
+            const SizedBox(height: 6),
+            LinearProgressIndicator(value: pct, color: AppColors.chartPrimary, backgroundColor: Colors.grey.shade200),
+          ],
+        ),
+      ),
+    );
+  }
+
 }
 
 class _BMISection extends StatelessWidget {
@@ -396,9 +689,17 @@ class _BMISection extends StatelessWidget {
                     keyboardType: TextInputType.number,
                     readOnly: isReadOnly,
                     decoration: InputDecoration(
-                      labelText: t.weightKg,
-                      border: const OutlineInputBorder(),
+                      hintText: t.weightKg,
+                      // minimal rounded style
+                      filled: true,
+                      fillColor: AppColors.lightGray,
                       isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                      prefixIcon: const Icon(Icons.monitor_weight_outlined, color: Color(0xFF9E9E9E)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
                 ),
@@ -409,9 +710,17 @@ class _BMISection extends StatelessWidget {
                     keyboardType: TextInputType.number,
                     readOnly: isReadOnly,
                     decoration: InputDecoration(
-                      labelText: t.heightCm,
-                      border: const OutlineInputBorder(),
+                      hintText: t.heightCm,
+                      // minimal rounded style
+                      filled: true,
+                      fillColor: AppColors.lightGray,
                       isDense: true,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                      prefixIcon: const Icon(Icons.height, color: Color(0xFF9E9E9E)),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(30),
+                        borderSide: BorderSide.none,
+                      ),
                     ),
                   ),
                 ),

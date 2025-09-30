@@ -39,6 +39,7 @@ import 'screens/profile_settings_screen.dart';
 import 'package:flutter/foundation.dart'; // kDebugMode, debugPrint
 import 'package:sqflite/sqflite.dart';
 import 'services/app_db.dart';
+import 'services/alarm_service.dart';
 
 Future<void> _devSmokeTest() async {
   final db = await AppDb.instance.database;
@@ -82,6 +83,14 @@ Future<void> main() async {
   }
 
   await _devSmokeTest();
+  // initialize alarm/notification service
+  try {
+    await AlarmService.init();
+    debugPrint('AlarmService initialized');
+  } catch (e, st) {
+    debugPrint('AlarmService.init failed: $e');
+    debugPrint('$st');
+  }
   
   runApp(
     MultiProvider(

@@ -16,7 +16,7 @@ class AppDb {
 
     return openDatabase(
       dbPath,
-      version: 7, // ⬅️ บัมป์เป็น 7: เพิ่ม notification_settings table
+  version: 8, // ⬅️ บัมป์เป็น 8: เพิ่ม exercise_logs table
       onConfigure: (db) async {
         await db.execute('PRAGMA foreign_keys = ON');
       },
@@ -163,6 +163,23 @@ class AppDb {
         ''');
         await db.execute('CREATE INDEX IF NOT EXISTS idx_notification_settings_user ON notification_settings(user_id);');
         await db.execute('CREATE INDEX IF NOT EXISTS idx_notification_settings_is_synced ON notification_settings(is_synced);');
+
+        // 8) Exercise logs (per-activity raw logs) - supports backend sync
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS exercise_logs (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            date TEXT NOT NULL,
+            activity_type TEXT NOT NULL,
+            duration INTEGER NOT NULL,
+            calories_burned REAL,
+            notes TEXT,
+            created_at INTEGER,
+            updated_at INTEGER,
+            is_synced INTEGER NOT NULL DEFAULT 0
+          );
+        ''');
+        await db.execute('CREATE INDEX IF NOT EXISTS idx_exercise_logs_user_date ON exercise_logs(user_id, date);');
       },
       onUpgrade: (db, oldV, newV) async {
         // v1 -> v2 : เดิม (exercise_daily แบบรวม)
