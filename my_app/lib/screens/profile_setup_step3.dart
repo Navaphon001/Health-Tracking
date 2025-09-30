@@ -1,13 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/physical_info_provider.dart';
 import '../providers/profile_setup_provider.dart';
 import '../theme/app_colors.dart';
 import '../shared/custom_top_app_bar.dart';
+import '../services/about_yourself_service.dart';
 
-class ProfileSetupStep3 extends StatelessWidget {
+class ProfileSetupStep3 extends StatefulWidget {
   const ProfileSetupStep3({super.key});
+
+  @override
+  State<ProfileSetupStep3> createState() => _ProfileSetupStep3State();
+}
+
+class _ProfileSetupStep3State extends State<ProfileSetupStep3> {
+  bool _isLoading = false;
+
+  // SnackBar callback
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  // Save about yourself data to API
+  Future<bool> _saveAboutYourself() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final phys = context.read<PhysicalInfoProvider>();
+      final profile = context.read<ProfileSetupProvider>();
+      
+      // Generate a unique ID for the about yourself info
+      const uuid = Uuid();
+      final aboutId = uuid.v4();
+      
+      // Create health description from health rating and goals
+      String? healthDescription;
+      if (phys.healthRating != null) {
+        healthDescription = 'Health rating: ${phys.healthRating}';
+      }
+      
+      String? healthGoal;
+      if (profile.goals.isNotEmpty) {
+        healthGoal = profile.goals.join(', ');
+      }
+      
+      final result = await AboutYourselfService.createAboutYourself(
+        id: aboutId,
+        healthDescription: healthDescription,
+        healthGoal: healthGoal,
+        snackFn: _showSnackBar,
+      );
+      
+      return result != null;
+    } catch (e) {
+      _showSnackBar('เกิดข้อผิดพลาด: ${e.toString()}', isError: true);
+      return false;
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -253,7 +312,7 @@ class ProfileSetupStep3 extends StatelessWidget {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     foregroundColor: btnTextColor,
                   ),
-                  onPressed: () {
+                  onPressed: _isLoading ? null : () async {
                     final phys = context.read<PhysicalInfoProvider>();
                     final profile = context.read<ProfileSetupProvider>();
                     final health = (phys.healthRating ?? '').trim();
@@ -264,12 +323,29 @@ class ProfileSetupStep3 extends StatelessWidget {
                       return;
                     }
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(AppLocalizations.of(context).profileSetupCompleted)),
-                    );
-                    Navigator.of(context).pushNamedAndRemoveUntil('/main', (route) => false);
+                    // Save data to API first
+                    final success = await _saveAboutYourself();
+                    
+                    if (success) {
+                      // Show completion message and navigate to dashboard
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(AppLocalizations.of(context).profileSetupCompleted)),
+                        );
+                        Navigator.of(context).pushNamedAndRemoveUntil('/main', (route) => false);
+                      }
+                    }
                   },
-                  child: Text(t.finish),
+                  child: _isLoading 
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Text(t.finish),
                 ),
               ),
             ),
