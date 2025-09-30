@@ -1,10 +1,13 @@
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/habit_notifier.dart';
 import '../theme/app_colors.dart';
 import '../shared/custom_top_app_bar.dart';
+import '../services/water_intake_service.dart';
+import '../shared/snack_fn.dart';
 
 // Water Loading Animation Widget
 class WaterLoadingAnimation extends StatefulWidget {
@@ -217,6 +220,7 @@ class _WaterScreenState extends State<WaterScreen> {
   final TextEditingController _amountController = TextEditingController();
   String _selectedAmount = '250';
   DrinkPreset? _selectedBeverage;
+  bool _isLoading = false;
 
   final List<String> _amountOptions = ['100', '150', '200', '250', '300', '350', '400', '500'];
   
@@ -236,7 +240,7 @@ class _WaterScreenState extends State<WaterScreen> {
     // ไม่ต้องเชื่อมกับ SQLite สำหรับ testing
   }
 
-  void _addWaterIntake() {
+  Future<void> _addWaterIntake() async {
     final amount = int.tryParse(_amountController.text.isNotEmpty 
         ? _amountController.text 
         : _selectedAmount);
@@ -250,34 +254,78 @@ class _WaterScreenState extends State<WaterScreen> {
       return;
     }
 
-    // เตรียมข้อมูลเครื่องดื่มและสี
-    final beverageName = _selectedBeverage?.name ?? 'Water';
-    const beverageColor = Colors.blue; // ใช้สีเดียวกันสำหรับทุกเครื่องดื่ม
-    
-    // เก็บรายการการดื่มพร้อมสี
-    _todayIntakes.add(WaterIntakeEntry(
-      amount: amount,
-      color: beverageColor,
-      beverageName: beverageName,
-      timestamp: DateTime.now(),
-    ));
-    
-    // บันทึกข้อมูลรวมใน HabitNotifier
-    final notifier = context.read<HabitNotifier>();
-    notifier.dailyWaterMl += amount;
-    notifier.dailyWaterCount += 1;
-    
-    // Reset form
     setState(() {
-      _selectedBeverage = null;
-      _amountController.text = _selectedAmount;
+      _isLoading = true;
     });
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context).beverageAdded),
-      ),
-    );
+    try {
+      // Generate unique ID
+      final uuid = const Uuid();
+      final id = uuid.v4();
+      
+      // Get current date in YYYY-MM-DD format
+      final today = DateTime.now();
+      final dateString = '${today.year}-${today.month.toString().padLeft(2, '0')}-${today.day.toString().padLeft(2, '0')}';
+      
+      // เตรียมข้อมูลเครื่องดื่มและสี
+      final beverageName = _selectedBeverage?.name ?? 'Water';
+      const beverageColor = Colors.blue; // ใช้สีเดียวกันสำหรับทุกเครื่องดื่ม
+      
+      // Call API to save water intake
+      final result = await WaterIntakeService.createWaterIntakeLog(
+        id: id,
+        date: dateString,
+        count: amount,
+        snackFn: (message, {bool isError = false}) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: isError ? Colors.red : Colors.green,
+            ),
+          );
+        },
+      );
+
+      if (result != null) {
+        // เก็บรายการการดื่มพร้อมสี (local display)
+        _todayIntakes.add(WaterIntakeEntry(
+          amount: amount,
+          color: beverageColor,
+          beverageName: beverageName,
+          timestamp: DateTime.now(),
+        ));
+        
+        // บันทึกข้อมูลรวมใน HabitNotifier
+        final notifier = context.read<HabitNotifier>();
+        notifier.dailyWaterMl += amount;
+        notifier.dailyWaterCount += 1;
+        
+        // Reset form
+        setState(() {
+          _selectedBeverage = null;
+          _amountController.text = _selectedAmount;
+        });
+
+        // Navigate to success page or show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('บันทึกการดื่มน้ำเรียบร้อยแล้ว'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('เกิดข้อผิดพลาด: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
 
@@ -710,7 +758,7 @@ class _WaterScreenState extends State<WaterScreen> {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
-                            onPressed: _addWaterIntake,
+                            onPressed: _isLoading ? null : _addWaterIntake,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
                               foregroundColor: Colors.white,
@@ -721,13 +769,22 @@ class _WaterScreenState extends State<WaterScreen> {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
-                            child: Text(
-                              t.save,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                            child: _isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    ),
+                                  )
+                                : Text(
+                                    t.save,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],
