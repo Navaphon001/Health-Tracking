@@ -14,7 +14,7 @@ SECRET_KEY = auth_module.SECRET_KEY
 ALGORITHM = auth_module.ALGORITHM
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-router = APIRouter()
+router = APIRouter(tags=["Basic Profile"])
 
 
 def get_current_user_id(token: str = Depends(oauth2_scheme)) -> str:

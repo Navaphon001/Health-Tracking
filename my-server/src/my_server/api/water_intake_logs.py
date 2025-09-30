@@ -23,7 +23,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except Exception:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-router = APIRouter()
+router = APIRouter(tags=["Water Intake Logs"])
 water_intake_logs_db = {}
 
 

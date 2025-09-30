@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-router = APIRouter()
+router = APIRouter(tags=["Authentication"])
 
 # DB config from docker-compose
 DB_USER = "admin"
