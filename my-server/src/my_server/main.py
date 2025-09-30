@@ -1,8 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from my_server.api.auth import router as auth_router
-from my_server.api.protected import router as protected_router
-from my_server.api.users import router as users_router
 from my_server.api.basic_profile import router as basic_profile_router
 from my_server.api.user_goals import router as user_goals_router
 from my_server.api.food_logs import router as food_logs_router
@@ -32,8 +30,6 @@ def favicon():
 
 # Include API
 app.include_router(auth_router, prefix="/auth")
-app.include_router(protected_router)
-app.include_router(users_router)
 app.include_router(basic_profile_router)
 app.include_router(user_goals_router)
 app.include_router(food_logs_router)
