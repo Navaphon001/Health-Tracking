@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
 from my_server.api.auth import router as auth_router
 from my_server.api.basic_profile import router as basic_profile_router
 from my_server.api.user_goals import router as user_goals_router
@@ -15,6 +16,15 @@ from my_server.api.physical_info import router as physical_info_router
 from my_server.api.about_yourself import router as about_yourself_router
 
 app = FastAPI()
+
+# Add CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with specific origins
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/")
 def read_root():
