@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:sqflite/sqflite.dart';
 import '../models/meal.dart';
 import '../models/food_log.dart';
@@ -156,7 +158,7 @@ class MealService {
 
   Future<void> saveMealWithLog(Meal meal, String userId) async {
     final db = await _db;
-
+    // Use transaction to insert meal and update food_log atomically
     await db.transaction((txn) async {
       // 1. Get or create food log for today
       final date = DateTime.now();
@@ -191,7 +193,65 @@ class MealService {
         where: 'id = ?',
         whereArgs: [foodLog.id],
       );
+
+      // After local insertion, attempt to sync to remote backend (best-effort)
+      try {
+        await createMealRemote(updatedMeal);
+        // Optionally, we could update local record with returned remote fields
+      } catch (e) {
+        // ignore remote errors for offline-first (offline-first) flow
+      }
     });
+  }
+
+  // -------------------- Remote API integration --------------------
+  // Replace with your actual backend base URL
+  static const String _baseUrl = 'http://10.0.2.2:8000';
+
+  Future<List<Meal>> getMealsRemote() async {
+    final resp = await http.get(Uri.parse('$_baseUrl/meals'));
+    if (resp.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(resp.body) as List<dynamic>;
+      return data.map((e) => Meal.fromJson(e as Map<String, dynamic>)).toList();
+    }
+    throw Exception('Failed to fetch meals: ${resp.statusCode}');
+  }
+
+  Future<Meal> createMealRemote(Meal meal) async {
+    final resp = await http.post(
+      Uri.parse('$_baseUrl/meals'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(meal.toJson()),
+    );
+
+    if (resp.statusCode == 200 || resp.statusCode == 201) {
+      final Map<String, dynamic> json = jsonDecode(resp.body) as Map<String, dynamic>;
+      return Meal.fromJson(json);
+    }
+
+    throw Exception('Failed to create remote meal: ${resp.statusCode} ${resp.body}');
+  }
+
+  Future<Meal> updateMealRemote(Meal meal) async {
+    final resp = await http.put(
+      Uri.parse('$_baseUrl/meals/${meal.id}'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(meal.toJson()),
+    );
+
+    if (resp.statusCode == 200) {
+      final Map<String, dynamic> json = jsonDecode(resp.body) as Map<String, dynamic>;
+      return Meal.fromJson(json);
+    }
+
+    throw Exception('Failed to update remote meal: ${resp.statusCode}');
+  }
+
+  Future<void> deleteMealRemote(String mealId) async {
+    final resp = await http.delete(Uri.parse('$_baseUrl/meals/$mealId'));
+    if (resp.statusCode != 200) {
+      throw Exception('Failed to delete remote meal: ${resp.statusCode}');
+    }
   }
 
   // Get daily meal summary

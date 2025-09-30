@@ -9,6 +9,7 @@ import '../models/exercise_activity.dart';
 import '../models/sleep_log.dart';
 import '../services/habit_local_repository.dart';
 import '../services/app_db.dart';
+import '../shared/date_key.dart';
 import '../shared/snack_fn.dart';
 import '../charts/chart_point.dart';
 import '../theme/app_colors.dart';
@@ -412,4 +413,58 @@ class HabitNotifier extends ChangeNotifier {
   /// kcal/วัน (รวมทุกประเภท)
   Future<List<ChartPoint>> fetchExerciseSeries({int days = 14}) =>
       _local.fetchExerciseCaloriesSeries(days: days);
+
+  /// Fetch a compact summary object for today's dashboard (water ml, sleep minutes, exercise kcal)
+  Future<Map<String, dynamic>> fetchTodaySummary() async {
+    try {
+      final s = await _local.dailySummary(DateTime.now());
+      // also include legacy latestSleepLog starCount if present
+      if (latestSleepLog != null && latestSleepLog!['starCount'] != null) {
+        s['sleep_quality'] = latestSleepLog!['starCount'];
+      } else {
+        // keep whatever DB had (could be absent)
+        s['sleep_quality'] = s['sleep_minutes'] != null ? null : null;
+      }
+      return s;
+    } catch (e) {
+      _snackFn?.call('โหลดสรุปประจำวันล้มเหลว', isError: true);
+      return {
+        'date_key': dateKeyOf(DateTime.now()),
+        'sleep_minutes': 0,
+        'water_count': 0,
+        'water_ml': 0,
+        'exercise_minutes': 0,
+        'exercise_calories': 0.0,
+        'sleep_quality': null,
+      };
+    }
+  }
+
+  /// Provide a small set of timeline entries for UI (time label + amount)
+  /// Currently this is a lightweight helper: if the water row contains serialized timeline
+  /// details in a future enhancement this can be replaced by a proper query. For now,
+  /// return placeholder time buckets based on the day's ml distribution if available.
+  List<Map<String, String>> buildWaterTimeline(int totalMl) {
+    // If no data, provide common buckets as placeholders
+    if (totalMl <= 0) {
+      return [
+        {'time': '6am - 8am', 'amount': '600ml'},
+        {'time': '9am - 11am', 'amount': '500ml'},
+        {'time': '11am - 2pm', 'amount': '1000ml'},
+      ];
+    }
+
+    // Distribute into common buckets proportionally for display (6am-8am,9-11,11-2,2-4,4-now)
+    final buckets = [600, 500, 1000, 700, 900];
+    // cap sum to avoid odd distributions
+    final sumBuckets = buckets.fold<int>(0, (p, e) => p + e);
+    final scale = totalMl / sumBuckets;
+    final out = <Map<String, String>>[];
+    final labels = ['6am - 8am', '9am - 11am', '11am - 2pm', '2pm - 4pm', '4pm - now'];
+    for (var i = 0; i < buckets.length; i++) {
+      final val = (buckets[i] * scale).round();
+      out.add({'time': labels[i], 'amount': '${val}ml'});
+    }
+    return out;
+  }
 }

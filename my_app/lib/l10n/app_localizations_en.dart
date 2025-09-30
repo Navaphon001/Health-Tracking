@@ -758,7 +758,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get waterIntakeML => 'Water Intake (ml)';
 
   @override
-  String get exerciseCalories => 'Exercise (kcal)';
+  String get exerciseCalories => 'Exercise (cal)';
 
   @override
   String get latest => 'Latest';
@@ -773,7 +773,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get milliliters => 'ml';
 
   @override
-  String get calories => 'kcal';
+  String get calories => 'cal';
 
   @override
   String get profileSettings => 'Profile Settings';
