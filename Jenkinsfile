@@ -105,15 +105,16 @@ pipeline {
             PORT=${PORT:-8000}
             RELOAD=false
 
-            if command -v poetry >/dev/null 2>&1; then
-              echo "Starting server with poetry + uvicorn on port $PORT"
-              nohup poetry run uvicorn my_server.main:app --app-dir src --host 0.0.0.0 --port $PORT > server.log 2>&1 & echo $! > server.pid
-            elif command -v uvicorn >/dev/null 2>&1; then
-              echo "Starting server with uvicorn from PATH on port $PORT"
-              nohup uvicorn my_server.main:app --app-dir src --host 0.0.0.0 --port $PORT > server.log 2>&1 & echo $! > server.pid
-            else
-              echo "No poetry or uvicorn available to start server, skipping start"; exit 0
+            # Sometimes 'poetry run' fails (pyproject format / poetry mismatch). Start uvicorn directly
+            # Ensure uvicorn (and fastapi) are installed in the environment; install if missing.
+            if ! python -c "import uvicorn" >/dev/null 2>&1; then
+              echo "uvicorn not importable, installing uvicorn and fastapi into environment"
+              python -m pip install --upgrade pip
+              python -m pip install uvicorn fastapi
             fi
+
+            echo "Starting server with python -m uvicorn on port $PORT"
+            nohup python -m uvicorn my_server.main:app --app-dir src --host 0.0.0.0 --port $PORT > server.log 2>&1 & echo $! > server.pid
 
             # wait for server to become ready
             MAX=30
@@ -273,6 +274,24 @@ pipeline {
     }
   }
 
-  post { always { echo "Pipeline finished" } }
+  post {
+    always {
+      echo "Pipeline finished"
+      // Attempt to stop background server if started
+      sh '''
+        set -eux || true
+        if [ -f "${PROJECT_DIR}/server.pid" ]; then
+          PID=$(cat "${PROJECT_DIR}/server.pid" || true)
+          echo "Stopping server pid=$PID"
+          kill -9 "$PID" || true
+          rm -f "${PROJECT_DIR}/server.pid" || true
+        fi
+        if [ -f "${PROJECT_DIR}/server.log" ]; then
+          echo "=== server.log (last 200 lines) ==="
+          tail -n 200 "${PROJECT_DIR}/server.log" || true
+        fi
+      '''
+    }
+  }
 }
 
