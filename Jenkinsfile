@@ -109,7 +109,7 @@ PY
       }
     }
 
-    stage('Run Tests & Coverage') {
+        stage('Run Tests & Coverage') {
       steps {
         dir('my-server') {
           sh '''
@@ -136,7 +136,7 @@ PY
             mkdir -p tests
             if [ ! -f tests/conftest.py ]; then
               cat > tests/conftest.py << 'EOF'
-import os, pytest
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -164,7 +164,13 @@ def db_session(engine):
 
 @pytest.fixture
 def client(db_session):
-    app.dependency_overrides[get_db] = lambda: iter([db_session])
+    # override dependency ให้ใช้ session ของเทสต์
+    def _override_get_db():
+        try:
+            yield db_session
+        finally:
+            pass
+    app.dependency_overrides[get_db] = _override_get_db
     c = TestClient(app)
     yield c
     app.dependency_overrides.clear()
@@ -183,10 +189,20 @@ EOF
             if [ ! -f tests/test_auth_flow.py ]; then
               cat > tests/test_auth_flow.py << 'EOF'
 def test_register_then_login(client):
-    r = client.post("/register", json={"username":"u1","email":"u1@example.com","password":"p@ssw0rd"})
+    # /auth/register ใช้ JSON body
+    r = client.post("/auth/register", json={
+        "username": "u1",
+        "email": "u1@example.com",
+        "password": "p@ssw0rd"
+    })
     assert r.status_code in (200, 201)
     assert "access_token" in r.json()
-    r2 = client.post("/login", data={"username":"u1@example.com","password":"p@ssw0rd"})
+
+    # /auth/login ใช้ form (OAuth2PasswordRequestForm)
+    r2 = client.post("/auth/login", data={
+        "username": "u1@example.com",
+        "password": "p@ssw0rd"
+    })
     assert r2.status_code == 200
     assert "access_token" in r2.json()
 EOF
@@ -202,6 +218,7 @@ EOF
         }
       }
     }
+
 
     stage('SonarQube Analysis') {
       when { expression { fileExists('my-server/coverage.xml') } }
