@@ -99,29 +99,76 @@ pipeline {
           sh '''
             set -eux
             export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
+            # ใช้ SQLite สำหรับเทสใน CI เพื่อไม่ต้องพึ่ง Postgres
+            export DATABASE_URL="${DATABASE_URL:-sqlite:///./ci_test.db}"
+            export TESTING=1
 
+            # ---- bootstrap tests (เฉพาะถ้ายังไม่มีไฟล์ใน repo) ----
             mkdir -p tests
-            if [ ! -f tests/test_main.py ]; then
-              cat > tests/test_main.py << 'EOF'
+            if [ ! -f tests/conftest.py ]; then
+              cat > tests/conftest.py << 'EOF'
+import os, pytest
 from fastapi.testclient import TestClient
-try:
-    from my_server.main import app
-    client = TestClient(app)
-    def test_health_or_root():
-        try:
-            r = client.get('/health')
-            assert r.status_code == 200
-        except Exception:
-            r = client.get('/')
-            assert r.status_code in (200, 404)
-except Exception:
-    def test_dummy():
-        assert True
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from my_server.schema.auth import Base
+from my_server.api.auth import get_db
+from my_server.main import app
+
+@pytest.fixture(scope="session")
+def engine(tmp_path_factory):
+    db_file = tmp_path_factory.mktemp("data") / "test.db"
+    url = f"sqlite:///{db_file}"
+    eng = create_engine(url, connect_args={"check_same_thread": False})
+    Base.metadata.create_all(eng)
+    yield eng
+    Base.metadata.drop_all(eng)
+
+@pytest.fixture
+def db_session(engine):
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    s = SessionLocal()
+    try:
+        yield s
+    finally:
+        s.close()
+
+@pytest.fixture
+def client(db_session):
+    app.dependency_overrides[get_db] = lambda: iter([db_session])
+    c = TestClient(app)
+    yield c
+    app.dependency_overrides.clear()
 EOF
             fi
 
-            pytest -q --cov=my_server --cov-report=xml tests/ || true
-            [ -f coverage.xml ] || echo "<coverage/>" > coverage.xml
+            if [ ! -f tests/test_health.py ]; then
+              cat > tests/test_health.py << 'EOF'
+def test_health(client):
+    r = client.get("/health")
+    assert r.status_code == 200
+    assert r.json().get("status") == "ok"
+EOF
+            fi
+
+            if [ ! -f tests/test_auth_flow.py ]; then
+              cat > tests/test_auth_flow.py << 'EOF'
+def test_register_then_login(client):
+    r = client.post("/register", json={"username":"u1","email":"u1@example.com","password":"p@ssw0rd"})
+    assert r.status_code in (200, 201)
+    assert "access_token" in r.json()
+    r2 = client.post("/login", data={"username":"u1@example.com","password":"p@ssw0rd"})
+    assert r2.status_code == 200
+    assert "access_token" in r2.json()
+EOF
+            fi
+            # --------------------------------------------------------
+
+            # รันเทส + เก็บ coverage เป็นไฟล์จริง
+            pytest -q \
+              --maxfail=1 --disable-warnings \
+              --cov=my_server --cov-branch \
+              --cov-report=xml:coverage.xml
           '''
         }
       }
@@ -138,22 +185,20 @@ EOF
               sh '''
                 set -eux
                 if command -v sonar-scanner >/dev/null 2>&1; then
-                  if [ -f sonar-project.properties ]; then
-                    sonar-scanner \
-                      -Dsonar.host.url="$SONAR_HOST_URL" \
-                      -Dsonar.token="$SONAR_TOKEN"
-                  else
-                    sonar-scanner \
-                      -Dsonar.host.url="$SONAR_HOST_URL" \
-                      -Dsonar.token="$SONAR_TOKEN" \
-                      -Dsonar.projectBaseDir="$PWD" \
-                      -Dsonar.projectKey=health-tracking-backend \
-                      -Dsonar.projectName="Health Tracking Backend" \
-                      -Dsonar.sources=src/my_server \
-                      -Dsonar.tests=tests \
-                      -Dsonar.python.version=3.13 \
-                      -Dsonar.python.coverage.reportPaths=coverage.xml
-                  fi
+                  sonar-scanner \
+                    -Dsonar.host.url="$SONAR_HOST_URL" \
+                    -Dsonar.token="$SONAR_TOKEN" \
+                    -Dsonar.projectBaseDir="$PWD" \
+                    -Dsonar.projectKey=health-tracking-backend \
+                    -Dsonar.projectName="Health Tracking Backend" \
+                    -Dsonar.projectVersion="${BUILD_NUMBER}" \
+                    -Dsonar.sources=src/my_server \
+                    -Dsonar.tests=tests \
+                    -Dsonar.test.inclusions=tests/**/*.py \
+                    -Dsonar.python.version=3.13 \
+                    -Dsonar.python.coverage.reportPaths=coverage.xml \
+                    -Dsonar.exclusions=**/tests/**,**/alembic/**,**/migrations/**,**/*.md \
+                    -Dsonar.coverage.exclusions=**/tests/**,**/alembic/**,**/migrations/**
                 else
                   echo "Skip Sonar analysis (scanner not installed)."
                 fi
@@ -167,31 +212,26 @@ EOF
     stage('Quality Gate') {
       steps {
         timeout(time: 10, unit: 'MINUTES') {
-          // พิมพ์รายละเอียดเงื่อนไขที่ตกผ่าน API (ใช้ jq)
+          // แสดง metric ที่ตก (ถ้ามี)
           withSonarQubeEnv('SonarQube') {
             withCredentials([string(credentialsId: 'tracking', variable: 'SONAR_TOKEN')]) {
               sh '''
                 set -eux
                 if [ -n "${SONAR_HOST_URL:-}" ]; then
-                  echo "Fetching SonarQube project_status for projectKey=health-tracking-backend"
                   curl -sS -u "${SONAR_TOKEN}:" \
                     "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=health-tracking-backend" \
                     | jq -r '.projectStatus.conditions[] | "\\(.status)  \\(.metricKey)  actual=\\(.actualValue)  op=\\(.comparator)  th=\\(.errorThreshold)"' || true
-                else
-                  echo "SONAR_HOST_URL not set; skipping diagnostic fetch"
                 fi
               '''
             }
           }
-
-          // ดึงสถานะ QG (ไม่มี field conditions ในอ็อบเจกต์นี้)
+          // บันทึกสถานะ QG (ไม่ abort) และเก็บไว้ใช้ข้าม deploy หากต้องการ
           script {
             def qg = waitForQualityGate(abortPipeline: false)
+            env.QG_STATUS = qg.status
             echo "Quality Gate status: ${qg.status}"
             if (qg.status != 'OK') {
-              // ให้บิลด์ผ่านแบบ UNSTABLE ตามนโยบายที่คุณตั้งไว้
-              currentBuild.result = 'UNSTABLE'
-              echo "Quality Gate failed; marking build UNSTABLE but continuing."
+              currentBuild.result = 'UNSTABLE' // ถ้าอยาก “ผ่านเขียวเสมอ” ให้ลบบรรทัดนี้
             }
           }
         }
@@ -199,39 +239,26 @@ EOF
     }
 
     stage('Deploy with Docker Compose') {
+      // ถ้าอยากข้าม Deploy เมื่อ QG ไม่ผ่าน ให้ยกคอมเมนต์บรรทัด when นี้
+      // when { environment name: 'QG_STATUS', value: 'OK' }
       steps {
         sh 'set -eux; [ -d "${COMPOSE_DIR}" ] || { echo "${COMPOSE_DIR} missing"; exit 1; }'
         // build image from the my-server root so Dockerfile context is correct
         sh 'set -eux; (cd "${WORKSPACE}/my-server" && docker build -t "${IMAGE_NAME}" -f Dockerfile .)'
 
         // Ensure host port 8000 is free - stop/remove any container binding it and remove old backend containers
-        sh '''#!/bin/bash
+        sh '''#!/usr/bin/env bash
 set -eux
-
 echo "Checking for containers binding host port 8000..."
 CONFLICTING="$(docker ps --format '{{.ID}} {{.Ports}} {{.Names}}' | grep -E '(:|::):?8000->' || true)"
 if [ -n "$CONFLICTING" ]; then
-  echo "Found conflicting container(s):"
-  echo "$CONFLICTING"
   echo "$CONFLICTING" | awk '{print $1}' | xargs -r docker stop || true
   echo "$CONFLICTING" | awk '{print $1}' | xargs -r docker rm -f || true
 fi
-
 # remove any existing container with the same docker-compose container name
-OLD="$(docker ps -a --filter "name=wellness_backend" --format '{{.ID}} {{.Status}}' || true)"
+OLD="$(docker ps -a --filter "name=wellness_backend" --format '{{.ID}}' || true)"
 if [ -n "$OLD" ]; then
-  echo "Removing existing wellness_backend container(s):"
-  echo "$OLD"
-  echo "$OLD" | awk '{print $1}' | xargs -r docker rm -f || true
-fi
-
-# if lsof is available, try to kill any process still listening on :8000 (best-effort)
-if command -v lsof >/dev/null 2>&1; then
-  PIDS="$(lsof -t -i :8000 || true)"
-  if [ -n "$PIDS" ]; then
-    echo "Killing host process(es) listening on :8000: $PIDS"
-    echo "$PIDS" | xargs -r kill -9 || true
-  fi
+  echo "$OLD" | xargs -r docker rm -f || true
 fi
 '''
 
@@ -239,58 +266,53 @@ fi
         sh 'set -eux; (cd "${COMPOSE_DIR}" && docker-compose down || true)'
         sh 'set -eux; (cd "${COMPOSE_DIR}" && docker-compose up -d)'
 
-        //robust health check with retries and diagnostics on failure
-        sh '''
-          set -eux
-          # show compose status
-          (cd "${COMPOSE_DIR}" && docker-compose ps)
+        // robust health check with retries and diagnostics on failure
+        sh '''#!/usr/bin/env bash
+set -euo pipefail
+cd "${COMPOSE_DIR}"
 
-          # Poll backend health endpoint with retries.
-          # First try to curl from inside the backend container (more reliable in CI).
-          MAX_TRIES=30
-          DELAY=2
-          attempt=0
-          while true; do
-            attempt=$((attempt+1))
+docker-compose ps
 
-            # In-container check: if the container exists and is running, exec curl there
-            IN_CONTAINER_OK=false
-            if docker ps --filter "name=wellness_backend" --format '{{.ID}}' | grep -q .; then
-              CONTAINER_ID=$(docker ps --filter "name=wellness_backend" --format '{{.ID}}' | head -n1)
-              if docker exec "$CONTAINER_ID" sh -c 'curl -sS --fail http://127.0.0.1:8000/health >/dev/null 2>&1' >/dev/null 2>&1; then
-                echo "Backend healthy (checked inside container)"
-                break
-              else
-                echo "Attempt ${attempt}/${MAX_TRIES}: container-local health check failed"
-              fi
-            else
-              echo "Attempt ${attempt}/${MAX_TRIES}: backend container not found yet"
-            fi
+# 1) รอ container 'backend' รายงาน HEALTHCHECK = healthy
+CID="$(docker-compose ps -q backend || true)"
+if [ -z "${CID}" ]; then
+  echo "Cannot find container id for service 'backend'"
+  docker-compose ps
+  exit 1
+fi
 
-            # Fallback: try to reach via the host-published port
-            if curl -sS --fail http://localhost:8000/health >/dev/null 2>&1; then
-              echo "Backend healthy (checked via host)"
-              break
-            fi
+echo "Waiting for backend container to be healthy..."
+for i in $(seq 1 90); do
+  status="$(docker inspect -f '{{.State.Health.Status}}' "$CID" 2>/dev/null || echo starting)"
+  if [ "$status" = "healthy" ]; then
+    echo "Container health is healthy"
+    break
+  fi
+  if [ "$i" -eq 90 ]; then
+    echo "Container did not become healthy in time"
+    docker inspect "$CID" || true
+    docker-compose logs --no-color --tail=200 || true
+    exit 1
+  fi
+  sleep 2
+done
 
-            echo "Attempt ${attempt}/${MAX_TRIES}: backend not responding yet"
+# 2) Probe HTTP /health, break เมื่อสำเร็จ
+MAX_TRIES=60
+DELAY=2
+for i in $(seq 1 "$MAX_TRIES"); do
+  if curl -fsS http://localhost:8000/health >/dev/null; then
+    echo "HTTP /health OK on attempt $i"
+    exit 0
+  fi
+  echo "Attempt $i/$MAX_TRIES: /health not ready yet"
+  sleep "$DELAY"
+done
 
-            if [ ${attempt} -ge ${MAX_TRIES} ]; then
-              echo "Backend did not become healthy after $((MAX_TRIES*DELAY))s — collecting diagnostics"
-              echo "=== docker ps -a ==="
-              docker ps -a || true
-              echo "=== docker-compose logs (last 200 lines) ==="
-              (cd "${COMPOSE_DIR}" && docker-compose logs --no-color --tail=200) || true
-              echo "=== docker logs wellness_backend (last 200 lines) ==="
-              docker logs --tail 200 wellness_backend || true
-              echo "=== docker logs wellness_postgres (last 200 lines) ==="
-              docker logs --tail 200 wellness_postgres || true
-              exit 1
-            fi
-
-            sleep ${DELAY}
-          done
-        '''
+echo "Backend did not respond 200 to /health after $((MAX_TRIES*DELAY))s"
+docker-compose logs --no-color --tail=200 || true
+exit 1
+'''
       }
     }
   }
