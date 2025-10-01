@@ -4,32 +4,20 @@ from my_server.schema.auth import User, RegisterRequest, LoginRequest, TokenResp
 from passlib.context import CryptContext
 import jwt
 from datetime import datetime, timedelta
-import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 router = APIRouter(tags=["Authentication"])
 
-"""
-Database configuration. Prefer an explicit DATABASE_URL environment variable (set by docker-compose
-or the deployment). If not present, assemble the URL from per-value environment variables. When
-running under docker-compose the DB host should be the service name `postgres`, so default to that
-instead of localhost.
-"""
+# DB config from docker-compose
+DB_USER = "admin"
+DB_PASSWORD = "adminpass"
+DB_HOST = "localhost"
+DB_PORT = "5432"
+DB_NAME = "health_db"
+DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-# Prefer a full DATABASE_URL if provided (e.g. postgres://user:pass@postgres:5432/db)
-DATABASE_URL = os.getenv("DATABASE_URL")
-if not DATABASE_URL:
-	DB_USER = os.getenv("DB_USER", "admin")
-	DB_PASSWORD = os.getenv("DB_PASSWORD", "adminpass")
-	# Default to the docker-compose service name so containers can reach each other
-	DB_HOST = os.getenv("DB_HOST", "postgres")
-	DB_PORT = os.getenv("DB_PORT", "5432")
-	DB_NAME = os.getenv("DB_NAME", "health_db")
-	DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
-
-# Enable pool_pre_ping to help recover from stale/closed connections in long-lived processes
-engine = create_engine(DATABASE_URL, pool_pre_ping=True)
+engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 from my_server.schema.auth import Base
 

@@ -168,6 +168,18 @@ EOF
       steps {
         timeout(time: 10, unit: 'MINUTES') {
           // ต้องติดตั้ง Jenkins SonarQube plugin และมี webhook จาก SonarQube -> Jenkins
+          // Diagnostic: fetch and print SonarQube project_status to show failing conditions
+          withCredentials([string(credentialsId: 'tracking', variable: 'SONAR_TOKEN')]) {
+            sh '''
+              set -eux
+              if [ -n "${SONAR_HOST_URL}" ]; then
+                echo "Fetching SonarQube project_status for projectKey=health-tracking-backend"
+                curl -sS -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=health-tracking-backend" | jq . || true
+              else
+                echo "SONAR_HOST_URL not set; skipping diagnostic fetch"
+              fi
+            '''
+          }
           waitForQualityGate abortPipeline: true
         }
       }
