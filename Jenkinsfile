@@ -110,32 +110,30 @@ PY
     }
 
         stage('Run Tests & Coverage') {
-      steps {
-        dir('my-server') {
-          sh '''
-            set -eux
-            export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
-            # ใช้ SQLite สำหรับเทสใน CI เพื่อไม่ต้องพึ่ง Postgres
-            export DATABASE_URL="${DATABASE_URL:-sqlite:///./ci_test.db}"
-            export TESTING=1
+  steps {
+    dir('my-server') {
+      sh '''
+        set -eux
+        export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
+        export DATABASE_URL="${DATABASE_URL:-sqlite:///./ci_test.db}"
+        export TESTING=1
 
-            # Ensure test runtime dependencies are available
-            if [ -f pyproject.toml ]; then
-              pip install poetry
-              poetry config virtualenvs.create false
-              poetry install --no-interaction || true
-              pip install --no-cache-dir "python-jose[cryptography]" pytest pytest-cov
-            elif [ -f requirements.txt ]; then
-              pip install --no-cache-dir -r requirements.txt || true
-              pip install --no-cache-dir "python-jose[cryptography]" pytest pytest-cov || true
-            else
-              pip install --no-cache-dir fastapi "uvicorn[standard]" pytest pytest-cov "python-jose[cryptography]" || true
-            fi
+        if [ -f pyproject.toml ]; then
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --no-interaction || true
+          pip install --no-cache-dir "python-jose[cryptography]" pytest pytest-cov
+        elif [ -f requirements.txt ]; then
+          pip install --no-cache-dir -r requirements.txt || true
+          pip install --no-cache-dir "python-jose[cryptography]" pytest pytest-cov || true
+        else
+          pip install --no-cache-dir fastapi "uvicorn[standard]" pytest pytest-cov "python-jose[cryptography]" || true
+        fi
 
-            # ---- bootstrap tests (เฉพาะถ้ายังไม่มีไฟล์ใน repo) ----
-            mkdir -p tests
-            if [ ! -f tests/conftest.py ]; then
-              cat > tests/conftest.py << 'EOF'
+        # ---- bootstrap tests (เฉพาะถ้าไม่มีไฟล์ใน repo) ----
+        mkdir -p tests
+        if [ ! -f tests/conftest.py ]; then
+          cat > tests/conftest.py << 'EOF'
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -164,7 +162,6 @@ def db_session(engine):
 
 @pytest.fixture
 def client(db_session):
-    # override dependency ให้ใช้ session ของเทสต์
     def _override_get_db():
         try:
             yield db_session
@@ -175,21 +172,20 @@ def client(db_session):
     yield c
     app.dependency_overrides.clear()
 EOF
-            fi
+        fi
 
-            if [ ! -f tests/test_health.py ]; then
-              cat > tests/test_health.py << 'EOF'
+        if [ ! -f tests/test_health.py ]; then
+          cat > tests/test_health.py << 'EOF'
 def test_health(client):
     r = client.get("/health")
     assert r.status_code == 200
     assert r.json().get("status") == "ok"
 EOF
-            fi
+        fi
 
-            if [ ! -f tests/test_auth_flow.py ]; then
-              cat > tests/test_auth_flow.py << 'EOF'
+        if [ ! -f tests/test_auth_flow.py ]; then
+          cat > tests/test_auth_flow.py << 'EOF'
 def test_register_then_login(client):
-    # /auth/register ใช้ JSON body
     r = client.post("/auth/register", json={
         "username": "u1",
         "email": "u1@example.com",
@@ -197,8 +193,6 @@ def test_register_then_login(client):
     })
     assert r.status_code in (200, 201)
     assert "access_token" in r.json()
-
-    # /auth/login ใช้ form (OAuth2PasswordRequestForm)
     r2 = client.post("/auth/login", data={
         "username": "u1@example.com",
         "password": "p@ssw0rd"
@@ -206,18 +200,23 @@ def test_register_then_login(client):
     assert r2.status_code == 200
     assert "access_token" in r2.json()
 EOF
-            fi
-            # --------------------------------------------------------
+        fi
 
-            # รันเทส + เก็บ coverage เป็นไฟล์จริง
-            pytest -q \
-              --maxfail=1 --disable-warnings \
-              --cov=my_server --cov-branch \
-              --cov-report=xml:coverage.xml
-          '''
-        }
-      }
+        # >>> patch legacy tests ที่ยังอ้าง /register , /login ให้เป็น /auth/...
+        if [ -f tests/test_auth_flow.py ]; then
+          sed -i -e 's|client.post("/register"|client.post("/auth/register"|g' tests/test_auth_flow.py || true
+          sed -i -e 's|client.post("/login"|client.post("/auth/login"|g'       tests/test_auth_flow.py || true
+        fi
+        # <<<
+
+        pytest -q --maxfail=1 --disable-warnings \
+          --cov=my_server --cov-branch \
+          --cov-report=xml:coverage.xml
+      '''
     }
+  }
+}
+
 
 
     stage('SonarQube Analysis') {
