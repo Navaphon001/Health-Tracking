@@ -174,6 +174,28 @@ pipeline {
       }
     }
 
+    stage('SonarQube Report (debug)') {
+      when {
+        expression { return true }
+      }
+      steps {
+        withCredentials([string(credentialsId: 'tracking', variable: 'SONAR_TOKEN')]) {
+          sh '''
+            set -eux
+            # Get the latest ce task status for the project to find the report id
+            echo "Fetching latest CE task for project ${SONAR_PROJECT_KEY}"
+            TASKS_API="$SONAR_HOST_URL/api/ce/task_search?submittedAfter=0&project=${SONAR_PROJECT_KEY}"
+            curl -s -u "$SONAR_TOKEN:" "$TASKS_API" | jq '.' || true
+
+            # Get quality gate status for the most recent analysis
+            echo "Fetching quality gate status for project ${SONAR_PROJECT_KEY}"
+            QG_API="$SONAR_HOST_URL/api/qualitygates/project_status?projectKey=${SONAR_PROJECT_KEY}"
+            curl -s -u "$SONAR_TOKEN:" "$QG_API" | jq '.' || true
+          '''
+        }
+      }
+    }
+
     stage('Build Docker Image') {
       steps {
         dir(env.PROJECT_DIR) {
