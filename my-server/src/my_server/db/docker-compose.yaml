@@ -21,7 +21,7 @@ services:
     restart: unless-stopped
 
   backend:
-    image: personal-wellness-tracker-backend:latest
+    image: health-tracking-backend:latest
     container_name: wellness_backend
     ports:
       - "8000:8000"

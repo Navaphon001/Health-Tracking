@@ -14,6 +14,7 @@ pipeline {
     PROJECT_DIR = "${WORKSPACE}"
     DOCKER_IMAGE = "health-tracking-backend:latest"
     DOCKER_CONTAINER = "health-tracking-backend"
+      COMPOSE_DIR = "${WORKSPACE}/my-server/src/my_server/db"
   }
 
   stages {
@@ -27,6 +28,14 @@ pipeline {
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             git wget unzip ca-certificates docker-cli default-jre-headless curl
             
+            # Ensure compose directory exists and show contents for debugging
+            if [ ! -d "${COMPOSE_DIR}" ]; then
+              echo "ERROR: compose directory ${COMPOSE_DIR} not found"
+              echo "Workspace contents:"; ls -la || true
+              exit 1
+            fi
+            echo "Compose directory contents:"; ls -la "${COMPOSE_DIR}"
+            (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml down) || true
           # Install docker-compose
           # Prefer the distro package/plugin if available (more robust). Fallback to downloading the binary with retries.
           if apt-get -qq install -y docker-compose-plugin; then
@@ -43,14 +52,14 @@ SHIM
               docker-compose --version || true
             fi
           else
-            DC_URL="https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-linux-x86_64"
+            (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml up -d --remove-orphans) || RC=$?
             # Attempt multiple times in case of transient network/SSL issues
             for i in 1 2 3 4 5; do
               echo "Downloading docker-compose (attempt $i)"
               curl -fL --retry 5 --retry-delay 5 --connect-timeout 15 "$DC_URL" -o /usr/local/bin/docker-compose && break || sleep 5
             done
             chmod +x /usr/local/bin/docker-compose
-            docker-compose --version || true
+              (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml up -d --remove-orphans) || RC=$?
           fi
 
           command -v git
@@ -70,18 +79,18 @@ SHIM
           rm -f /tmp/sonar.zip || true
           for f in $CANDIDATES; do
             URL="${BASE_URL}/${f}"
-            echo "Trying: $URL"
+              (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml ps) || true
             if wget -q --spider "$URL"; then
               wget -qO /tmp/sonar.zip "$URL"
               break
-            fi
+              (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml logs postgres) || true
           done
           test -s /tmp/sonar.zip || { echo "Failed to download SonarScanner ${SCAN_VER}"; exit 1; }
 
           unzip -q /tmp/sonar.zip -d /opt
           SCAN_HOME="$(find /opt -maxdepth 1 -type d -name 'sonar-scanner*' | head -n1)"
           ln -sf "$SCAN_HOME/bin/sonar-scanner" /usr/local/bin/sonar-scanner
-          sonar-scanner --version
+                (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml down -v) || true
 
           # ยืนยันว่า docker.sock ถูก mount มาแล้ว
           test -S /var/run/docker.sock || { echo "ERROR: /var/run/docker.sock not mounted"; exit 1; }
@@ -90,7 +99,7 @@ SHIM
     }
 
     stage('Checkout') {
-      steps {
+                (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml up -d --remove-orphans) || RC=$?
         git branch: 'feat/jenkins-ci', url: 'https://github.com/Navaphon001/Health-Tracking.git'
       }
     }
@@ -109,9 +118,9 @@ SHIM
               poetry install
             elif [ -f requirements.txt ]; then
               pip install -r requirements.txt
-            else
+                  (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml ps) || true
               # Install common FastAPI dependencies
-              pip install fastapi uvicorn sqlalchemy psycopg2-binary alembic pydantic python-jose[cryptography] passlib[bcrypt] python-multipart
+                  (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml logs postgres) || true
             fi
             
             # Install testing dependencies
@@ -123,10 +132,10 @@ SHIM
         }
       }
     }
-
+            (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml ps)
     stage('Run Tests & Coverage') {
       steps {
-        dir('my-server') {
+            (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml logs backend --tail=10) || true
           sh '''
             set -eux
             # Ensure tests can import the package under src; use safe expansion so unset PYTHONPATH won't fail
