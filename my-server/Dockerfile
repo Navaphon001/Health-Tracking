@@ -17,6 +17,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy project files
 COPY . /app
 
+# Ensure python can import packages under src/
+ENV PYTHONPATH=/app/src:$PYTHONPATH
+
 # Prefer installing via pyproject (poetry) if present
 RUN python -m pip install --upgrade pip setuptools wheel
 RUN if [ -f pyproject.toml ]; then \
@@ -31,4 +34,4 @@ RUN if [ -f pyproject.toml ]; then \
 # Expose port expected by pipeline and run uvicorn
 EXPOSE 8000
 
-CMD ["uvicorn", "my_server.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "my_server.main:app", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "src"]
