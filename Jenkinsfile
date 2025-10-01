@@ -28,9 +28,30 @@ pipeline {
             git wget unzip ca-certificates docker-cli default-jre-headless curl
             
           # Install docker-compose
-          curl -L "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
-          chmod +x /usr/local/bin/docker-compose
-          docker-compose --version
+          # Prefer the distro package/plugin if available (more robust). Fallback to downloading the binary with retries.
+          if apt-get -qq install -y docker-compose-plugin; then
+            # Newer Docker uses the compose plugin; provide a docker-compose shim for scripts that expect it
+            if command -v docker-compose >/dev/null 2>&1; then
+              docker-compose --version || true
+            else
+              # Create a small shim that delegates to 'docker compose'
+              cat > /usr/local/bin/docker-compose <<'SHIM'
+#!/bin/sh
+exec docker compose "$@"
+SHIM
+              chmod +x /usr/local/bin/docker-compose
+              docker-compose --version || true
+            fi
+          else
+            DC_URL="https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-linux-x86_64"
+            # Attempt multiple times in case of transient network/SSL issues
+            for i in 1 2 3 4 5; do
+              echo "Downloading docker-compose (attempt $i)"
+              curl -fL --retry 5 --retry-delay 5 --connect-timeout 15 "$DC_URL" -o /usr/local/bin/docker-compose && break || sleep 5
+            done
+            chmod +x /usr/local/bin/docker-compose
+            docker-compose --version || true
+          fi
 
           command -v git
           command -v docker
