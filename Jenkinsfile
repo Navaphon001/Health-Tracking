@@ -80,11 +80,27 @@ pipeline {
             if [ -f pyproject.toml ]; then
               pip install poetry
               poetry config virtualenvs.create false
-              poetry install --no-dev --no-interaction || true
+              poetry install --no-interaction || true
+
+              # ✅ ensure python-jose is present even if not declared in pyproject
+              pip install --no-cache-dir "python-jose[cryptography]"
+
+              # quick sanity check
+              python - <<'PY'
+import sys
+try:
+    import jose, jose.jwt
+    print("python-jose OK")
+except Exception as e:
+    print("python-jose missing/broken:", e)
+    sys.exit(1)
+PY
             elif [ -f requirements.txt ]; then
               pip install --no-cache-dir -r requirements.txt
+              pip install --no-cache-dir "python-jose[cryptography]" || true
             else
-              pip install --no-cache-dir fastapi "uvicorn[standard]" sqlalchemy psycopg2-binary alembic pydantic "python-jose[cryptography]" "passlib[bcrypt]" python-multipart python-dotenv || true
+              pip install --no-cache-dir fastapi "uvicorn[standard]" sqlalchemy psycopg2-binary alembic pydantic \
+                  "python-jose[cryptography]" "passlib[bcrypt]" python-multipart python-dotenv || true
             fi
 
             pip install pytest pytest-cov
@@ -103,16 +119,17 @@ pipeline {
             export DATABASE_URL="${DATABASE_URL:-sqlite:///./ci_test.db}"
             export TESTING=1
 
-            # Ensure test runtime dependencies are available (FastAPI, uvicorn, pytest)
+            # Ensure test runtime dependencies are available
             if [ -f pyproject.toml ]; then
-              # install dev deps so tests run
               pip install poetry
               poetry config virtualenvs.create false
               poetry install --no-interaction || true
+              pip install --no-cache-dir "python-jose[cryptography]" pytest pytest-cov
             elif [ -f requirements.txt ]; then
               pip install --no-cache-dir -r requirements.txt || true
+              pip install --no-cache-dir "python-jose[cryptography]" pytest pytest-cov || true
             else
-              pip install --no-cache-dir fastapi "uvicorn[standard]" pytest pytest-cov || true
+              pip install --no-cache-dir fastapi "uvicorn[standard]" pytest pytest-cov "python-jose[cryptography]" || true
             fi
 
             # ---- bootstrap tests (เฉพาะถ้ายังไม่มีไฟล์ใน repo) ----
