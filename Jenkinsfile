@@ -239,23 +239,42 @@ fi
         sh 'set -eux; (cd "${COMPOSE_DIR}" && docker-compose down || true)'
         sh 'set -eux; (cd "${COMPOSE_DIR}" && docker-compose up -d)'
 
-        // robust health check with retries and diagnostics on failure
+        //robust health check with retries and diagnostics on failure
         sh '''
           set -eux
           # show compose status
           (cd "${COMPOSE_DIR}" && docker-compose ps)
 
-          # Poll backend health endpoint on host:8000 with retries
+          # Poll backend health endpoint with retries.
+          # First try to curl from inside the backend container (more reliable in CI).
           MAX_TRIES=30
           DELAY=2
           attempt=0
           while true; do
             attempt=$((attempt+1))
+
+            # In-container check: if the container exists and is running, exec curl there
+            IN_CONTAINER_OK=false
+            if docker ps --filter "name=wellness_backend" --format '{{.ID}}' | grep -q .; then
+              CONTAINER_ID=$(docker ps --filter "name=wellness_backend" --format '{{.ID}}' | head -n1)
+              if docker exec "$CONTAINER_ID" sh -c 'curl -sS --fail http://127.0.0.1:8000/health >/dev/null 2>&1' >/dev/null 2>&1; then
+                echo "Backend healthy (checked inside container)"
+                break
+              else
+                echo "Attempt ${attempt}/${MAX_TRIES}: container-local health check failed"
+              fi
+            else
+              echo "Attempt ${attempt}/${MAX_TRIES}: backend container not found yet"
+            fi
+
+            # Fallback: try to reach via the host-published port
             if curl -sS --fail http://localhost:8000/health >/dev/null 2>&1; then
-              echo "Backend healthy"
+              echo "Backend healthy (checked via host)"
               break
             fi
+
             echo "Attempt ${attempt}/${MAX_TRIES}: backend not responding yet"
+
             if [ ${attempt} -ge ${MAX_TRIES} ]; then
               echo "Backend did not become healthy after $((MAX_TRIES*DELAY))s — collecting diagnostics"
               echo "=== docker ps -a ==="
@@ -268,6 +287,7 @@ fi
               docker logs --tail 200 wellness_postgres || true
               exit 1
             fi
+
             sleep ${DELAY}
           done
         '''
