@@ -239,9 +239,38 @@ fi
         sh 'set -eux; (cd "${COMPOSE_DIR}" && docker-compose down || true)'
         sh 'set -eux; (cd "${COMPOSE_DIR}" && docker-compose up -d)'
 
-        // quick health check
-        sh 'set -eux; sleep 5; (cd "${COMPOSE_DIR}" && docker-compose ps)'
-        sh 'set -eux; curl -sS --fail http://localhost:8000/health >/dev/null && echo "OK" || echo "Backend not healthy (maybe still starting)"'
+        // robust health check with retries and diagnostics on failure
+        sh '''
+          set -eux
+          # show compose status
+          (cd "${COMPOSE_DIR}" && docker-compose ps)
+
+          # Poll backend health endpoint on host:8000 with retries
+          MAX_TRIES=30
+          DELAY=2
+          attempt=0
+          while true; do
+            attempt=$((attempt+1))
+            if curl -sS --fail http://localhost:8000/health >/dev/null 2>&1; then
+              echo "Backend healthy"
+              break
+            fi
+            echo "Attempt ${attempt}/${MAX_TRIES}: backend not responding yet"
+            if [ ${attempt} -ge ${MAX_TRIES} ]; then
+              echo "Backend did not become healthy after $((MAX_TRIES*DELAY))s — collecting diagnostics"
+              echo "=== docker ps -a ==="
+              docker ps -a || true
+              echo "=== docker-compose logs (last 200 lines) ==="
+              (cd "${COMPOSE_DIR}" && docker-compose logs --no-color --tail=200) || true
+              echo "=== docker logs wellness_backend (last 200 lines) ==="
+              docker logs --tail 200 wellness_backend || true
+              echo "=== docker logs wellness_postgres (last 200 lines) ==="
+              docker logs --tail 200 wellness_postgres || true
+              exit 1
+            fi
+            sleep ${DELAY}
+          done
+        '''
       }
     }
   }
