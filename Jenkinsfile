@@ -93,6 +93,45 @@ pipeline {
       }
     }
 
+    stage('Start Server (for tests)') {
+      steps {
+        dir(env.PROJECT_DIR) {
+          sh '''
+            set -eux
+            # Ensure package root is visible for imports
+            export PYTHONPATH="$PWD"
+
+            # Prefer poetry if available; fallback to uvicorn in PATH
+            PORT=${PORT:-8000}
+            RELOAD=false
+
+            if command -v poetry >/dev/null 2>&1; then
+              echo "Starting server with poetry + uvicorn on port $PORT"
+              nohup poetry run uvicorn my_server.main:app --app-dir src --host 0.0.0.0 --port $PORT > server.log 2>&1 & echo $! > server.pid
+            elif command -v uvicorn >/dev/null 2>&1; then
+              echo "Starting server with uvicorn from PATH on port $PORT"
+              nohup uvicorn my_server.main:app --app-dir src --host 0.0.0.0 --port $PORT > server.log 2>&1 & echo $! > server.pid
+            else
+              echo "No poetry or uvicorn available to start server, skipping start"; exit 0
+            fi
+
+            # wait for server to become ready
+            MAX=30
+            OK=0
+            for i in $(seq 1 $MAX); do
+              if curl -sSf "http://127.0.0.1:$PORT/" >/dev/null 2>&1; then OK=1; break; fi
+              sleep 1
+            done
+            if [ "$OK" -ne 1 ]; then
+              echo "Server failed to start, dumping server.log:"; cat server.log || true
+              exit 1
+            fi
+            echo "Server ready on port $PORT"
+          '''
+        }
+      }
+    }
+
     stage('Run Tests & Coverage') {
   steps {
     dir(env.PROJECT_DIR) {
@@ -236,3 +275,4 @@ pipeline {
 
   post { always { echo "Pipeline finished" } }
 }
+
