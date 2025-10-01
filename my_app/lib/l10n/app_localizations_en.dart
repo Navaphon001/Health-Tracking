@@ -9,7 +9,7 @@ class AppLocalizationsEn extends AppLocalizations {
   AppLocalizationsEn([String locale = 'en']) : super(locale);
 
   @override
-  String get appTitle => 'Personal Wellness Tracker';
+  String get appTitle => 'Health Tracker';
 
   @override
   String get dashboard => 'Dashboard';
@@ -777,6 +777,139 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get profileSettings => 'Profile Settings';
+
+  @override
+  String get addNewBeverage => 'Add New Beverage';
+
+  @override
+  String get beverageName => 'Beverage Name';
+
+  @override
+  String get beverageNameExample => 'e.g. Iced milk, Green tea';
+
+  @override
+  String get deleteBeverage => 'Delete Beverage';
+
+  @override
+  String deleteBeverageConfirm(String name) {
+    return 'Do you want to delete \"$name\"?';
+  }
+
+  @override
+  String beverageDeletedSuccess(String name) {
+    return 'Deleted $name successfully';
+  }
+
+  @override
+  String beverageAddedSuccess(String name) {
+    return 'Added $name successfully';
+  }
+
+  @override
+  String get dayNameSun => 'Sun';
+
+  @override
+  String get dayNameMon => 'Mon';
+
+  @override
+  String get dayNameTue => 'Tue';
+
+  @override
+  String get dayNameWed => 'Wed';
+
+  @override
+  String get dayNameThu => 'Thu';
+
+  @override
+  String get dayNameFri => 'Fri';
+
+  @override
+  String get dayNameSat => 'Sat';
+
+  @override
+  String get exerciseWalking => 'Walking';
+
+  @override
+  String get exerciseRunning => 'Running';
+
+  @override
+  String get exerciseCycling => 'Cycling';
+
+  @override
+  String get exerciseSwimming => 'Swimming';
+
+  @override
+  String get exerciseYoga => 'Yoga';
+
+  @override
+  String get exerciseWeightLifting => 'Weight Lifting';
+
+  @override
+  String get exerciseDancing => 'Dancing';
+
+  @override
+  String get exerciseFootball => 'Football';
+
+  @override
+  String get waterLogFailed => 'Failed to log water intake';
+
+  @override
+  String waterLogSuccess(String name, num amount) {
+    return 'Added $name +$amount ml';
+  }
+
+  @override
+  String exerciseLogSuccess(num minutes) {
+    return 'Logged exercise +$minutes minutes';
+  }
+
+  @override
+  String get activitySavedSuccess => 'Activity saved successfully';
+
+  @override
+  String get activitySaveFailed => 'Failed to save activity';
+
+  @override
+  String get activityDeletedSuccess => 'Activity deleted';
+
+  @override
+  String get activityDeleteFailed => 'Failed to delete activity';
+
+  @override
+  String get sleepLoggedSuccess => 'Sleep logged';
+
+  @override
+  String get sleepLogFailed => 'Failed to log sleep';
+
+  @override
+  String get achievementConsecutive3Days =>
+      'Logged activities for 3 consecutive days';
+
+  @override
+  String get achievementConsecutive7Days =>
+      'Logged activities for 7 consecutive days';
+
+  @override
+  String get achievementFirstWeightLog => 'First Weight Log';
+
+  @override
+  String get achievementFirstWeightLogDesc =>
+      'Logged weight for the first time';
+
+  @override
+  String get achievementWeightConsecutive7Days =>
+      'Logged weight for 7 consecutive days';
+
+  @override
+  String get chooseBeverage => 'Choose Beverage';
+
+  @override
+  String totalCalories(num calories) {
+    return 'Total Calories: $calories cal';
+  }
+
+  @override
+  String get nutrition => 'Nutrition';
 
   @override
   String get fullName => 'Full Name';

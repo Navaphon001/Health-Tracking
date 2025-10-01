@@ -295,18 +295,17 @@ class _DateCard extends StatelessWidget {
 
   const _DateCard({required this.date, required this.selected, this.isToday = false});
 
-  String get dayName {
-    // short localized day names could be used; keep English fallback
-    const names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    return names[date.weekday % 7];
-  }
-
   @override
   Widget build(BuildContext context) {
-  final primary = AppColors.primary;
+    final primary = AppColors.primary;
     final cardBg = selected
         ? null
         : Colors.white;
+
+    // Get localized day name
+    final t = AppLocalizations.of(context);
+    final dayNames = [t.dayNameSun, t.dayNameMon, t.dayNameTue, t.dayNameWed, t.dayNameThu, t.dayNameFri, t.dayNameSat];
+    final dayName = dayNames[date.weekday % 7];
 
     return Container(
       width: 72,

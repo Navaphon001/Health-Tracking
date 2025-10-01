@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In en, this message translates to:
-  /// **'Personal Wellness Tracker'**
+  /// **'Health Tracker'**
   String get appTitle;
 
   /// No description provided for @dashboard.
@@ -1561,6 +1561,240 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Profile Settings'**
   String get profileSettings;
+
+  /// No description provided for @addNewBeverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add New Beverage'**
+  String get addNewBeverage;
+
+  /// No description provided for @beverageName.
+  ///
+  /// In en, this message translates to:
+  /// **'Beverage Name'**
+  String get beverageName;
+
+  /// No description provided for @beverageNameExample.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. Iced milk, Green tea'**
+  String get beverageNameExample;
+
+  /// No description provided for @deleteBeverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Beverage'**
+  String get deleteBeverage;
+
+  /// No description provided for @deleteBeverageConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to delete \"{name}\"?'**
+  String deleteBeverageConfirm(String name);
+
+  /// No description provided for @beverageDeletedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted {name} successfully'**
+  String beverageDeletedSuccess(String name);
+
+  /// No description provided for @beverageAddedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {name} successfully'**
+  String beverageAddedSuccess(String name);
+
+  /// No description provided for @dayNameSun.
+  ///
+  /// In en, this message translates to:
+  /// **'Sun'**
+  String get dayNameSun;
+
+  /// No description provided for @dayNameMon.
+  ///
+  /// In en, this message translates to:
+  /// **'Mon'**
+  String get dayNameMon;
+
+  /// No description provided for @dayNameTue.
+  ///
+  /// In en, this message translates to:
+  /// **'Tue'**
+  String get dayNameTue;
+
+  /// No description provided for @dayNameWed.
+  ///
+  /// In en, this message translates to:
+  /// **'Wed'**
+  String get dayNameWed;
+
+  /// No description provided for @dayNameThu.
+  ///
+  /// In en, this message translates to:
+  /// **'Thu'**
+  String get dayNameThu;
+
+  /// No description provided for @dayNameFri.
+  ///
+  /// In en, this message translates to:
+  /// **'Fri'**
+  String get dayNameFri;
+
+  /// No description provided for @dayNameSat.
+  ///
+  /// In en, this message translates to:
+  /// **'Sat'**
+  String get dayNameSat;
+
+  /// No description provided for @exerciseWalking.
+  ///
+  /// In en, this message translates to:
+  /// **'Walking'**
+  String get exerciseWalking;
+
+  /// No description provided for @exerciseRunning.
+  ///
+  /// In en, this message translates to:
+  /// **'Running'**
+  String get exerciseRunning;
+
+  /// No description provided for @exerciseCycling.
+  ///
+  /// In en, this message translates to:
+  /// **'Cycling'**
+  String get exerciseCycling;
+
+  /// No description provided for @exerciseSwimming.
+  ///
+  /// In en, this message translates to:
+  /// **'Swimming'**
+  String get exerciseSwimming;
+
+  /// No description provided for @exerciseYoga.
+  ///
+  /// In en, this message translates to:
+  /// **'Yoga'**
+  String get exerciseYoga;
+
+  /// No description provided for @exerciseWeightLifting.
+  ///
+  /// In en, this message translates to:
+  /// **'Weight Lifting'**
+  String get exerciseWeightLifting;
+
+  /// No description provided for @exerciseDancing.
+  ///
+  /// In en, this message translates to:
+  /// **'Dancing'**
+  String get exerciseDancing;
+
+  /// No description provided for @exerciseFootball.
+  ///
+  /// In en, this message translates to:
+  /// **'Football'**
+  String get exerciseFootball;
+
+  /// No description provided for @waterLogFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to log water intake'**
+  String get waterLogFailed;
+
+  /// No description provided for @waterLogSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {name} +{amount} ml'**
+  String waterLogSuccess(String name, num amount);
+
+  /// No description provided for @exerciseLogSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged exercise +{minutes} minutes'**
+  String exerciseLogSuccess(num minutes);
+
+  /// No description provided for @activitySavedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity saved successfully'**
+  String get activitySavedSuccess;
+
+  /// No description provided for @activitySaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save activity'**
+  String get activitySaveFailed;
+
+  /// No description provided for @activityDeletedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity deleted'**
+  String get activityDeletedSuccess;
+
+  /// No description provided for @activityDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to delete activity'**
+  String get activityDeleteFailed;
+
+  /// No description provided for @sleepLoggedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep logged'**
+  String get sleepLoggedSuccess;
+
+  /// No description provided for @sleepLogFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to log sleep'**
+  String get sleepLogFailed;
+
+  /// No description provided for @achievementConsecutive3Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged activities for 3 consecutive days'**
+  String get achievementConsecutive3Days;
+
+  /// No description provided for @achievementConsecutive7Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged activities for 7 consecutive days'**
+  String get achievementConsecutive7Days;
+
+  /// No description provided for @achievementFirstWeightLog.
+  ///
+  /// In en, this message translates to:
+  /// **'First Weight Log'**
+  String get achievementFirstWeightLog;
+
+  /// No description provided for @achievementFirstWeightLogDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged weight for the first time'**
+  String get achievementFirstWeightLogDesc;
+
+  /// No description provided for @achievementWeightConsecutive7Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Logged weight for 7 consecutive days'**
+  String get achievementWeightConsecutive7Days;
+
+  /// No description provided for @chooseBeverage.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Beverage'**
+  String get chooseBeverage;
+
+  /// No description provided for @totalCalories.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Calories: {calories} cal'**
+  String totalCalories(num calories);
+
+  /// No description provided for @nutrition.
+  ///
+  /// In en, this message translates to:
+  /// **'Nutrition'**
+  String get nutrition;
 
   /// No description provided for @fullName.
   ///

@@ -9,7 +9,7 @@ class AppLocalizationsTh extends AppLocalizations {
   AppLocalizationsTh([String locale = 'th']) : super(locale);
 
   @override
-  String get appTitle => 'ตัวติดตามสุขภาพส่วนบุคคล';
+  String get appTitle => 'Health Tracker';
 
   @override
   String get dashboard => 'แดชบอร์ด';
@@ -775,6 +775,136 @@ class AppLocalizationsTh extends AppLocalizations {
 
   @override
   String get profileSettings => 'ตั้งค่าโปรไฟล์';
+
+  @override
+  String get addNewBeverage => 'เพิ่มเครื่องดื่มใหม่';
+
+  @override
+  String get beverageName => 'ชื่อเครื่องดื่ม';
+
+  @override
+  String get beverageNameExample => 'เช่น นมเย็น, ชาเขียว';
+
+  @override
+  String get deleteBeverage => 'ลบเครื่องดื่ม';
+
+  @override
+  String deleteBeverageConfirm(String name) {
+    return 'คุณต้องการลบ \"$name\" หรือไม่?';
+  }
+
+  @override
+  String beverageDeletedSuccess(String name) {
+    return 'ลบ $name เรียบร้อยแล้ว';
+  }
+
+  @override
+  String beverageAddedSuccess(String name) {
+    return 'เพิ่ม $name เรียบร้อยแล้ว';
+  }
+
+  @override
+  String get dayNameSun => 'อา';
+
+  @override
+  String get dayNameMon => 'จ';
+
+  @override
+  String get dayNameTue => 'อ';
+
+  @override
+  String get dayNameWed => 'พ';
+
+  @override
+  String get dayNameThu => 'พฤ';
+
+  @override
+  String get dayNameFri => 'ศ';
+
+  @override
+  String get dayNameSat => 'ส';
+
+  @override
+  String get exerciseWalking => 'เดินเล่น';
+
+  @override
+  String get exerciseRunning => 'วิ่ง';
+
+  @override
+  String get exerciseCycling => 'ปั่นจักรยาน';
+
+  @override
+  String get exerciseSwimming => 'ว่ายน้ำ';
+
+  @override
+  String get exerciseYoga => 'โยคะ';
+
+  @override
+  String get exerciseWeightLifting => 'ยกน้ำหนัก';
+
+  @override
+  String get exerciseDancing => 'เต้นรำ';
+
+  @override
+  String get exerciseFootball => 'ฟุตบอล';
+
+  @override
+  String get waterLogFailed => 'บันทึกน้ำดื่มล้มเหลว';
+
+  @override
+  String waterLogSuccess(String name, num amount) {
+    return 'เพิ่ม $name +$amount ml';
+  }
+
+  @override
+  String exerciseLogSuccess(num minutes) {
+    return 'บันทึกออกกำลังกาย +$minutes นาที';
+  }
+
+  @override
+  String get activitySavedSuccess => 'บันทึกกิจกรรมสำเร็จ';
+
+  @override
+  String get activitySaveFailed => 'บันทึกกิจกรรมล้มเหลว';
+
+  @override
+  String get activityDeletedSuccess => 'ลบกิจกรรมแล้ว';
+
+  @override
+  String get activityDeleteFailed => 'ลบกิจกรรมล้มเหลว';
+
+  @override
+  String get sleepLoggedSuccess => 'บันทึกการนอนแล้ว';
+
+  @override
+  String get sleepLogFailed => 'บันทึกการนอนล้มเหลว';
+
+  @override
+  String get achievementConsecutive3Days => 'บันทึกกิจกรรมต่อเนื่อง 3 วัน';
+
+  @override
+  String get achievementConsecutive7Days => 'บันทึกกิจกรรมต่อเนื่อง 7 วัน';
+
+  @override
+  String get achievementFirstWeightLog => 'บันทึกน้ำหนักครั้งแรก';
+
+  @override
+  String get achievementFirstWeightLogDesc => 'บันทึกน้ำหนักครั้งแรก';
+
+  @override
+  String get achievementWeightConsecutive7Days =>
+      'บันทึกน้ำหนักต่อเนื่อง 7 วัน';
+
+  @override
+  String get chooseBeverage => 'เลือกเครื่องดื่ม';
+
+  @override
+  String totalCalories(num calories) {
+    return 'จำนวนแคลอรี่: $calories cal';
+  }
+
+  @override
+  String get nutrition => 'โภชนาการ';
 
   @override
   String get fullName => 'ชื่อเต็ม';

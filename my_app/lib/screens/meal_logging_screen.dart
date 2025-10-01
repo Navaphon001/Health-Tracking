@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -232,11 +233,16 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
         // Mock save: simulate a short delay and then set mock nutrition data
         setState(() { _isSaving = true; });
         await Future.delayed(const Duration(milliseconds: 700));
+        
+        // Generate random calories between 150-800 based on food name for consistency
+        final random = Random(meal.foodName.hashCode); // Use hashCode as seed for consistency
+        final randomCalories = 150 + random.nextInt(651); // 150-800 range
+        
         // Create a mocked Nutrition entry (values are example placeholders)
         final mockNutrition = Nutrition(
           id: DateTime.now().millisecondsSinceEpoch.toString(),
           foodName: meal.foodName,
-          calories: 250.0 + (meal.foodName.length % 3) * 10, // small variation
+          calories: randomCalories.toDouble(),
           protein: 12.0 + (meal.foodName.length % 5),
           carbs: 30.0 + (meal.foodName.length % 7),
           fat: 10.0 + (meal.foodName.length % 4),
@@ -496,13 +502,27 @@ class _MealLoggingScreenState extends State<MealLoggingScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Nutrition',
-                            style: TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: colorScheme.onSurface,
-                            ),
+                          // Title row with Nutrition on left and calories on right
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                AppLocalizations.of(context).nutrition,
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                              Text(
+                                AppLocalizations.of(context).totalCalories((_lastSavedNutrition!.calories ?? 0).round()),
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 8),
                           // Use a responsive two-column layout that looks like statistic cards

@@ -285,20 +285,21 @@ class _WaterScreenState extends State<WaterScreen> {
   void _showAddBeverageDialog() {
     final nameController = TextEditingController();
     const Color defaultColor = Colors.blue; // Use a default color
+    final t = AppLocalizations.of(context);
     
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('เพิ่มเครื่องดื่มใหม่'),
+        title: Text(t.addNewBeverage),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             TextField(
               controller: nameController,
-              decoration: const InputDecoration(
-                labelText: 'ชื่อเครื่องดื่ม',
-                hintText: 'เช่น นมเย็น, ชาเขียว',
+              decoration: InputDecoration(
+                labelText: t.beverageName,
+                hintText: t.beverageNameExample,
               ),
             ),
           ],
@@ -316,7 +317,7 @@ class _WaterScreenState extends State<WaterScreen> {
                 context.read<HabitNotifier>().addDrinkPreset(name, 250, defaultColor);
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('เพิ่ม $name เรียบร้อยแล้ว')),
+                  SnackBar(content: Text(t.beverageAddedSuccess(name))),
                 );
               }
             },
@@ -328,11 +329,12 @@ class _WaterScreenState extends State<WaterScreen> {
   }
 
   void _showDeleteConfirmDialog(DrinkPreset preset) {
+    final t = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('ลบเครื่องดื่ม'),
-        content: Text('คุณต้องการลบ "${preset.name}" หรือไม่?'),
+        title: Text(t.deleteBeverage),
+        content: Text(t.deleteBeverageConfirm(preset.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -352,14 +354,14 @@ class _WaterScreenState extends State<WaterScreen> {
               await context.read<HabitNotifier>().deleteDrinkPreset(preset.id);
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('ลบ ${preset.name} เรียบร้อยแล้ว')),
+                SnackBar(content: Text(t.beverageDeletedSuccess(preset.name))),
               );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red,
               foregroundColor: Colors.white,
             ),
-            child: const Text('ลบ'),
+            child: Text(t.delete),
           ),
         ],
       ),
@@ -676,7 +678,7 @@ class _WaterScreenState extends State<WaterScreen> {
                         
                         // Section: Choose Beverage
                         Text(
-                          'Choose Beverage',
+                          AppLocalizations.of(context).chooseBeverage,
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,

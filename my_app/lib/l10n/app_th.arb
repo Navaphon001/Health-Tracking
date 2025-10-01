@@ -1,5 +1,5 @@
 {
-  "appTitle": "ตัวติดตามสุขภาพส่วนบุคคล",
+  "appTitle": "Health Tracker",
   "dashboard": "แดชบอร์ด",
   "settings": "การตั้งค่า",
   "account": "บัญชี",
@@ -329,5 +329,76 @@
   "pleaseSelectBirthDate": "กรุณาเลือกวันเกิดของคุณ",
   "pleaseSelectGender": "กรุณาเลือกเพศของคุณ",
   "saveChanges": "บันทึกการเปลี่ยนแปลง",
-  "profileUpdatedSuccessfully": "อัปเดตโปรไฟล์สำเร็จแล้ว"
+  "profileUpdatedSuccessfully": "อัปเดตโปรไฟล์สำเร็จแล้ว",
+  "addNewBeverage": "เพิ่มเครื่องดื่มใหม่",
+  "beverageName": "ชื่อเครื่องดื่ม",
+  "beverageNameExample": "เช่น นมเย็น, ชาเขียว",
+  "deleteBeverage": "ลบเครื่องดื่ม",
+  "deleteBeverageConfirm": "คุณต้องการลบ \"{name}\" หรือไม่?",
+  "@deleteBeverageConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "beverageDeletedSuccess": "ลบ {name} เรียบร้อยแล้ว",
+  "@beverageDeletedSuccess": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "beverageAddedSuccess": "เพิ่ม {name} เรียบร้อยแล้ว",
+  "@beverageAddedSuccess": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "dayNameSun": "อา",
+  "dayNameMon": "จ",
+  "dayNameTue": "อ",
+  "dayNameWed": "พ",
+  "dayNameThu": "พฤ",
+  "dayNameFri": "ศ",
+  "dayNameSat": "ส",
+  "exerciseWalking": "เดินเล่น",
+  "exerciseRunning": "วิ่ง",
+  "exerciseCycling": "ปั่นจักรยาน",
+  "exerciseSwimming": "ว่ายน้ำ",
+  "exerciseYoga": "โยคะ",
+  "exerciseWeightLifting": "ยกน้ำหนัก",
+  "exerciseDancing": "เต้นรำ",
+  "exerciseFootball": "ฟุตบอล",
+  "waterLogFailed": "บันทึกน้ำดื่มล้มเหลว",
+  "waterLogSuccess": "เพิ่ม {name} +{amount} ml",
+  "@waterLogSuccess": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "amount": {"type": "num"}
+    }
+  },
+  "exerciseLogSuccess": "บันทึกออกกำลังกาย +{minutes} นาที",
+  "@exerciseLogSuccess": {
+    "placeholders": {
+      "minutes": {"type": "num"}
+    }
+  },
+  "activitySavedSuccess": "บันทึกกิจกรรมสำเร็จ",
+  "activitySaveFailed": "บันทึกกิจกรรมล้มเหลว",
+  "activityDeletedSuccess": "ลบกิจกรรมแล้ว",
+  "activityDeleteFailed": "ลบกิจกรรมล้มเหลว",
+  "sleepLoggedSuccess": "บันทึกการนอนแล้ว",
+  "sleepLogFailed": "บันทึกการนอนล้มเหลว",
+  "achievementConsecutive3Days": "บันทึกกิจกรรมต่อเนื่อง 3 วัน",
+  "achievementConsecutive7Days": "บันทึกกิจกรรมต่อเนื่อง 7 วัน",
+  "achievementFirstWeightLog": "บันทึกน้ำหนักครั้งแรก",
+  "achievementFirstWeightLogDesc": "บันทึกน้ำหนักครั้งแรก",
+  "achievementWeightConsecutive7Days": "บันทึกน้ำหนักต่อเนื่อง 7 วัน",
+  "chooseBeverage": "เลือกเครื่องดื่ม",
+  "calories": "แคล",
+  "totalCalories": "จำนวนแคลอรี่: {calories} cal",
+  "@totalCalories": {
+    "placeholders": {
+      "calories": {"type": "num"}
+    }
+  },
+  "nutrition": "โภชนาการ"
 }

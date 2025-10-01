@@ -99,7 +99,7 @@ class ExerciseScreen extends StatelessWidget {
                                     : at == ActivityType.swim
                                         ? Icons.pool
                                         : Icons.sports_soccer;
-                        final label = _activityLabel(at);
+                        final label = _activityLabel(at, t);
                         return Align(
                           alignment: Alignment.centerLeft,
                           child: InkWell(
@@ -211,18 +211,18 @@ class ExerciseScreen extends StatelessWidget {
     );
   }
 
-    static String _activityLabel(ActivityType t) {
+    static String _activityLabel(ActivityType t, AppLocalizations localizations) {
       switch (t) {
         case ActivityType.walk:
-          return 'Walking';
+          return localizations.exerciseWalking;
         case ActivityType.run:
-          return 'Running';
+          return localizations.exerciseRunning;
         case ActivityType.bike:
-          return 'Cycling';
+          return localizations.exerciseCycling;
         case ActivityType.swim:
-          return 'Swimming';
+          return localizations.exerciseSwimming;
         case ActivityType.sport:
-          return 'Sport';
+          return localizations.exerciseFootball;
       }
     }
 
@@ -238,7 +238,7 @@ class ExerciseScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: ActivityType.values.map((at) {
-              final label = _activityLabel(at);
+              final label = _activityLabel(at, AppLocalizations.of(ctx));
               final icon = at == ActivityType.walk
                   ? Icons.directions_walk
                   : at == ActivityType.run

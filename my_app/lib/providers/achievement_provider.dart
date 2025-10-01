@@ -1,22 +1,76 @@
 import 'package:flutter/material.dart';
 import '../models/achievement.dart';
+import '../l10n/app_localizations.dart';
 
 class AchievementProvider extends ChangeNotifier {
   List<Achievement> _achievements = [];
-  
-  List<Achievement> get achievements => _achievements;
-  
-  List<Achievement> get unlockedAchievements => 
-      _achievements.where((achievement) => achievement.isUnlocked).toList();
-  
-  List<Achievement> get lockedAchievements => 
-      _achievements.where((achievement) => !achievement.isUnlocked).toList();
-
-  List<Achievement> get inProgressAchievements => 
-      _achievements.where((achievement) => achievement.isInProgress).toList();
+  AppLocalizations? _localizations;
 
   AchievementProvider() {
     _initializeMockAchievements();
+  }
+
+  List<Achievement> get achievements => _achievements;
+  List<Achievement> get unlockedAchievements => _achievements.where((a) => a.isUnlocked).toList();
+  List<Achievement> get lockedAchievements => _achievements.where((a) => !a.isUnlocked).toList();
+  List<Achievement> get inProgressAchievements => _achievements.where((a) => a.isInProgress).toList();
+  
+  void setLocalizations(AppLocalizations localizations) {
+    _localizations = localizations;
+    _initializeAchievements();
+  }
+
+  void _initializeAchievements() {
+    if (_localizations == null) return;
+    
+    final t = _localizations!;
+    
+    _achievements = [
+      // Exercise achievements
+      Achievement(
+        id: 'exercise_consistency_3',
+        title: '3 Day Streak',
+        description: t.achievementConsecutive3Days,
+        iconPath: '🔥',
+        type: AchievementType.exercise,
+        maxProgress: 3,
+        currentProgress: 1,
+        reward: 'เก่งมากเลย! เริ่มมีนิสัยการออกกำลังกายแล้ว',
+      ),
+      Achievement(
+        id: 'exercise_consistency_7',
+        title: '7 Day Streak',
+        description: t.achievementConsecutive7Days,
+        iconPath: '🏆',
+        type: AchievementType.exercise,
+        maxProgress: 7,
+        currentProgress: 4,
+        reward: 'ยอดเยี่ยม! คุณสร้างนิสัยดีขึ้นแล้ว',
+      ),
+      
+      // Weight achievements
+      Achievement(
+        id: 'weight_first',
+        title: t.achievementFirstWeightLog,
+        description: t.achievementFirstWeightLogDesc,
+        iconPath: '⚖️',
+        type: AchievementType.weight,
+        maxProgress: 1,
+        currentProgress: 0,
+        reward: 'การติดตามน้ำหนักเป็นก้าวแรกสู่เป้าหมาย!',
+      ),
+      Achievement(
+        id: 'weight_consistency',
+        title: 'ควบคุมน้ำหนักสม่ำเสมอ',
+        description: t.achievementWeightConsecutive7Days,
+        iconPath: '📊',
+        type: AchievementType.weight,
+        maxProgress: 7,
+        currentProgress: 1,
+        reward: 'การติดตามสม่ำเสมอช่วยให้มีสุขภาพดี!',
+      ),
+    ];
+    notifyListeners();
   }
 
   void _initializeMockAchievements() {

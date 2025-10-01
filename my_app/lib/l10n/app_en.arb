@@ -1,5 +1,5 @@
 {
-  "appTitle": "Personal Wellness Tracker",
+  "appTitle": "Health Tracker",
   "dashboard": "Dashboard",
   "settings": "Settings",
   "account": "Account",
@@ -318,6 +318,77 @@
   "noDataAvailable": "No data available",
   "errorOccurred": "An error occurred",
   "profileSettings": "Profile Settings",
+  "addNewBeverage": "Add New Beverage",
+  "beverageName": "Beverage Name",
+  "beverageNameExample": "e.g. Iced milk, Green tea",
+  "deleteBeverage": "Delete Beverage",
+  "deleteBeverageConfirm": "Do you want to delete \"{name}\"?",
+  "@deleteBeverageConfirm": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "beverageDeletedSuccess": "Deleted {name} successfully",
+  "@beverageDeletedSuccess": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "beverageAddedSuccess": "Added {name} successfully",
+  "@beverageAddedSuccess": {
+    "placeholders": {
+      "name": {"type": "String"}
+    }
+  },
+  "dayNameSun": "Sun",
+  "dayNameMon": "Mon",
+  "dayNameTue": "Tue",
+  "dayNameWed": "Wed",
+  "dayNameThu": "Thu",
+  "dayNameFri": "Fri",
+  "dayNameSat": "Sat",
+  "exerciseWalking": "Walking",
+  "exerciseRunning": "Running",
+  "exerciseCycling": "Cycling",
+  "exerciseSwimming": "Swimming",
+  "exerciseYoga": "Yoga",
+  "exerciseWeightLifting": "Weight Lifting",
+  "exerciseDancing": "Dancing",
+  "exerciseFootball": "Football",
+  "waterLogFailed": "Failed to log water intake",
+  "waterLogSuccess": "Added {name} +{amount} ml",
+  "@waterLogSuccess": {
+    "placeholders": {
+      "name": {"type": "String"},
+      "amount": {"type": "num"}
+    }
+  },
+  "exerciseLogSuccess": "Logged exercise +{minutes} minutes",
+  "@exerciseLogSuccess": {
+    "placeholders": {
+      "minutes": {"type": "num"}
+    }
+  },
+  "activitySavedSuccess": "Activity saved successfully",
+  "activitySaveFailed": "Failed to save activity",
+  "activityDeletedSuccess": "Activity deleted",
+  "activityDeleteFailed": "Failed to delete activity",
+  "sleepLoggedSuccess": "Sleep logged",
+  "sleepLogFailed": "Failed to log sleep",
+  "achievementConsecutive3Days": "Logged activities for 3 consecutive days",
+  "achievementConsecutive7Days": "Logged activities for 7 consecutive days",
+  "achievementFirstWeightLog": "First Weight Log",
+  "achievementFirstWeightLogDesc": "Logged weight for the first time",
+  "achievementWeightConsecutive7Days": "Logged weight for 7 consecutive days",
+  "chooseBeverage": "Choose Beverage",
+  "calories": "cal",
+  "totalCalories": "Total Calories: {calories} cal",
+  "@totalCalories": {
+    "placeholders": {
+      "calories": {"type": "num"}
+    }
+  },
+  "nutrition": "Nutrition",
   "fullName": "Full Name",
   "nickname": "Nickname",
   "birthDate": "Birth Date",

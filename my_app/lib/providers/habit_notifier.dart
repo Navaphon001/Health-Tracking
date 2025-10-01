@@ -11,6 +11,7 @@ import '../services/habit_local_repository.dart';
 import '../services/app_db.dart';
 import '../shared/date_key.dart';
 import '../shared/snack_fn.dart';
+import '../shared/app_messages.dart';
 import '../charts/chart_point.dart';
 import '../theme/app_colors.dart';
 
@@ -41,7 +42,10 @@ class HabitNotifier extends ChangeNotifier {
   HabitLocalRepository get repo => _local;
 
   SnackFn? _snackFn;
+  AppMessages? _messages;
+  
   void setSnackBarCallback(SnackFn fn) => _snackFn = fn;
+  void setMessages(AppMessages messages) => _messages = messages;
 
   // ===== WATER (SQLite) =====
   int dailyWaterCount = 0; // จาก SQLite
@@ -123,7 +127,7 @@ class HabitNotifier extends ChangeNotifier {
       dailyWaterGoal = day.goal;
       notifyListeners();
     } catch (_) {
-      _snackFn?.call('บันทึกน้ำดื่มล้มเหลว', isError: true);
+      _snackFn?.call(_messages?.waterLogFailed ?? 'Failed to log water intake', isError: true);
     }
   }
 
@@ -152,10 +156,10 @@ class HabitNotifier extends ChangeNotifier {
       dailyDrinkCounts[d.id] = (dailyDrinkCounts[d.id] ?? 0) + 1;
       await p.setString(_kDrinkCountsKey(dk), jsonEncode(dailyDrinkCounts));
 
-      _snackFn?.call('เพิ่ม ${d.name} +$ml ml');
+      _snackFn?.call(_messages?.waterLogSuccess(d.name, ml) ?? 'Added ${d.name} +$ml ml');
       notifyListeners();
     } catch (_) {
-      _snackFn?.call('บันทึกน้ำดื่มล้มเหลว', isError: true);
+      _snackFn?.call(_messages?.waterLogFailed ?? 'Failed to log water intake', isError: true);
     }
   }
 
@@ -245,7 +249,7 @@ class HabitNotifier extends ChangeNotifier {
         type: type,
         // ให้รีโปไปอ่านอัตรา kcal/นาที ของแต่ละ type เอง
       );
-      _snackFn?.call('บันทึกออกกำลังกาย +$deltaMin นาที');
+      _snackFn?.call(_messages?.exerciseLogSuccess(deltaMin) ?? 'Logged exercise +$deltaMin minutes');
     }
   }
 
@@ -307,9 +311,9 @@ class HabitNotifier extends ChangeNotifier {
         exerciseActivities[i] = saved;
       }
       notifyListeners();
-      _snackFn?.call('บันทึกกิจกรรมสำเร็จ');
+      _snackFn?.call(_messages?.activitySavedSuccess ?? 'Activity saved successfully');
     } catch (_) {
-      _snackFn?.call('บันทึกกิจกรรมล้มเหลว', isError: true);
+      _snackFn?.call(_messages?.activitySaveFailed ?? 'Failed to save activity', isError: true);
     }
   }
 
@@ -319,9 +323,9 @@ class HabitNotifier extends ChangeNotifier {
       await _local.deleteExercise(id);
       exerciseActivities.removeWhere((e) => e.id == id);
       notifyListeners();
-      _snackFn?.call('ลบกิจกรรมแล้ว');
+      _snackFn?.call(_messages?.activityDeletedSuccess ?? 'Activity deleted');
     } catch (_) {
-      _snackFn?.call('ลบกิจกรรมล้มเหลว', isError: true);
+      _snackFn?.call(_messages?.activityDeleteFailed ?? 'Failed to delete activity', isError: true);
     }
   }
 
@@ -373,9 +377,9 @@ class HabitNotifier extends ChangeNotifier {
         'starCount': saved.starCount,
       };
       notifyListeners();
-      _snackFn?.call('บันทึกการนอนแล้ว');
+      _snackFn?.call(_messages?.sleepLoggedSuccess ?? 'Sleep logged');
     } catch (_) {
-      _snackFn?.call('บันทึกการนอนล้มเหลว', isError: true);
+      _snackFn?.call(_messages?.sleepLogFailed ?? 'Failed to log sleep', isError: true);
     }
   }
 
