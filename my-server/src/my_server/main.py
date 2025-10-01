@@ -36,6 +36,12 @@ app.add_middleware(
 def read_root():
     return {"message": "Hello Server!"}
 
+
+@app.get("/health")
+def health_check():
+    # Lightweight health endpoint used by CI to verify the app is responding
+    return {"status": "ok"}
+
 @app.get("/swagger")
 def swagger_redirect():
     return RedirectResponse(url="/docs")
@@ -98,13 +104,14 @@ def wait_for_db_and_init(retries: int = 15, delay: int = 2):
             exists = bool(row and row[0])
             if not exists:
                 print("users table not found — applying init.sql")
-                # load SQL file
-                sql_path = pathlib.Path(__file__).resolve().parents[1] / "db" / "init.sql"
+                # load SQL file from package db directory (my_server/db/init.sql)
+                sql_path = pathlib.Path(__file__).resolve().parent / "db" / "init.sql"
+                print(f"Looking for init.sql at: {sql_path}")
                 if sql_path.exists():
                     sql_text = sql_path.read_text(encoding="utf-8")
-                    # Execute the SQL blob; Postgres accepts multiple commands
+                    # Execute the SQL blob; use exec_driver_sql for multi-statement scripts
                     with engine.begin() as trans_conn:
-                        trans_conn.execute(text(sql_text))
+                        trans_conn.exec_driver_sql(sql_text)
                     print("Applied init.sql")
                 else:
                     print(f"init.sql not found at {sql_path}; cannot initialize schema")
