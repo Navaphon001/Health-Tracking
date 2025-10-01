@@ -162,15 +162,11 @@ def db_session(engine):
 
 @pytest.fixture
 def client(db_session):
-    def _override_get_db():
-        try:
-            yield db_session
-        finally:
-            pass
-    app.dependency_overrides[get_db] = _override_get_db
-    c = TestClient(app)
-    yield c
-    app.dependency_overrides.clear()
+  # override dependency: return the session object directly
+  app.dependency_overrides[get_db] = lambda: db_session
+  c = TestClient(app)
+  yield c
+  app.dependency_overrides.clear()
 EOF
         fi
 
