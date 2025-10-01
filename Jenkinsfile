@@ -242,7 +242,18 @@ PY
 
             # Start services defined by the compose file
             echo "Starting services with docker-compose..."
-            docker-compose -f src/my_server/db/docker-compose.yaml up -d
+
+            # Defensive: remove containers that may conflict with compose service names
+            echo "Cleaning up any existing containers that may conflict..."
+            docker rm -f wellness_postgres || true
+            docker rm -f wellness_backend || true
+
+            # Run compose with --remove-orphans to avoid leftover containers from older runs
+            if ! docker-compose -f src/my_server/db/docker-compose.yaml up -d --remove-orphans; then
+              echo "docker-compose up failed, retrying once after a brief wait..."
+              sleep 5
+              docker-compose -f src/my_server/db/docker-compose.yaml up -d --remove-orphans
+            fi
 
             echo "Waiting for services to be ready..."
             sleep 20
