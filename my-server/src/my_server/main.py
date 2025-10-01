@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
+import os
+import uvicorn
 from my_server.api.auth import router as auth_router
 from my_server.api.basic_profile import router as basic_profile_router
 from my_server.api.user_goals import router as user_goals_router
@@ -52,3 +54,13 @@ app.include_router(water_intake_logs_router)
 app.include_router(notification_settings_router)
 app.include_router(physical_info_router)
 app.include_router(about_yourself_router)
+
+
+if __name__ == "__main__":
+    # Allow running the app directly with: python -m my_server.main (when PYTHONPATH includes src)
+    # or: set PORT and run python -m my_server.main
+    host = os.environ.get("HOST", "0.0.0.0")
+    port = int(os.environ.get("PORT", 8000))
+    # Use reload only in development
+    reload_flag = os.environ.get("RELOAD", "true").lower() in ("1", "true", "yes")
+    uvicorn.run("my_server.main:app", host=host, port=port, reload=reload_flag)
