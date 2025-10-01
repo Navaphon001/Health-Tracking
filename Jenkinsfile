@@ -286,8 +286,49 @@ PY
               docker-compose -f src/my_server/db/docker-compose.yaml logs postgres || true
               echo "==== Postgres container logs ===="
               docker logs wellness_postgres || true
-              echo "Failing the build due to unhealthy postgres container"
-              exit 1
+
+              # Look for a common failure: data directory version mismatch
+              if docker-compose -f src/my_server/db/docker-compose.yaml logs postgres 2>/dev/null | grep -qi "incompatible with this version\|initialized by PostgreSQL version"; then
+                echo "Detected Postgres data-dir version mismatch. Removing compose volumes and retrying..."
+                docker-compose -f src/my_server/db/docker-compose.yaml down -v || true
+
+                # Remove named volumes that look like the project's postgres data
+                for V in $(docker volume ls --format '{{.Name}}' | grep -Ei 'postgres|postgres_data' || true); do
+                  echo "Removing docker volume: $V" || true
+                  docker volume rm -f "$V" || true
+                done
+
+                echo "Retrying docker-compose up after volume cleanup..."
+                docker-compose -f src/my_server/db/docker-compose.yaml up -d --remove-orphans || RC=$?
+                if [ -z "${RC:-}" ]; then
+                  RC=0
+                fi
+
+                # Give Postgres a moment to initialize and re-check health
+                HEALTH_OK=0
+                for i in 1 12; do
+                  STATUS=$(docker inspect --format '{{.State.Health.Status}}' wellness_postgres 2>/dev/null || echo unknown)
+                  echo "[post-prune-poll $i] postgres health=$STATUS"
+                  if [ "${STATUS}" = "healthy" ]; then
+                    HEALTH_OK=1
+                    break
+                  fi
+                  sleep 5
+                done
+
+                if [ "$HEALTH_OK" -ne 1 ]; then
+                  echo "Postgres still unhealthy after cleaning volumes. Final diagnostics:"
+                  docker-compose -f src/my_server/db/docker-compose.yaml ps || true
+                  docker ps -a || true
+                  docker-compose -f src/my_server/db/docker-compose.yaml logs postgres || true
+                  docker logs wellness_postgres || true
+                  echo "Failing the build due to unhealthy postgres container"
+                  exit 1
+                fi
+              else
+                echo "Postgres did not reach healthy state and no version-mismatch detected. Printing diagnostics and failing."
+                exit 1
+              fi
             fi
 
             echo "Checking service status..."
