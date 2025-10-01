@@ -28,7 +28,7 @@ pipeline {
           apt-get update
           DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
             git wget unzip ca-certificates curl \
-            default-jre-headless docker-cli
+            default-jre-headless docker-cli jq
 
           # Install docker-compose v2 (standalone shim)
           curl -sSL "https://github.com/docker/compose/releases/download/v2.20.2/docker-compose-linux-x86_64" -o /usr/local/bin/docker-compose
@@ -169,16 +169,19 @@ EOF
         timeout(time: 10, unit: 'MINUTES') {
           // ต้องติดตั้ง Jenkins SonarQube plugin และมี webhook จาก SonarQube -> Jenkins
           // Diagnostic: fetch and print SonarQube project_status to show failing conditions
-          withCredentials([string(credentialsId: 'tracking', variable: 'SONAR_TOKEN')]) {
-            sh '''
-              set -eux
-              if [ -n "${SONAR_HOST_URL}" ]; then
-                echo "Fetching SonarQube project_status for projectKey=health-tracking-backend"
-                curl -sS -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=health-tracking-backend" | jq . || true
-              else
-                echo "SONAR_HOST_URL not set; skipping diagnostic fetch"
-              fi
-            '''
+          // Use withSonarQubeEnv so SONAR_HOST_URL is exported by Jenkins and use safe expansion
+          withSonarQubeEnv('SonarQube') {
+            withCredentials([string(credentialsId: 'tracking', variable: 'SONAR_TOKEN')]) {
+              sh '''
+                set -eux
+                if [ -n "${SONAR_HOST_URL:-}" ]; then
+                  echo "Fetching SonarQube project_status for projectKey=health-tracking-backend"
+                  curl -sS -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=health-tracking-backend" | jq . || true
+                else
+                  echo "SONAR_HOST_URL not set; skipping diagnostic fetch"
+                fi
+              '''
+            }
           }
           waitForQualityGate abortPipeline: true
         }
