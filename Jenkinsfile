@@ -148,7 +148,7 @@ pipeline {
 
                 sonar-scanner \
                   -Dsonar.host.url="$SONAR_HOST_URL" \
-                  -Dsonar.login="$SONAR_TOKEN" \
+                  -Dsonar.token="$SONAR_TOKEN" \
                   -Dsonar.projectBaseDir="$PWD" \
                   -Dsonar.projectKey="${SONAR_PROJECT_KEY}" \
                   -Dsonar.projectName="${SONAR_PROJECT_KEY}" \
