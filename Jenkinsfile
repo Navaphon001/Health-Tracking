@@ -129,8 +129,8 @@ SHIM
         dir('my-server') {
           sh '''
             set -eux
-            # Ensure tests can import the package under src
-            export PYTHONPATH="$PWD/src:$PYTHONPATH"
+            # Ensure tests can import the package under src; use safe expansion so unset PYTHONPATH won't fail
+            export PYTHONPATH="$PWD/src${PYTHONPATH:+:$PYTHONPATH}"
             
             # Create test directory if it doesn't exist
             mkdir -p tests
