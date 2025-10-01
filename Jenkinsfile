@@ -121,11 +121,47 @@ pipeline {
 
             # Sometimes 'poetry run' fails (pyproject format / poetry mismatch). Start uvicorn directly
             # Ensure uvicorn (and fastapi) are installed in the environment; install if missing.
+            # If the CI earlier exported a requirements file, install it (ensures runtime deps like sqlalchemy)
+            if [ -f /tmp/requirements.txt ]; then
+              echo "Found /tmp/requirements.txt, contents:"
+              sed -n '1,200p' /tmp/requirements.txt || true
+              echo "Installing exported requirements via pip"
+              python -m pip install --upgrade pip
+              python -m pip install --no-cache-dir -r /tmp/requirements.txt || true
+            else
+              echo "/tmp/requirements.txt not found — poetry export may have failed"
+            fi
+
             if ! python -c "import uvicorn" >/dev/null 2>&1; then
               echo "uvicorn not importable, installing uvicorn and fastapi into environment"
               python -m pip install --upgrade pip
-              python -m pip install uvicorn fastapi
+              python -m pip install --no-cache-dir uvicorn fastapi
             fi
+
+            # Debug: show versions of critical packages
+            python -c "import importlib, pkgutil
+print('python', __import__('sys').version)
+for m in ('uvicorn','fastapi','sqlalchemy','sqlmodel'):
+    try:
+        mod = importlib.import_module(m)
+        print(m, getattr(mod, '__version__', 'unknown'))
+    except Exception as e:
+        print(m, 'NOT INSTALLED:', e)
+" || true
+
+      # If sqlalchemy still not importable, try installing key runtime packages explicitly
+      if ! python -c "import sqlalchemy" >/dev/null 2>&1; then
+        echo "sqlalchemy not importable after requirements install; installing runtime dependencies explicitly"
+        python -m pip install --no-cache-dir sqlalchemy sqlmodel asyncpg psycopg2-binary python-multipart pyjwt passlib[bcrypt] bcrypt || true
+        python -c "import importlib
+print('post-install check:')
+for m in ('sqlalchemy','sqlmodel','asyncpg'):
+  try:
+    importlib.import_module(m); print(m,'OK')
+  except Exception as e:
+    print(m,'MISSING',e)
+" || true
+      fi
 
             echo "Starting server with python -m uvicorn on port $PORT"
             nohup python -m uvicorn my_server.main:app --app-dir src --host 0.0.0.0 --port $PORT > server.log 2>&1 & echo $! > server.pid
