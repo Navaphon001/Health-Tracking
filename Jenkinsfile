@@ -178,6 +178,30 @@ EOF
         // build image from the my-server root so Dockerfile context is correct
         sh 'set -eux; (cd "${WORKSPACE}/my-server" && docker build -t "${IMAGE_NAME}" -f Dockerfile .)'
 
+        // Ensure host port 8000 is free - stop/remove any container binding it and remove old backend containers
+        sh 'set -eux; \
+          echo "Checking for containers binding host port 8000..."; \
+          CONFLICTING="$(docker ps --filter "status=running" --format "{{.ID}} {{.Ports}} {{.Names}}" | grep -E "0.0.0.0:8000->" || true)"; \
+          if [ -n "$CONFLICTING" ]; then \
+            echo "Found conflicting container(s):"; echo "$CONFLICTING"; \
+            echo "$CONFLICTING" | awk '{print $1}' | xargs -r docker stop || true; \
+            echo "$CONFLICTING" | awk '{print $1}' | xargs -r docker rm -f || true; \
+          fi; \
+          # remove any existing container with the same docker-compose container name
+          OLD="$(docker ps -a --filter "name=wellness_backend" --format "{{.ID}} {{.Status}}" || true)"; \
+          if [ -n "$OLD" ]; then \
+            echo "Removing existing wellness_backend container(s):"; echo "$OLD"; \
+            echo "$OLD" | awk '{print $1}' | xargs -r docker rm -f || true; \
+          fi; \
+          # if lsof is available, try to kill any process still listening on :8000 (best-effort)
+          if command -v lsof >/dev/null 2>&1; then \
+            PIDS="$(lsof -t -i :8000 || true)"; \
+            if [ -n "$PIDS" ]; then \
+              echo "Killing host process(es) listening on :8000: $PIDS"; \
+              echo "$PIDS" | xargs -r kill -9 || true; \
+            fi; \
+          fi'
+
         // compose up (down first, then up -d)
         sh 'set -eux; (cd "${COMPOSE_DIR}" && docker-compose down || true)'
         sh 'set -eux; (cd "${COMPOSE_DIR}" && docker-compose up -d)'
