@@ -52,6 +52,8 @@ def favicon():
 
 # Include API
 app.include_router(auth_router, prefix="/auth")
+# Also expose auth endpoints at top-level (e.g. /register, /login) to support tests and simple clients
+app.include_router(auth_router)
 app.include_router(basic_profile_router)
 app.include_router(user_goals_router)
 app.include_router(food_logs_router)
