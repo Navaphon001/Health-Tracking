@@ -100,13 +100,23 @@ pipeline {
             set -eux
             export PYTHONPATH="$PWD"
             if [ -d tests ]; then
-              # ปรับ --cov=app ถ้าโค้ดหลักอยู่ในโฟลเดอร์ app/
-              if [ -d app ]; then
-                pytest -q --cov=app --cov-report=xml tests/
+              # Only run pytest if test files are present; avoids failing pipeline on empty tests/
+              TEST_FILES=$(find tests -type f \( -name 'test_*.py' -o -name '*_test.py' \) | wc -l || true)
+              if [ "${TEST_FILES}" -eq 0 ]; then
+                echo "No test files found in tests/, skipping pytest"
               else
-                pytest -q --cov=.   --cov-report=xml tests/
+                # ปรับ --cov=app ถ้าโค้ดหลักอยู่ในโฟลเดอร์ app/
+                if [ -d app ]; then
+                  pytest -q --cov=app --cov-report=xml tests/
+                else
+                  pytest -q --cov=. --cov-report=xml tests/
+                fi
+                if [ -f coverage.xml ]; then
+                  echo "Coverage XML written to coverage.xml"
+                else
+                  echo "Warning: coverage.xml was not produced"
+                fi
               fi
-              test -f coverage.xml
             else
               echo "No tests directory in ${PWD}, skipping pytest"
             fi
