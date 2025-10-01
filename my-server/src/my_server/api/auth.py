@@ -77,14 +77,36 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
+
+def _ensure_session(db_like):
+    """Normalize dependency-injected DB value to a SQLAlchemy Session.
+
+    Tests sometimes override get_db with callables that return an iterator or generator.
+    This helper returns the Session object whether `db_like` is a Session or an iterator
+    that yields the Session as its first value.
+    """
+    # already a Session-like object
+    if hasattr(db_like, "query"):
+        return db_like
+
+    # generator/iterator case: attempt to retrieve the first yielded value
+    try:
+        first = next(db_like)
+        return first
+    except Exception:
+        # fallback: return as-is (will likely error downstream)
+        return db_like
+
 # ----------------------------
 # Routes
 # ----------------------------
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 def register(request: RegisterRequest, db: Session = Depends(get_db)):
     from uuid import uuid4
+    # Normalize injected db to a Session (tests may provide generators/iterators)
+    session = _ensure_session(db)
     # ป้องกันซ้ำชั้นแอป
-    if db.query(User).filter(User.email == request.email).first():
+    if session.query(User).filter(User.email == request.email).first():
         raise HTTPException(status_code=400, detail="Email already registered")
 
     user = User(
@@ -93,11 +115,11 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
         email=request.email,
         password=get_password_hash(request.password),
     )
-    db.add(user)
+    session.add(user)
     try:
-        db.commit()
+        session.commit()
     except IntegrityError:
-        db.rollback()
+        session.rollback()
         # เผื่อกรณีซ้ำจาก constraint ที่ DB
         raise HTTPException(status_code=400, detail="Email already registered")
 
@@ -107,7 +129,8 @@ def register(request: RegisterRequest, db: Session = Depends(get_db)):
 @router.post("/login", response_model=TokenResponse)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     # Authenticate by email + password (OAuth2 form field "username" = email)
-    user = db.query(User).filter(User.email == form_data.username).first()
+    session = _ensure_session(db)
+    user = session.query(User).filter(User.email == form_data.username).first()
     if not user or not verify_password(form_data.password, user.password):
         raise HTTPException(status_code=401, detail="Incorrect email or password")
     access_token = create_access_token({"sub": user.email, "user_id": user.id})
