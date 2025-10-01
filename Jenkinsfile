@@ -103,6 +103,18 @@ pipeline {
             export DATABASE_URL="${DATABASE_URL:-sqlite:///./ci_test.db}"
             export TESTING=1
 
+            # Ensure test runtime dependencies are available (FastAPI, uvicorn, pytest)
+            if [ -f pyproject.toml ]; then
+              # install dev deps so tests run
+              pip install poetry
+              poetry config virtualenvs.create false
+              poetry install --no-interaction || true
+            elif [ -f requirements.txt ]; then
+              pip install --no-cache-dir -r requirements.txt || true
+            else
+              pip install --no-cache-dir fastapi "uvicorn[standard]" pytest pytest-cov || true
+            fi
+
             # ---- bootstrap tests (เฉพาะถ้ายังไม่มีไฟล์ใน repo) ----
             mkdir -p tests
             if [ ! -f tests/conftest.py ]; then
