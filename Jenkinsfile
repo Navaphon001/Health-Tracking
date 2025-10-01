@@ -258,10 +258,33 @@ EOF
       steps {
         sh '''
           set -eux
-          # Only attempt to run the container if the Dockerfile existed and build likely ran
+          # Only attempt to run the container if the Docker image exists
           if docker image inspect "${DOCKER_IMAGE}" >/dev/null 2>&1; then
-            docker rm -f "${DOCKER_CONTAINER}" || true
-            docker run -d --name "${DOCKER_CONTAINER}" -p 8000:8000 "${DOCKER_IMAGE}"
+            echo "Docker image ${DOCKER_IMAGE} found. Checking port 8000 availability..."
+
+            # If a docker container already publishes 0.0.0.0:8000, remove it first
+            BINDING=$(docker ps --format '{{.ID}} {{.Names}} {{.Ports}}' | grep '0.0.0.0:8000->' || true)
+            if [ -n "$BINDING" ]; then
+              echo "Found existing container binding port 8000: $BINDING"
+              CONTAINER_ID=$(echo "$BINDING" | awk '{print $1}')
+              echo "Removing container $CONTAINER_ID"
+              docker rm -f "$CONTAINER_ID" || true
+            fi
+
+            # Re-check if any host process is listening on 8000 (non-container)
+            HOST_BUSY=0
+            if command -v ss >/dev/null 2>&1; then
+              if ss -ltnp | grep -q ':8000\b'; then HOST_BUSY=1; fi
+            elif command -v netstat >/dev/null 2>&1; then
+              if netstat -tlnp 2>/dev/null | grep -q ':8000\b'; then HOST_BUSY=1; fi
+            fi
+
+            if [ "$HOST_BUSY" -eq 1 ]; then
+              echo "Host port 8000 is in use by a non-container process. Skipping docker run to avoid conflict."
+            else
+              echo "Port 8000 available — starting container."
+              docker run -d --name "${DOCKER_CONTAINER}" -p 8000:8000 "${DOCKER_IMAGE}"
+            fi
           else
             echo "Docker image ${DOCKER_IMAGE} not found, skipping deploy"
           fi
