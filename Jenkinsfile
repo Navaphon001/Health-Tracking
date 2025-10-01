@@ -97,7 +97,7 @@ SHIM
         '''
       }
     }
-                # fallback ถ้าไม่มีไฟล์ properties
+                //fallback ถ้าไม่มีไฟล์ properties
 pipeline {
   agent {
     docker {
