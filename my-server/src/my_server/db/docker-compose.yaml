@@ -1,19 +1,37 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:15
-    container_name: health_tracker_db
-    restart: always
+  postgres:
+    image: postgres:latest
+    container_name: wellness_postgres
     environment:
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: adminpass
-      POSTGRES_DB: health_db
+      POSTGRES_DB: wellness_tracker_db
+      POSTGRES_USER: wellness_user
+      POSTGRES_PASSWORD: wellness_password
+    ports:
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U wellness_user -d wellness_tracker_db"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  backend:
+    image: personal-wellness-tracker-backend:latest
+    container_name: wellness_backend
     ports:
-      - "5432:5432"
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://wellness_user:wellness_password@postgres:5432/wellness_tracker_db
+      - SECRET_KEY=your-secret-key-here-change-in-production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
 
 volumes:
   postgres_data:
