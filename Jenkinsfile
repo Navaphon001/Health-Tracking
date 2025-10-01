@@ -167,30 +167,31 @@ EOF
     stage('Quality Gate') {
       steps {
         timeout(time: 10, unit: 'MINUTES') {
-          // ต้องติดตั้ง Jenkins SonarQube plugin และมี webhook จาก SonarQube -> Jenkins
-          // Diagnostic: fetch and print SonarQube project_status to show failing conditions
-          // Use withSonarQubeEnv so SONAR_HOST_URL is exported by Jenkins and use safe expansion
+          // พิมพ์รายละเอียดเงื่อนไขที่ตกผ่าน API (ใช้ jq)
           withSonarQubeEnv('SonarQube') {
             withCredentials([string(credentialsId: 'tracking', variable: 'SONAR_TOKEN')]) {
               sh '''
                 set -eux
                 if [ -n "${SONAR_HOST_URL:-}" ]; then
                   echo "Fetching SonarQube project_status for projectKey=health-tracking-backend"
-                  curl -sS -u "${SONAR_TOKEN}:" "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=health-tracking-backend" | jq . || true
+                  curl -sS -u "${SONAR_TOKEN}:" \
+                    "${SONAR_HOST_URL}/api/qualitygates/project_status?projectKey=health-tracking-backend" \
+                    | jq -r '.projectStatus.conditions[] | "\\(.status)  \\(.metricKey)  actual=\\(.actualValue)  op=\\(.comparator)  th=\\(.errorThreshold)"' || true
                 else
                   echo "SONAR_HOST_URL not set; skipping diagnostic fetch"
                 fi
               '''
             }
           }
-          // Capture quality gate status without aborting the pipeline so we can decide
+
+          // ดึงสถานะ QG (ไม่มี field conditions ในอ็อบเจกต์นี้)
           script {
             def qg = waitForQualityGate(abortPipeline: false)
             echo "Quality Gate status: ${qg.status}"
             if (qg.status != 'OK') {
-              // Mark the build unstable (warning) but continue pipeline. Change to 'error' to abort.
+              // ให้บิลด์ผ่านแบบ UNSTABLE ตามนโยบายที่คุณตั้งไว้
               currentBuild.result = 'UNSTABLE'
-              echo "Quality Gate failed; marking build UNSTABLE but continuing. Review SonarQube to fix the issues."
+              echo "Quality Gate failed; marking build UNSTABLE but continuing."
             }
           }
         }
