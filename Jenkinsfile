@@ -99,7 +99,6 @@ SHIM
     }
 
     stage('Checkout') {
-                (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml up -d --remove-orphans) || RC=$?
         git branch: 'feat/jenkins-ci', url: 'https://github.com/Navaphon001/Health-Tracking.git'
       }
     }
@@ -132,10 +131,8 @@ SHIM
         }
       }
     }
-            (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml ps)
     stage('Run Tests & Coverage') {
       steps {
-            (cd "${COMPOSE_DIR}" && docker-compose -f docker-compose.yaml logs backend --tail=10) || true
           sh '''
             set -eux
             # Ensure tests can import the package under src; use safe expansion so unset PYTHONPATH won't fail
