@@ -135,7 +135,7 @@ pipeline {
       steps {
         // ต้องตั้ง SonarQube server ชื่อ "SonarQube" และ credentialId: FastApi (Secret Text)
         withSonarQubeEnv('SonarQube') {
-          withCredentials([string(credentialsId: 'FastApi', variable: 'SONAR_TOKEN')]) {
+          withCredentials([string(credentialsId: 'Health01', variable: 'SONAR_TOKEN')]) {
             dir(env.PROJECT_DIR) {
               sh '''
                 set -eux
