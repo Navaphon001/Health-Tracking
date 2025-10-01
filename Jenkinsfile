@@ -387,7 +387,7 @@ PY
         '''
       }
     }
-  }
+
 
   post {
     always {
