@@ -249,10 +249,18 @@ PY
             docker rm -f wellness_backend || true
 
             # Run compose with --remove-orphans to avoid leftover containers from older runs
-            if ! docker-compose -f src/my_server/db/docker-compose.yaml up -d --remove-orphans; then
-              echo "docker-compose up failed, retrying once after a brief wait..."
+            # Capture the exit code instead of letting 'set -eux' abort the script so
+            # we can always collect diagnostics if something goes wrong.
+            echo "Running docker-compose up (attempt 1)"
+            docker-compose -f src/my_server/db/docker-compose.yaml up -d --remove-orphans || RC=$?
+            if [ -z "${RC:-}" ]; then
+              RC=0
+            fi
+            if [ "$RC" -ne 0 ]; then
+              echo "docker-compose up failed (rc=$RC), retrying once after a brief wait..."
               sleep 5
-              docker-compose -f src/my_server/db/docker-compose.yaml up -d --remove-orphans
+              docker-compose -f src/my_server/db/docker-compose.yaml up -d --remove-orphans || RC=$?
+              echo "docker-compose up retry finished with rc=${RC:-}" || true
             fi
 
             echo "Waiting for postgres to become healthy..."
