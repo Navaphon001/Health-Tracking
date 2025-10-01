@@ -179,19 +179,26 @@ pipeline {
         expression { return true }
       }
       steps {
-        withCredentials([string(credentialsId: 'tracking', variable: 'SONAR_TOKEN')]) {
-          sh '''
-            set -eux
-            # Get the latest ce task status for the project to find the report id
-            echo "Fetching latest CE task for project ${SONAR_PROJECT_KEY}"
-            TASKS_API="$SONAR_HOST_URL/api/ce/task_search?submittedAfter=0&project=${SONAR_PROJECT_KEY}"
-            curl -s -u "$SONAR_TOKEN:" "$TASKS_API" | jq '.' || true
+        // Run the debug queries with Sonar env injected
+        withSonarQubeEnv('SonarQube') {
+          withCredentials([string(credentialsId: 'tracking', variable: 'SONAR_TOKEN')]) {
+            sh '''
+              set -eux
+              : "SONAR_HOST_URL=${SONAR_HOST_URL:-}"
+              if [ -z "${SONAR_HOST_URL:-}" ]; then
+                echo "ERROR: SONAR_HOST_URL is not set by withSonarQubeEnv - check Jenkins SonarQube configuration" >&2
+                exit 4
+              fi
 
-            # Get quality gate status for the most recent analysis
-            echo "Fetching quality gate status for project ${SONAR_PROJECT_KEY}"
-            QG_API="$SONAR_HOST_URL/api/qualitygates/project_status?projectKey=${SONAR_PROJECT_KEY}"
-            curl -s -u "$SONAR_TOKEN:" "$QG_API" | jq '.' || true
-          '''
+              echo "Fetching latest CE task for project ${SONAR_PROJECT_KEY}"
+              TASKS_API="$SONAR_HOST_URL/api/ce/task_search?submittedAfter=0&project=${SONAR_PROJECT_KEY}"
+              curl -s -u "$SONAR_TOKEN:" "$TASKS_API" | jq '.' || true
+
+              echo "Fetching quality gate status for project ${SONAR_PROJECT_KEY}"
+              QG_API="$SONAR_HOST_URL/api/qualitygates/project_status?projectKey=${SONAR_PROJECT_KEY}"
+              curl -s -u "$SONAR_TOKEN:" "$QG_API" | jq '.' || true
+            '''
+          }
         }
       }
     }
