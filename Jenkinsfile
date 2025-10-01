@@ -172,8 +172,9 @@ except Exception as e:
     sys.exit(2)
 PY
 
-            # Run tests with coverage (this will generate coverage.xml when data exists)
-            pytest -q --cov=my_server --cov-report=xml tests/
+            # Run tests with coverage using the current Python interpreter and
+            # collect coverage by path so pytest-cov reports reliably.
+            python -m pytest -q --cov=src/my_server --cov-report=xml:coverage.xml tests/
             ls -la
             test -f coverage.xml
           '''
