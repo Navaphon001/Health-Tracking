@@ -81,6 +81,20 @@ pipeline {
                 tail -n +1 /tmp/p_no_dev.log || true
                 poetry install || true
               fi
+              # Export a pinned requirements.txt and ensure dependencies are available for pip installs
+              # This helps CI environments that prefer pip over poetry runtime execution
+              if command -v poetry >/dev/null 2>&1; then
+                set +e
+                poetry export -f requirements.txt --without-hashes -o /tmp/requirements.txt 2>/tmp/poetry_export.log || true
+                set -e
+                if [ -f /tmp/requirements.txt ]; then
+                  echo "Installing exported requirements.txt via pip"
+                  python -m pip install -r /tmp/requirements.txt || true
+                else
+                  echo "poetry export failed, showing poetry export log:" || true
+                  tail -n +1 /tmp/poetry_export.log || true
+                fi
+              fi
             elif [ -f requirements.txt ]; then
               pip install -r requirements.txt
             else
