@@ -1,89 +1,114 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from my_server.schema.auth import User, RegisterRequest, LoginRequest, TokenResponse
-from passlib.context import CryptContext
-import jwt
-from datetime import datetime, timedelta
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.exc import IntegrityError
+from passlib.context import CryptContext
+from jose import jwt  # ✅ ใช้ python-jose ให้ถูกแพ็กเกจ
+from datetime import datetime, timedelta
 import os
+
+from my_server.schema.auth import User, RegisterRequest, LoginRequest, TokenResponse, Base  # Base อาจใช้ที่อื่น
 
 router = APIRouter(tags=["Authentication"])
 
-
-# Prefer an explicit DATABASE_URL; otherwise build from DB_* env vars.
-def _get_database_url():
-	url = os.getenv("DATABASE_URL")
-	if url:
-		return url
-	user = os.getenv("DB_USER", "admin")
-	password = os.getenv("DB_PASSWORD", "adminpass")
-	# Default to the docker-compose service name so the backend can reach postgres inside compose
-	host = os.getenv("DB_HOST", "postgres")
-	port = os.getenv("DB_PORT", "5432")
-	name = os.getenv("DB_NAME", "health_db")
-	return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
-
+# ----------------------------
+# Database URL resolver
+# ----------------------------
+def _get_database_url() -> str:
+    url = os.getenv("DATABASE_URL")
+    if url:
+        return url
+    user = os.getenv("DB_USER", "admin")
+    password = os.getenv("DB_PASSWORD", "adminpass")
+    host = os.getenv("DB_HOST", "postgres")  # service name ใน docker-compose
+    port = os.getenv("DB_PORT", "5432")
+    name = os.getenv("DB_NAME", "health_db")
+    return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
 
 DATABASE_URL = _get_database_url()
 
-# Create engine with pool_pre_ping to avoid stale connections and a short connect timeout
+# โหมดเทสต์/CI: บังคับ SQLite ถ้า TESTING=1 (ช่วยให้ pytest รันได้โดยไม่พึ่ง Postgres)
+if os.getenv("TESTING") == "1":
+    DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./ci_test.db")
+
+# ----------------------------
+# SQLAlchemy engine/session
+# ----------------------------
+connect_args = {}
+if DATABASE_URL.startswith("sqlite"):
+    connect_args = {"check_same_thread": False}
+else:
+    # psycopg2 connect timeout
+    connect_args = {"connect_timeout": 5}
+
 engine = create_engine(
-	DATABASE_URL,
-	pool_pre_ping=True,
-	connect_args={"connect_timeout": 5},
+    DATABASE_URL,
+    pool_pre_ping=True,
+    pool_recycle=300,
+    connect_args=connect_args,
 )
-
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-from my_server.schema.auth import Base
 
-# Password hashing
+def get_db() -> Session:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+# ----------------------------
+# Auth / JWT
+# ----------------------------
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-SECRET_KEY = "your-secret-key"  # Change this in production
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
+SECRET_KEY = os.getenv("SECRET_KEY", "CHANGE-ME-IN-PROD")  # ⚠️ เปลี่ยนในโปรดักชัน
+ALGORITHM = os.getenv("JWT_ALG", "HS256")
+ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "60"))
 
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    return pwd_context.verify(plain_password, hashed_password)
 
-def verify_password(plain_password, hashed_password):
-	return pwd_context.verify(plain_password, hashed_password)
+def get_password_hash(password: str) -> str:
+    return pwd_context.hash(password)
 
-def get_password_hash(password):
-	return pwd_context.hash(password)
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-def create_access_token(data: dict, expires_delta: timedelta = None):
-	to_encode = data.copy()
-	expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-	to_encode.update({"exp": expire})
-	encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-	return encoded_jwt
+# ----------------------------
+# Routes
+# ----------------------------
+@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+def register(request: RegisterRequest, db: Session = Depends(get_db)):
+    from uuid import uuid4
+    # ป้องกันซ้ำชั้นแอป
+    if db.query(User).filter(User.email == request.email).first():
+        raise HTTPException(status_code=400, detail="Email already registered")
 
-def get_db():
-	db = SessionLocal()
-	try:
-		yield db
-	finally:
-		db.close()
+    user = User(
+        id=str(uuid4()),
+        username=request.username,
+        email=request.email,
+        password=get_password_hash(request.password),
+    )
+    db.add(user)
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        # เผื่อกรณีซ้ำจาก constraint ที่ DB
+        raise HTTPException(status_code=400, detail="Email already registered")
 
-@router.post("/register", response_model=TokenResponse)
-def register(request: RegisterRequest, db=Depends(get_db)):
-	from uuid import uuid4
-	# Allow duplicate usernames; enforce unique email only
-	email_exist = db.query(User).filter(User.email == request.email).first()
-	if email_exist:
-		raise HTTPException(status_code=400, detail="Email already registered")
-	hashed_password = get_password_hash(request.password)
-	user = User(id=str(uuid4()), username=request.username, email=request.email, password=hashed_password)
-	db.add(user)
-	db.commit()
-	# include user id in token
-	access_token = create_access_token({"sub": request.email, "user_id": user.id})
-	return {"access_token": access_token, "token_type": "bearer"}
+    access_token = create_access_token({"sub": request.email, "user_id": user.id})
+    return {"access_token": access_token, "token_type": "bearer"}
 
 @router.post("/login", response_model=TokenResponse)
-def login(form_data: OAuth2PasswordRequestForm = Depends(), db=Depends(get_db)):
-	# Authenticate by email + password
-	user = db.query(User).filter(User.email == form_data.username).first()
-	if not user or not verify_password(form_data.password, user.password):
-		raise HTTPException(status_code=401, detail="Incorrect email or password")
-	access_token = create_access_token({"sub": user.email, "user_id": user.id})
-	return {"access_token": access_token, "token_type": "bearer"}
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    # Authenticate by email + password (OAuth2 form field "username" = email)
+    user = db.query(User).filter(User.email == form_data.username).first()
+    if not user or not verify_password(form_data.password, user.password):
+        raise HTTPException(status_code=401, detail="Incorrect email or password")
+    access_token = create_access_token({"sub": user.email, "user_id": user.id})
+    return {"access_token": access_token, "token_type": "bearer"}
