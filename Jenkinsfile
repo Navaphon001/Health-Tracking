@@ -61,15 +61,22 @@ pipeline {
             # prefer poetry if pyproject.toml exists
             if [ -f pyproject.toml ]; then
               python -m pip install --upgrade pip
-              pip install poetry
+              # Pin poetry to a known stable v1 that supports --no-dev to avoid unexpected CLI behavior
+              pip install "poetry==1.8.1" || pip install poetry || true
+              poetry --version || true
+              python --version || true
               poetry config virtualenvs.create false || true
-              # Install dependencies without dev packages. Support both poetry v2 and v1 flags.
-              if poetry install --only main 2>/dev/null; then
+              # Install dependencies without dev packages. Support poetry v2 '--only main' and v1 '--no-dev'.
+              # Try deterministic options first, then fall back and surface diagnostics if they fail.
+              if poetry install --only main 2>/tmp/poetry_install_only_main.log; then
                 echo "poetry install --only main succeeded"
-              elif poetry install --no-dev 2>/dev/null; then
+              elif poetry install --no-dev 2>/tmp/poetry_install_no_dev.log; then
                 echo "poetry install --no-dev succeeded"
               else
                 echo "Falling back to poetry install (may include dev deps)"
+                # Print diagnostic snippets to help debug CI failures
+                tail -n +1 /tmp/poetry_install_only_main.log || true
+                tail -n +1 /tmp/poetry_install_no_dev.log || true
                 poetry install || true
               fi
             elif [ -f requirements.txt ]; then
@@ -118,7 +125,7 @@ pipeline {
                   -Dsonar.projectKey=${SONAR_PROJECT_KEY} \
                   -Dsonar.projectName="${SONAR_PROJECT_KEY}" \
                   -Dsonar.sources=. \
-                  -Dsonar.python.version=3.11 \
+                  -Dsonar.python.version=3.13 \
                   -Dsonar.python.coverage.reportPaths=coverage.xml \
                   -Dsonar.sourceEncoding=UTF-8
               '''
