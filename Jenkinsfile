@@ -187,10 +187,6 @@ EOF
           script {
             def qg = waitForQualityGate(abortPipeline: false)
             echo "Quality Gate status: ${qg.status}"
-            // Print any conditions if available
-            if (qg?.conditions) {
-              echo "Quality Gate conditions: ${qg.conditions}"
-            }
             if (qg.status != 'OK') {
               // Mark the build unstable (warning) but continue pipeline. Change to 'error' to abort.
               currentBuild.result = 'UNSTABLE'
