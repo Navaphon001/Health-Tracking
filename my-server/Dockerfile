@@ -37,6 +37,10 @@ RUN if [ -f pyproject.toml ]; then \
             python-dotenv; \
     fi
 
+# Some optional dependencies (like python-jose) may not be declared in pyproject.lock.
+# Ensure at least python-jose is available at runtime so `from jose import jwt` succeeds.
+RUN pip install --no-cache-dir "python-jose[cryptography]" || true
+
 # Create non-root user for security (but keep as root for now to avoid permission issues)
 # RUN groupadd -r appuser && useradd -r -g appuser appuser
 # RUN chown -R appuser:appuser /app
