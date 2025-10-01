@@ -2,20 +2,19 @@ pipeline {
   agent {
     docker {
       image 'python:3.13'
-      // รันเป็น root และต่อ docker.sock เพื่อ build/run ได้
-      args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
-    }
-  }
-pipeline {
-  agent {
-    docker {
-      image 'python:3.13'
       // รันเป็น root และต่อ docker.sock ของโฮสต์ เพื่อ build/run ได้
       args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
     }
   }
 
   options { timestamps() }
+
+  environment {
+    // Project-level variables used in cleanup and deploy stages
+    PROJECT_DIR = "${WORKSPACE}"
+    DOCKER_IMAGE = "personal-wellness-tracker-backend:latest"
+    DOCKER_CONTAINER = "personal-wellness-tracker-backend"
+  }
 
   stages {
 
@@ -231,12 +230,6 @@ EOF
             curl -f http://localhost:8000/ || curl -f http://localhost:8000/docs || echo "Backend may still be starting..."
           '''
         }
-      }
-    }
-  }
-
-  post { always { echo "Pipeline finished" } }
-}
       }
     }
 
