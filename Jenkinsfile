@@ -235,7 +235,7 @@ PY
 
             # Stop previous compose-managed services (if any)
             echo "Stopping existing docker-compose services (if any)..."
-            docker-compose -f src/my_server/db/docker-compose.yaml down || true
+              cd src/my_server/db && docker-compose -f docker-compose.yaml down || true
 
             # Remove any old container with the same name
             docker rm -f "${DOCKER_CONTAINER}" || true
@@ -245,21 +245,21 @@ PY
 
             # Defensive: remove containers that may conflict with compose service names
             echo "Cleaning up any existing containers that may conflict..."
-            docker rm -f wellness_postgres || true
-            docker rm -f wellness_backend || true
+              docker rm -f wellness_postgres || true
+              docker rm -f wellness_backend || true
 
             # Run compose with --remove-orphans to avoid leftover containers from older runs
             # Capture the exit code instead of letting 'set -eux' abort the script so
             # we can always collect diagnostics if something goes wrong.
             echo "Running docker-compose up (attempt 1)"
-            docker-compose -f src/my_server/db/docker-compose.yaml up -d --remove-orphans || RC=$?
+              cd src/my_server/db && docker-compose -f docker-compose.yaml up -d --remove-orphans || RC=$?
             if [ -z "${RC:-}" ]; then
               RC=0
             fi
             if [ "$RC" -ne 0 ]; then
               echo "docker-compose up failed (rc=$RC), retrying once after a brief wait..."
               sleep 5
-              docker-compose -f src/my_server/db/docker-compose.yaml up -d --remove-orphans || RC=$?
+                cd src/my_server/db && docker-compose -f docker-compose.yaml up -d --remove-orphans || RC=$?
               echo "docker-compose up retry finished with rc=${RC:-}" || true
             fi
 
@@ -279,18 +279,18 @@ PY
             if [ "$HEALTH_OK" -ne 1 ]; then
               echo "Postgres failed to reach healthy state. Collecting diagnostics..."
               echo "==== docker-compose ps ===="
-              docker-compose -f src/my_server/db/docker-compose.yaml ps || true
+                cd src/my_server/db && docker-compose -f docker-compose.yaml ps || true
               echo "==== docker ps (all) ===="
               docker ps -a || true
               echo "==== Postgres logs (compose) ===="
-              docker-compose -f src/my_server/db/docker-compose.yaml logs postgres || true
+                cd src/my_server/db && docker-compose -f docker-compose.yaml logs postgres || true
               echo "==== Postgres container logs ===="
               docker logs wellness_postgres || true
 
               # Look for a common failure: data directory version mismatch
                   if docker-compose -f src/my_server/db/docker-compose.yaml logs postgres 2>/dev/null | grep -Ei "incompatible with this version|initialized by PostgreSQL version" >/dev/null 2>&1; then
                 echo "Detected Postgres data-dir version mismatch. Removing compose volumes and retrying..."
-                docker-compose -f src/my_server/db/docker-compose.yaml down -v || true
+                  cd src/my_server/db && docker-compose -f docker-compose.yaml down -v || true
 
                 # Remove named volumes that look like the project's postgres data
                 for V in $(docker volume ls --format '{{.Name}}' | grep -Ei 'postgres|postgres_data' || true); do
@@ -299,7 +299,7 @@ PY
                 done
 
                 echo "Retrying docker-compose up after volume cleanup..."
-                docker-compose -f src/my_server/db/docker-compose.yaml up -d --remove-orphans || RC=$?
+                  cd src/my_server/db && docker-compose -f docker-compose.yaml up -d --remove-orphans || RC=$?
                 if [ -z "${RC:-}" ]; then
                   RC=0
                 fi
@@ -318,9 +318,9 @@ PY
 
                 if [ "$HEALTH_OK" -ne 1 ]; then
                   echo "Postgres still unhealthy after cleaning volumes. Final diagnostics:"
-                  docker-compose -f src/my_server/db/docker-compose.yaml ps || true
+                    cd src/my_server/db && docker-compose -f docker-compose.yaml ps || true
                   docker ps -a || true
-                  docker-compose -f src/my_server/db/docker-compose.yaml logs postgres || true
+                    cd src/my_server/db && docker-compose -f docker-compose.yaml logs postgres || true
                   docker logs wellness_postgres || true
                   echo "Failing the build due to unhealthy postgres container"
                   exit 1
@@ -332,10 +332,10 @@ PY
             fi
 
             echo "Checking service status..."
-            docker-compose -f src/my_server/db/docker-compose.yaml ps
+              cd src/my_server/db && docker-compose -f docker-compose.yaml ps
 
             echo "Backend logs:"
-            docker-compose -f src/my_server/db/docker-compose.yaml logs backend --tail=10 || true
+              cd src/my_server/db && docker-compose -f docker-compose.yaml logs backend --tail=10 || true
 
             echo "Testing backend connection..."
             curl -f http://localhost:8000/ || curl -f http://localhost:8000/docs || echo "Backend may still be starting..."
