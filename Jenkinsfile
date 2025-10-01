@@ -9,7 +9,7 @@ pipeline {
   options { timestamps() }
 
   environment {
-    # Project-specific overrides (can be overridden by Jenkins credentials or job parameters)
+    // Project-specific overrides (can be overridden by Jenkins credentials or job parameters)
     PROJECT_DIR = 'my-server'
     DOCKER_IMAGE = "fastapi-app:latest"
     SONAR_PROJECT_KEY = 'Health-Tracking-my-server'
