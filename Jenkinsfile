@@ -155,6 +155,7 @@ pipeline {
                   -Dsonar.sources="$SRC" \
                   -Dsonar.python.version=3.13 \
                   -Dsonar.sourceEncoding=UTF-8 \
+                  -Dsonar.exclusions=tests/** \
                   $TESTS_OPT \
                   $COV_OPT
               '''
