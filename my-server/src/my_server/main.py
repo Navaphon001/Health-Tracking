@@ -2,7 +2,11 @@ from fastapi import FastAPI
 from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
+import time
+import pathlib
 import uvicorn
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import OperationalError
 from my_server.api.auth import router as auth_router
 from my_server.api.basic_profile import router as basic_profile_router
 from my_server.api.user_goals import router as user_goals_router
@@ -54,6 +58,70 @@ app.include_router(water_intake_logs_router)
 app.include_router(notification_settings_router)
 app.include_router(physical_info_router)
 app.include_router(about_yourself_router)
+
+
+# --- Database startup helper: wait for DB and apply init.sql if needed ---
+def _get_database_url():
+    # prefer explicit DATABASE_URL, otherwise use docker-friendly defaults
+    url = os.getenv("DATABASE_URL")
+    if url:
+        return url
+    user = os.getenv("DB_USER", "wellness_user")
+    password = os.getenv("DB_PASSWORD", "wellness_password")
+    host = os.getenv("DB_HOST", "postgres")
+    port = os.getenv("DB_PORT", "5432")
+    name = os.getenv("DB_NAME", "wellness_tracker_db")
+    return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
+
+
+def wait_for_db_and_init(retries: int = 15, delay: int = 2):
+    db_url = _get_database_url()
+    engine = None
+    for i in range(retries):
+        try:
+            engine = create_engine(db_url, pool_pre_ping=True)
+            with engine.connect() as conn:
+                # quick sanity query
+                conn.execute(text("SELECT 1"))
+            break
+        except OperationalError as exc:
+            print(f"DB not ready (attempt {i+1}/{retries}): {exc}")
+            time.sleep(delay)
+    else:
+        raise RuntimeError("Database not available after retries")
+
+    # check for users table; if missing, apply init.sql found in repo under my-server/src/my_server/db/init.sql
+    try:
+        with engine.connect() as conn:
+            res = conn.execute(text("SELECT to_regclass('public.users')"))
+            row = res.fetchone()
+            exists = bool(row and row[0])
+            if not exists:
+                print("users table not found — applying init.sql")
+                # load SQL file
+                sql_path = pathlib.Path(__file__).resolve().parents[1] / "db" / "init.sql"
+                if sql_path.exists():
+                    sql_text = sql_path.read_text(encoding="utf-8")
+                    # Execute the SQL blob; Postgres accepts multiple commands
+                    with engine.begin() as trans_conn:
+                        trans_conn.execute(text(sql_text))
+                    print("Applied init.sql")
+                else:
+                    print(f"init.sql not found at {sql_path}; cannot initialize schema")
+            else:
+                print("users table exists; no init needed")
+    except Exception as exc:
+        print(f"Error during DB init check/apply: {exc}")
+
+
+@app.on_event("startup")
+def startup_db():
+    try:
+        wait_for_db_and_init()
+    except Exception as exc:
+        # if startup DB init fails, raise to avoid running with broken DB
+        print(f"Startup DB init failed: {exc}")
+        raise
 
 
 if __name__ == "__main__":
