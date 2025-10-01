@@ -288,7 +288,7 @@ PY
               docker logs wellness_postgres || true
 
               # Look for a common failure: data directory version mismatch
-              if docker-compose -f src/my_server/db/docker-compose.yaml logs postgres 2>/dev/null | grep -qi "incompatible with this version\|initialized by PostgreSQL version"; then
+                  if docker-compose -f src/my_server/db/docker-compose.yaml logs postgres 2>/dev/null | grep -Ei "incompatible with this version|initialized by PostgreSQL version" >/dev/null 2>&1; then
                 echo "Detected Postgres data-dir version mismatch. Removing compose volumes and retrying..."
                 docker-compose -f src/my_server/db/docker-compose.yaml down -v || true
 
