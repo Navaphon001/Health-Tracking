@@ -255,8 +255,32 @@ PY
               docker-compose -f src/my_server/db/docker-compose.yaml up -d --remove-orphans
             fi
 
-            echo "Waiting for services to be ready..."
-            sleep 20
+            echo "Waiting for postgres to become healthy..."
+            # Poll the postgres container health for up to 60 seconds
+            HEALTH_OK=0
+            for i in 1 12; do
+              STATUS=$(docker inspect --format '{{.State.Health.Status}}' wellness_postgres 2>/dev/null || echo unknown)
+              echo "[poll $i] postgres health=$STATUS"
+              if [ "${STATUS}" = "healthy" ]; then
+                HEALTH_OK=1
+                break
+              fi
+              sleep 5
+            done
+
+            if [ "$HEALTH_OK" -ne 1 ]; then
+              echo "Postgres failed to reach healthy state. Collecting diagnostics..."
+              echo "==== docker-compose ps ===="
+              docker-compose -f src/my_server/db/docker-compose.yaml ps || true
+              echo "==== docker ps (all) ===="
+              docker ps -a || true
+              echo "==== Postgres logs (compose) ===="
+              docker-compose -f src/my_server/db/docker-compose.yaml logs postgres || true
+              echo "==== Postgres container logs ===="
+              docker logs wellness_postgres || true
+              echo "Failing the build due to unhealthy postgres container"
+              exit 1
+            fi
 
             echo "Checking service status..."
             docker-compose -f src/my_server/db/docker-compose.yaml ps
