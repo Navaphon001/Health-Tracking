@@ -338,20 +338,37 @@ for i in $(seq 1 90); do
   sleep 2
 done
 
-# 2) Probe HTTP /health, break เมื่อสำเร็จ
+# 2) Probe HTTP /health. Prefer in-container probe (docker exec) so we don't depend on host networking.
 MAX_TRIES=60
 DELAY=2
+BACKEND_SVC_NAME="backend"
+CID="$CID"
+
+echo "Probing /health (in-container first, then host)..."
 for i in $(seq 1 "$MAX_TRIES"); do
-  if curl -fsS http://localhost:8000/health >/dev/null; then
-    echo "HTTP /health OK on attempt $i"
+  # 2a) Try in-container curl (should always succeed if uvicorn listening on 0.0.0.0 inside container)
+  if docker exec "$CID" sh -c 'curl -fsS http://127.0.0.1:8000/health' >/dev/null 2>&1; then
+    echo "In-container /health OK on attempt $i"
     exit 0
   fi
+
+  # 2b) Fallback: try host-published port (useful when container exposes port to host)
+  if curl -fsS http://localhost:8000/health >/dev/null 2>&1; then
+    echo "Host /health OK on attempt $i"
+    exit 0
+  fi
+
   echo "Attempt $i/$MAX_TRIES: /health not ready yet"
   sleep "$DELAY"
 done
 
 echo "Backend did not respond 200 to /health after $((MAX_TRIES*DELAY))s"
+echo "---- docker-compose ps ----"
+docker-compose ps || true
+echo "---- docker-compose logs (tail 200) ----"
 docker-compose logs --no-color --tail=200 || true
+echo "---- docker inspect backend ----"
+docker inspect "$CID" || true
 exit 1
 '''
       }
