@@ -94,36 +94,32 @@ pipeline {
     }
 
     stage('Run Tests & Coverage') {
-      steps {
-        dir(env.PROJECT_DIR) {
-          sh '''
-            set -eux
-            export PYTHONPATH="$PWD"
-            if [ -d tests ]; then
-              # Only run pytest if test files are present; avoids failing pipeline on empty tests/
-              TEST_FILES=$(find tests -type f \( -name 'test_*.py' -o -name '*_test.py' \) | wc -l || true)
-              if [ "${TEST_FILES}" -eq 0 ]; then
-                echo "No test files found in tests/, skipping pytest"
-              else
-                # ปรับ --cov=app ถ้าโค้ดหลักอยู่ในโฟลเดอร์ app/
-                if [ -d app ]; then
-                  pytest -q --cov=app --cov-report=xml tests/
-                else
-                  pytest -q --cov=. --cov-report=xml tests/
-                fi
-                if [ -f coverage.xml ]; then
-                  echo "Coverage XML written to coverage.xml"
-                else
-                  echo "Warning: coverage.xml was not produced"
-                fi
-              fi
+  steps {
+    dir(env.PROJECT_DIR) {
+      sh '''
+        set -eux
+        export PYTHONPATH="$PWD"
+
+        if [ -d tests ]; then
+          # นับไฟล์ทดสอบ (รองรับ *_test.py และ test_*.py)
+          CNT=$(find tests -type f \( -name "*_test.py" -o -name "test_*.py" \) | wc -l || true)
+          if [ "${CNT:-0}" -gt 0 ]; then
+            # ถ้าโค้ดหลักอยู่ในโฟลเดอร์ app/ ให้ใช้ --cov=app; ถ้าไม่ ให้ใช้ --cov=.
+            if [ -d app ]; then
+              pytest -q --cov=app --cov-report=xml tests/
             else
-              echo "No tests directory in ${PWD}, skipping pytest"
+              pytest -q --cov=.   --cov-report=xml tests/
             fi
-          '''
-        }
-      }
+          else
+            echo "No test files found under tests/, skipping pytest"
+          fi
+        else
+          echo "No tests directory in ${PWD}, skipping pytest"
+        fi
+      '''
     }
+  }
+}
 
     stage('SonarQube Analysis') {
       steps {
