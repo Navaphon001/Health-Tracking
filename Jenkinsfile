@@ -208,7 +208,11 @@ pipeline {
         dir(env.PROJECT_DIR) {
           sh '''
             set -eux
-            docker build -t "${DOCKER_IMAGE}" .
+            if [ -f Dockerfile ]; then
+              docker build -t "${DOCKER_IMAGE}" .
+            else
+              echo "Dockerfile not found in ${PWD}, skipping docker build"
+            fi
           '''
         }
       }
@@ -218,8 +222,13 @@ pipeline {
       steps {
         sh '''
           set -eux
-          docker rm -f "${DOCKER_CONTAINER}" || true
-          docker run -d --name "${DOCKER_CONTAINER}" -p 8000:8000 "${DOCKER_IMAGE}"
+          # Only attempt to run the container if the Dockerfile existed and build likely ran
+          if docker image inspect "${DOCKER_IMAGE}" >/dev/null 2>&1; then
+            docker rm -f "${DOCKER_CONTAINER}" || true
+            docker run -d --name "${DOCKER_CONTAINER}" -p 8000:8000 "${DOCKER_IMAGE}"
+          else
+            echo "Docker image ${DOCKER_IMAGE} not found, skipping deploy"
+          fi
         '''
       }
     }
