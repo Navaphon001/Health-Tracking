@@ -6,18 +6,34 @@ import jwt
 from datetime import datetime, timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import os
 
 router = APIRouter(tags=["Authentication"])
 
-# DB config from docker-compose
-DB_USER = "admin"
-DB_PASSWORD = "adminpass"
-DB_HOST = "localhost"
-DB_PORT = "5432"
-DB_NAME = "health_db"
-DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
 
-engine = create_engine(DATABASE_URL)
+# Prefer an explicit DATABASE_URL; otherwise build from DB_* env vars.
+def _get_database_url():
+	url = os.getenv("DATABASE_URL")
+	if url:
+		return url
+	user = os.getenv("DB_USER", "admin")
+	password = os.getenv("DB_PASSWORD", "adminpass")
+	# Default to the docker-compose service name so the backend can reach postgres inside compose
+	host = os.getenv("DB_HOST", "postgres")
+	port = os.getenv("DB_PORT", "5432")
+	name = os.getenv("DB_NAME", "health_db")
+	return f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{name}"
+
+
+DATABASE_URL = _get_database_url()
+
+# Create engine with pool_pre_ping to avoid stale connections and a short connect timeout
+engine = create_engine(
+	DATABASE_URL,
+	pool_pre_ping=True,
+	connect_args={"connect_timeout": 5},
+)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 from my_server.schema.auth import Base
 
