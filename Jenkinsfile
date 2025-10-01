@@ -163,6 +163,12 @@ for m in ('sqlalchemy','sqlmodel','asyncpg'):
 " || true
       fi
 
+            # pydantic[email] requires email-validator; install if missing
+            if ! python -c "import email_validator" >/dev/null 2>&1; then
+              echo "email_validator not importable; installing email-validator"
+              python -m pip install --no-cache-dir email-validator || true
+            fi
+
             echo "Starting server with python -m uvicorn on port $PORT"
             nohup python -m uvicorn my_server.main:app --app-dir src --host 0.0.0.0 --port $PORT > server.log 2>&1 & echo $! > server.pid
 
