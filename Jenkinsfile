@@ -12,8 +12,8 @@ pipeline {
   environment {
     // Project-level variables used in cleanup and deploy stages
     PROJECT_DIR = "${WORKSPACE}"
-    DOCKER_IMAGE = "personal-wellness-tracker-backend:latest"
-    DOCKER_CONTAINER = "personal-wellness-tracker-backend"
+    DOCKER_IMAGE = "health-tracking-backend:latest"
+    DOCKER_CONTAINER = "health-tracking-backend"
   }
 
   stages {
@@ -91,13 +91,13 @@ SHIM
 
     stage('Checkout') {
       steps {
-        git branch: 'Backup', url: 'https://github.com/Lolipopxn/Personal-Wellness-Tracker-App.git'
+        git branch: 'feat/jenkins-ci', url: 'https://github.com/Navaphon001/Health-Tracking.git'
       }
     }
 
     stage('Install Python Deps') {
       steps {
-        dir('personal_wellness_tracker_backend') {
+        dir('my-server') {
           sh '''
             set -eux
             python -m pip install --upgrade pip
@@ -118,7 +118,7 @@ SHIM
             pip install pytest pytest-cov
             
             # เผื่อบางโปรเจกต์ยังไม่มีไฟล์ __init__.py
-            test -f personal_wellness_tracker_backend/__init__.py || touch personal_wellness_tracker_backend/__init__.py
+            test -f my-server/__init__.py || true
           '''
         }
       }
@@ -126,7 +126,7 @@ SHIM
 
     stage('Run Tests & Coverage') {
       steps {
-        dir('personal_wellness_tracker_backend') {
+        dir('my-server') {
           sh '''
             set -eux
             export PYTHONPATH="$PWD"
@@ -166,7 +166,7 @@ EOF
             fi
             
             # Run tests with coverage
-            pytest -q --cov=personal_wellness_tracker_backend --cov-report=xml tests/ || pytest -q --cov=personal_wellness_tracker_backend --cov-report=xml
+            pytest -q --cov=my_server --cov-report=xml tests/ || pytest -q --cov=my_server --cov-report=xml
             ls -la
             test -f coverage.xml
           '''
@@ -176,7 +176,7 @@ EOF
 
     stage('SonarQube Analysis') {
       steps {
-        dir('personal_wellness_tracker_backend') {
+        dir('my-server') {
           // ชื่อ server ต้องตรงกับที่ตั้งไว้ใน Manage Jenkins → SonarQube servers
           withSonarQubeEnv('SonarQube') {
             sh '''
@@ -192,9 +192,9 @@ EOF
                   -Dsonar.host.url="$SONAR_HOST_URL" \
                   -Dsonar.login="$SONAR_AUTH_TOKEN" \
                   -Dsonar.projectBaseDir="$PWD" \
-                  -Dsonar.projectKey=personal-wellness-tracker-backend \
-                  -Dsonar.projectName="Personal Wellness Tracker Backend" \
-                  -Dsonar.sources=personal_wellness_tracker_backend \
+                  -Dsonar.projectKey=Health-Tracking \
+                  -Dsonar.projectName="Health Tracking Backend" \
+                  -Dsonar.sources=src/my_server \
                   -Dsonar.tests=tests \
                   -Dsonar.python.version=3.13 \
                   -Dsonar.python.coverage.reportPaths=coverage.xml \
@@ -217,36 +217,34 @@ EOF
 
     stage('Deploy with Docker Compose') {
       steps {
-        dir('personal_wellness_tracker_backend') {
+        dir('my-server') {
           sh '''
             set -eux
-            
-            # Build Docker image ก่อน
+
+            # Build Docker image using the standard image name
             echo "Building Docker image..."
-            docker build -t personal-wellness-tracker-backend:latest .
-            
-            # หยุด containers เก่าทั้งหมด
-            echo "Stopping existing containers..."
-            docker-compose down || true
-            docker rm -f personal-wellness-tracker-backend || true
-            
-            # รัน services ทั้งหมดด้วย docker-compose
+            docker build -t "${DOCKER_IMAGE}" .
+
+            # Stop previous compose-managed services (if any)
+            echo "Stopping existing docker-compose services (if any)..."
+            docker-compose -f src/my_server/db/docker-compose.yaml down || true
+
+            # Remove any old container with the same name
+            docker rm -f "${DOCKER_CONTAINER}" || true
+
+            # Start services defined by the compose file
             echo "Starting services with docker-compose..."
-            docker-compose up -d
-            
-            # รอให้ services พร้อม
+            docker-compose -f src/my_server/db/docker-compose.yaml up -d
+
             echo "Waiting for services to be ready..."
             sleep 20
-            
-            # ตรวจสอบสถานะ services
+
             echo "Checking service status..."
-            docker-compose ps
-            
-            # แสดง logs ของ backend
+            docker-compose -f src/my_server/db/docker-compose.yaml ps
+
             echo "Backend logs:"
-            docker-compose logs backend --tail=10
-            
-            # ตรวจสอบว่า backend ตอบสนอง
+            docker-compose -f src/my_server/db/docker-compose.yaml logs backend --tail=10 || true
+
             echo "Testing backend connection..."
             curl -f http://localhost:8000/ || curl -f http://localhost:8000/docs || echo "Backend may still be starting..."
           '''
