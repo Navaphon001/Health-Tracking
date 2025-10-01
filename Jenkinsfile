@@ -101,8 +101,18 @@ pipeline {
         export PYTHONPATH="$PWD"
 
         if [ -d tests ]; then
-          # นับไฟล์ทดสอบ (รองรับ *_test.py และ test_*.py)
-          CNT=$(find tests -type f \( -name "*_test.py" -o -name "test_*.py" \) | wc -l || true)
+          # นับไฟล์ทดสอบ (รองรับ *_test.py และ test_*.py) โดยใช้ shell globbing แทน backslash-escaped parens
+          CNT=0
+          # count test_*.py
+          set -- tests/test_*.py
+          if [ -e "$1" ]; then
+            CNT=$((CNT + $(ls tests/test_*.py 2>/dev/null | wc -l)))
+          fi
+          # count *_test.py
+          set -- tests/*_test.py
+          if [ -e "$1" ]; then
+            CNT=$((CNT + $(ls tests/*_test.py 2>/dev/null | wc -l)))
+          fi
           if [ "${CNT:-0}" -gt 0 ]; then
             # ถ้าโค้ดหลักอยู่ในโฟลเดอร์ app/ ให้ใช้ --cov=app; ถ้าไม่ ให้ใช้ --cov=.
             if [ -d app ]; then
