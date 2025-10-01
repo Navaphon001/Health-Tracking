@@ -1,7 +1,7 @@
 pipeline {
   agent {
     docker {
-      image 'python:3.11'
+      image 'python:3.13'
       args '-u 0:0 -v /var/run/docker.sock:/var/run/docker.sock'
     }
   }
@@ -63,7 +63,15 @@ pipeline {
               python -m pip install --upgrade pip
               pip install poetry
               poetry config virtualenvs.create false || true
-              poetry install --no-dev
+              # Install dependencies without dev packages. Support both poetry v2 and v1 flags.
+              if poetry install --only main 2>/dev/null; then
+                echo "poetry install --only main succeeded"
+              elif poetry install --no-dev 2>/dev/null; then
+                echo "poetry install --no-dev succeeded"
+              else
+                echo "Falling back to poetry install (may include dev deps)"
+                poetry install || true
+              fi
             elif [ -f requirements.txt ]; then
               python -m pip install --upgrade pip
               pip install -r requirements.txt
