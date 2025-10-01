@@ -157,7 +157,7 @@ EOF
       steps {
         dir('personal_wellness_tracker_backend') {
           // ชื่อ server ต้องตรงกับที่ตั้งไว้ใน Manage Jenkins → SonarQube servers
-          withSonarQubeEnv('SonarQube servers') {
+          withSonarQubeEnv('SonarQube') {
             sh '''
               set -eux
               # ถ้ามีไฟล์ sonar-project.properties ให้ใช้ไฟล์นั้น
