@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/physical_info_provider.dart';
 import '../providers/profile_setup_provider.dart';
 import '../theme/app_colors.dart';
 import '../shared/custom_top_app_bar.dart';
+import '../services/physical_info_service.dart';
 
 class ProfileSetupStep2 extends StatefulWidget {
   const ProfileSetupStep2({super.key});
@@ -19,6 +21,50 @@ class _ProfileSetupStep2State extends State<ProfileSetupStep2> {
   String? _heightError;
   late final TextEditingController _weightCtrl;
   late final TextEditingController _heightCtrl;
+  bool _isLoading = false;
+
+  // SnackBar callback
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  // Save physical info data to API
+  Future<bool> _savePhysicalInfo() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final phys = context.read<PhysicalInfoProvider>();
+      final profile = context.read<ProfileSetupProvider>();
+      
+      // Generate a unique ID for the physical info
+      const uuid = Uuid();
+      final infoId = uuid.v4();
+      
+      final weightValue = double.tryParse(phys.weight ?? '');
+      final heightValue = double.tryParse(phys.height ?? '');
+      
+      final result = await PhysicalInfoService.createPhysicalInfo(
+        id: infoId,
+        weight: weightValue,
+        height: heightValue,
+        activityLevel: profile.activityLevel,
+        snackFn: _showSnackBar,
+      );
+      
+      return result != null;
+    } catch (e) {
+      _showSnackBar('เกิดข้อผิดพลาด: ${e.toString()}', isError: true);
+      return false;
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   void initState() {
@@ -268,7 +314,7 @@ class _ProfileSetupStep2State extends State<ProfileSetupStep2> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     foregroundColor: btnTextColor,
                   ),
-                  onPressed: () {
+                  onPressed: _isLoading ? null : () async {
                     final phys = context.read<PhysicalInfoProvider>();
                     final profile = context.read<ProfileSetupProvider>();
                     final weightVal = (phys.weight ?? '').trim();
@@ -296,9 +342,26 @@ class _ProfileSetupStep2State extends State<ProfileSetupStep2> {
 
                     if (hasError) return;
 
-                    Navigator.of(context).pushNamed('/profile-setup-step3');
+                    // Save data to API first
+                    final success = await _savePhysicalInfo();
+                    
+                    if (success) {
+                      // Navigate to step 3 only if save was successful
+                      if (context.mounted) {
+                        Navigator.of(context).pushNamed('/profile-setup-step3');
+                      }
+                    }
                   },
-                  child: Text(t.next),
+                  child: _isLoading 
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Text(t.next),
                 ),
               ),
             ),

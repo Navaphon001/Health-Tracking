@@ -2,13 +2,9 @@ from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordBearer
 import jwt
 from typing import List
-from ..schema.water_intake_logs import WaterIntakeLog
-
-SECRET_KEY = "your-secret-key"
-from fastapi import APIRouter, HTTPException, Depends
-from fastapi.security import OAuth2PasswordBearer
-from typing import List
-from ..schema.water_intake_logs import WaterIntakeLog
+from datetime import datetime
+from sqlalchemy.orm import Session
+from ..schema.water_intake_logs import WaterIntakeLog, WaterIntakeLogORM
 from ..api import auth as auth_module
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
@@ -24,51 +20,106 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         raise HTTPException(status_code=401, detail="Invalid token")
 
 router = APIRouter(tags=["Water Intake Logs"])
-water_intake_logs_db = {}
 
 
 @router.get("/water_intake_logs", response_model=List[WaterIntakeLog])
-def get_water_intake_logs(db=Depends(auth_module.get_db), user_id: str = Depends(get_current_user)):
-    return [v for v in water_intake_logs_db.values() if getattr(v, 'user_id', None) == user_id]
+def get_water_intake_logs(db: Session = Depends(auth_module.get_db), user_id: str = Depends(get_current_user)):
+    logs = db.query(WaterIntakeLogORM).filter(WaterIntakeLogORM.user_id == user_id).all()
+    return [WaterIntakeLog(
+        id=log.id,
+        user_id=log.user_id,
+        date=log.date,
+        count=log.count,
+        updated_at=log.updated_at
+    ) for log in logs]
 
 
 @router.get("/water_intake_logs/{log_id}", response_model=WaterIntakeLog)
-def get_water_intake_log(log_id: str, db=Depends(auth_module.get_db), user_id: str = Depends(get_current_user)):
-    log = water_intake_logs_db.get(log_id)
-    if not log or getattr(log, 'user_id', None) != user_id:
+def get_water_intake_log(log_id: str, db: Session = Depends(auth_module.get_db), user_id: str = Depends(get_current_user)):
+    log = db.query(WaterIntakeLogORM).filter(
+        WaterIntakeLogORM.id == log_id,
+        WaterIntakeLogORM.user_id == user_id
+    ).first()
+    if not log:
         raise HTTPException(status_code=404, detail="Water intake log not found")
-    return log
+    return WaterIntakeLog(
+        id=log.id,
+        user_id=log.user_id,
+        date=log.date,
+        count=log.count,
+        updated_at=log.updated_at
+    )
 
 
 @router.post("/water_intake_logs", response_model=WaterIntakeLog)
-def create_water_intake_log(log: WaterIntakeLog, db=Depends(auth_module.get_db), user_id: str = Depends(get_current_user)):
-    if log.id in water_intake_logs_db:
+def create_water_intake_log(log: WaterIntakeLog, db: Session = Depends(auth_module.get_db), user_id: str = Depends(get_current_user)):
+    # Check if record already exists
+    existing = db.query(WaterIntakeLogORM).filter(WaterIntakeLogORM.id == log.id).first()
+    if existing:
         raise HTTPException(status_code=400, detail="Water intake log already exists")
-    try:
-        log.user_id = user_id
-    except Exception:
-        log = WaterIntakeLog(**{**(log.model_dump() if hasattr(log, 'model_dump') else log.__dict__), 'user_id': user_id})
-    water_intake_logs_db[log.id] = log
-    return log
+    
+    # Create new database record
+    db_record = WaterIntakeLogORM(
+        id=log.id,
+        user_id=user_id,
+        date=log.date,
+        count=log.count,
+        updated_at=datetime.now()
+    )
+    
+    db.add(db_record)
+    db.commit()
+    db.refresh(db_record)
+    
+    return WaterIntakeLog(
+        id=db_record.id,
+        user_id=db_record.user_id,
+        date=db_record.date,
+        count=db_record.count,
+        updated_at=db_record.updated_at
+    )
 
 
 @router.put("/water_intake_logs/{log_id}", response_model=WaterIntakeLog)
-def update_water_intake_log(log_id: str, log: WaterIntakeLog, db=Depends(auth_module.get_db), user_id: str = Depends(get_current_user)):
-    existing = water_intake_logs_db.get(log_id)
-    if not existing or getattr(existing, 'user_id', None) != user_id:
+def update_water_intake_log(log_id: str, log: WaterIntakeLog, db: Session = Depends(auth_module.get_db), user_id: str = Depends(get_current_user)):
+    # Find existing record
+    db_record = db.query(WaterIntakeLogORM).filter(
+        WaterIntakeLogORM.id == log_id,
+        WaterIntakeLogORM.user_id == user_id
+    ).first()
+    
+    if not db_record:
         raise HTTPException(status_code=404, detail="Water intake log not found")
-    try:
-        log.user_id = user_id
-    except Exception:
-        log = WaterIntakeLog(**{**(log.model_dump() if hasattr(log, 'model_dump') else log.__dict__), 'user_id': user_id})
-    water_intake_logs_db[log_id] = log
-    return log
+    
+    # Update fields
+    db_record.date = log.date
+    db_record.count = log.count
+    db_record.updated_at = datetime.now()
+    
+    db.commit()
+    db.refresh(db_record)
+    
+    return WaterIntakeLog(
+        id=db_record.id,
+        user_id=db_record.user_id,
+        date=db_record.date,
+        count=db_record.count,
+        updated_at=db_record.updated_at
+    )
 
 
 @router.delete("/water_intake_logs/{log_id}")
-def delete_water_intake_log(log_id: str, db=Depends(auth_module.get_db), user_id: str = Depends(get_current_user)):
-    existing = water_intake_logs_db.get(log_id)
-    if not existing or getattr(existing, 'user_id', None) != user_id:
+def delete_water_intake_log(log_id: str, db: Session = Depends(auth_module.get_db), user_id: str = Depends(get_current_user)):
+    # Find existing record
+    db_record = db.query(WaterIntakeLogORM).filter(
+        WaterIntakeLogORM.id == log_id,
+        WaterIntakeLogORM.user_id == user_id
+    ).first()
+    
+    if not db_record:
         raise HTTPException(status_code=404, detail="Water intake log not found")
-    del water_intake_logs_db[log_id]
+    
+    db.delete(db_record)
+    db.commit()
+    
     return {"detail": "Water intake log deleted"}

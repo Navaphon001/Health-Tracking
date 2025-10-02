@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/profile_setup_provider.dart';
 import '../theme/app_colors.dart';
 import '../shared/profile_image_picker.dart';
 import '../shared/custom_top_app_bar.dart';
+import '../shared/snack_fn.dart';
+import '../services/basic_profile_service.dart';
 
 class ProfileSetupStep1 extends StatefulWidget {
   const ProfileSetupStep1({super.key});
@@ -19,6 +22,47 @@ class _ProfileSetupStep1State extends State<ProfileSetupStep1> {
   String? _nameError;
   String? _dobError;
   String? _genderError;
+  bool _isLoading = false;
+
+  // SnackBar callback
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  // Save basic profile data to API
+  Future<bool> _saveBasicProfile() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      final provider = context.read<ProfileSetupProvider>();
+      
+      // Generate a unique ID for the profile
+      const uuid = Uuid();
+      final profileId = uuid.v4();
+      
+      final result = await BasicProfileService.createBasicProfile(
+        id: profileId,
+        fullName: provider.fullName,
+        dateOfBirth: provider.birthDate,
+        gender: provider.gender,
+        profileImageUrl: provider.profileImageUrl,
+        snackFn: _showSnackBar,
+      );
+      
+      return result != null;
+    } catch (e) {
+      _showSnackBar('เกิดข้อผิดพลาด: ${e.toString()}', isError: true);
+      return false;
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
 
   @override
   void initState() {
@@ -247,7 +291,7 @@ class _ProfileSetupStep1State extends State<ProfileSetupStep1> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     foregroundColor: btnTextColor,
                   ),
-                  onPressed: () {
+                  onPressed: _isLoading ? null : () async {
                     // Validate form: require name, dob, gender. Avatar is optional.
                     final provider = context.read<ProfileSetupProvider>();
                     final nameValid = _nameController.text.trim().isNotEmpty;
@@ -262,10 +306,27 @@ class _ProfileSetupStep1State extends State<ProfileSetupStep1> {
                     });
 
                     if (_nameError == null && _dobError == null && _genderError == null) {
-                      Navigator.of(context).pushNamed('/profile-setup-step2');
+                      // Save data to API first
+                      final success = await _saveBasicProfile();
+                      
+                      if (success) {
+                        // Navigate to step 2 only if save was successful
+                        if (context.mounted) {
+                          Navigator.of(context).pushNamed('/profile-setup-step2');
+                        }
+                      }
                     }
                   },
-                  child: Text(t.next),
+                  child: _isLoading 
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Text(t.next),
                 ),
               ),
             ),
